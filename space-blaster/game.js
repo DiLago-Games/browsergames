@@ -1,11 +1,6 @@
 /**
  * Space Blaster – casual browser game
  *
- * Controls
- *  ← → Arrow keys / A D  – move ship
- *  Space / Z             – shoot
- *  P                     – pause
- *
  * Gameplay
  *  - Shoot incoming asteroids before they reach the bottom.
  *  - Missing an asteroid costs one life (3 lives total).
@@ -29,11 +24,6 @@
   const finalScore     = document.getElementById("final-score");
   const highScoreEl    = document.getElementById("high-score");
   const btnRestart     = document.getElementById("btn-restart");
-  const btnFullscreen  = document.getElementById("btn-fullscreen");
-  const mobileControls = document.getElementById("mobile-controls");
-  const btnLeft        = document.getElementById("btn-left");
-  const btnRight       = document.getElementById("btn-right");
-  const btnShoot       = document.getElementById("btn-shoot");
   const ctx            = canvas.getContext("2d");
 
   /* ── Constants ─────────────────────────────────── */
@@ -117,87 +107,6 @@
     if (e.code === "Space" || e.code === "KeyZ") e.preventDefault();
   });
   document.addEventListener("keyup",  e => { keys[e.code] = false; });
-
-  setupMobileControls();
-
-  function setupMobileControls() {
-    const hasCoarsePointer = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-    const hasTouchSupport = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
-
-    if (!hasCoarsePointer && !hasTouchSupport) {
-      return;
-    }
-
-    mobileControls.style.display = "flex";
-    canvas.style.cursor = "default";
-    canvas.style.touchAction = "none";
-
-    bindHold(btnLeft, "ArrowLeft");
-    bindHold(btnRight, "ArrowRight");
-    bindHold(btnShoot, "Space");
-    bindCanvasTouch();
-  }
-
-  function bindHold(button, keyCode) {
-    if (!button) {
-      return;
-    }
-
-    const press = (event) => {
-      event.preventDefault();
-      keys[keyCode] = true;
-    };
-
-    const release = (event) => {
-      event.preventDefault();
-      keys[keyCode] = false;
-    };
-
-    button.addEventListener("pointerdown", press);
-    button.addEventListener("pointerup", release);
-    button.addEventListener("pointercancel", release);
-    button.addEventListener("pointerleave", release);
-  }
-
-  function bindCanvasTouch() {
-    const moveShipToTouch = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      const touch = event.touches[0];
-      if (!touch || !ship) {
-        return;
-      }
-
-      const relativeX = (touch.clientX - rect.left) / rect.width;
-      ship.x = Math.max(ship.w / 2, Math.min(W - ship.w / 2, relativeX * W));
-    };
-
-    canvas.addEventListener("touchstart", (event) => {
-      event.preventDefault();
-      moveShipToTouch(event);
-      keys.Space = true;
-    }, { passive: false });
-
-    canvas.addEventListener("touchmove", (event) => {
-      event.preventDefault();
-      moveShipToTouch(event);
-      keys.Space = true;
-    }, { passive: false });
-
-    const endTouch = (event) => {
-      event.preventDefault();
-      keys.Space = false;
-    };
-
-    canvas.addEventListener("touchend", endTouch, { passive: false });
-    canvas.addEventListener("touchcancel", endTouch, { passive: false });
-  }
-
-  /* ── Fullscreen ─────────────────────────────────── */
-  btnFullscreen.addEventListener("click", () => {
-    const el = document.getElementById("unity-container");
-    if (!document.fullscreenElement) el.requestFullscreen?.();
-    else document.exitFullscreen?.();
-  });
 
   /* ── Init ───────────────────────────────────────── */
   function initState() {
@@ -505,10 +414,6 @@
     ctx.shadowColor  = "#48f";
     ctx.shadowBlur   = 20;
     ctx.fillText("⏸ PAUSED", W / 2, H / 2);
-    ctx.font = "16px Arial";
-    ctx.shadowBlur = 0;
-    ctx.fillStyle  = "#789";
-    ctx.fillText("Press P to resume", W / 2, H / 2 + 48);
     ctx.restore();
   }
 
