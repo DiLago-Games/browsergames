@@ -127,10 +127,12 @@
 
     mobileControls.style.display = "flex";
     canvas.style.cursor = "default";
+    canvas.style.touchAction = "none";
 
     bindHold(btnLeft, "ArrowLeft");
     bindHold(btnRight, "ArrowRight");
     bindHold(btnShoot, "Space");
+    bindCanvasTouch();
   }
 
   function bindHold(button, keyCode) {
@@ -152,6 +154,39 @@
     button.addEventListener("pointerup", release);
     button.addEventListener("pointercancel", release);
     button.addEventListener("pointerleave", release);
+  }
+
+  function bindCanvasTouch() {
+    const moveShipToTouch = (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const touch = event.touches[0];
+      if (!touch || !ship) {
+        return;
+      }
+
+      const relativeX = (touch.clientX - rect.left) / rect.width;
+      ship.x = Math.max(ship.w / 2, Math.min(W - ship.w / 2, relativeX * W));
+    };
+
+    canvas.addEventListener("touchstart", (event) => {
+      event.preventDefault();
+      moveShipToTouch(event);
+      keys.Space = true;
+    }, { passive: false });
+
+    canvas.addEventListener("touchmove", (event) => {
+      event.preventDefault();
+      moveShipToTouch(event);
+      keys.Space = true;
+    }, { passive: false });
+
+    const endTouch = (event) => {
+      event.preventDefault();
+      keys.Space = false;
+    };
+
+    canvas.addEventListener("touchend", endTouch, { passive: false });
+    canvas.addEventListener("touchcancel", endTouch, { passive: false });
   }
 
   /* ── Fullscreen ─────────────────────────────────── */
