@@ -85,7 +85,8 @@ const state = {
   bgmTimer: null,
   bgmMode: "idle",
   bgmStep: 0,
-  bgmModeExpiresAt: 0
+  bgmModeExpiresAt: 0,
+  bgmTrumpetBusyUntil: 0
 };
 
 const reelsEl = document.getElementById("reels");
@@ -106,6 +107,14 @@ const betDownBtn = document.getElementById("bet-down");
 const reelCells = [];
 const reelElements = [];
 let audioContext = null;
+let activeTrumpetOsc = null;
+let activeTrumpetVibrato = null;
+let activeTrumpetMasterGain = null;
+let trumpetReverbInput = null;
+let trumpetSynth = null;
+
+const BGM_TRUMPET_VOLUME = 0.68;
+const BGM_DRUM_VOLUME = 0.72;
 
 function money(value) {
   return `$${value}`;
@@ -241,6 +250,37 @@ function initAudio() {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
 
+  if (!trumpetReverbInput) {
+    const reverbInput = audioContext.createGain();
+    const delayA = audioContext.createDelay(1.5);
+    const delayB = audioContext.createDelay(1.5);
+    const feedbackA = audioContext.createGain();
+    const feedbackB = audioContext.createGain();
+    const tone = audioContext.createBiquadFilter();
+    const wet = audioContext.createGain();
+
+    delayA.delayTime.value = 0.14;
+    delayB.delayTime.value = 0.27;
+    feedbackA.gain.value = 0.32;
+    feedbackB.gain.value = 0.24;
+    tone.type = "lowpass";
+    tone.frequency.value = 4200;
+    wet.gain.value = 0.13;
+
+    reverbInput.connect(delayA);
+    reverbInput.connect(delayB);
+    delayA.connect(feedbackA);
+    feedbackA.connect(delayA);
+    delayB.connect(feedbackB);
+    feedbackB.connect(delayB);
+    delayA.connect(tone);
+    delayB.connect(tone);
+    tone.connect(wet);
+    wet.connect(audioContext.destination);
+
+    trumpetReverbInput = reverbInput;
+  }
+
   updateBackgroundMusicForState();
 }
 
@@ -330,69 +370,288 @@ function stopSpinSound() {
   }
 }
 
-function playTrumpetNote(startTime, frequency, duration, gainPeak = 0.045) {
+function playTrumpetNote(startTime, frequency, duration, gainPeak = 0.045, articulation = "tenuto") {
   if (!audioContext) {
     return;
   }
 
-  const lead = audioContext.createOscillator();
-  const leadGain = audioContext.createGain();
-  lead.type = "sawtooth";
-  lead.frequency.setValueAtTime(frequency, startTime);
-  lead.frequency.exponentialRampToValueAtTime(frequency * 0.985, startTime + duration);
-  leadGain.gain.setValueAtTime(0.0001, startTime);
-  leadGain.gain.exponentialRampToValueAtTime(gainPeak, startTime + 0.03);
-  leadGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-  lead.connect(leadGain);
-  leadGain.connect(audioContext.destination);
-  lead.start(startTime);
-  lead.stop(startTime + duration + 0.03);
+  const ensureTrumpetSynth = () => {
+    if (trumpetSynth) {
+      return trumpetSynth;
+    }
 
-  // A softer overtone adds brass-like shimmer.
-  const overtone = audioContext.createOscillator();
-  const overtoneGain = audioContext.createGain();
-  overtone.type = "triangle";
-  overtone.frequency.setValueAtTime(frequency * 2.01, startTime);
-  overtoneGain.gain.setValueAtTime(0.0001, startTime);
-  overtoneGain.gain.exponentialRampToValueAtTime(gainPeak * 0.35, startTime + 0.02);
-  overtoneGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.88);
-  overtone.connect(overtoneGain);
-  overtoneGain.connect(audioContext.destination);
-  overtone.start(startTime);
-  overtone.stop(startTime + duration + 0.02);
+    const highpass = audioContext.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.value = 170;
+
+    const presence = audioContext.createBiquadFilter();
+    presence.type = "peaking";
+    presence.frequency.value = 1650;
+    presence.Q.value = 1.2;
+    presence.gain.value = 4.5;
+
+    const body = audioContext.createBiquadFilter();
+    body.type = "lowpass";
+    body.frequency.value = 4700;
+    body.Q.value = 0.75;
+
+    const master = audioContext.createGain();
+    master.gain.value = 0.0001;
+
+    highpass.connect(presence);
+    presence.connect(body);
+    body.connect(master);
+    master.connect(audioContext.destination);
+
+    if (trumpetReverbInput) {
+      const send = audioContext.createGain();
+      send.gain.value = 0.09;
+      master.connect(send);
+      send.connect(trumpetReverbInput);
+    }
+
+    const vibrato = audioContext.createOscillator();
+    const vibratoDepth = audioContext.createGain();
+    vibrato.type = "sine";
+    vibrato.frequency.value = 4.8;
+    vibratoDepth.gain.value = 1.0;
+    vibrato.connect(vibratoDepth);
+
+    const osc = audioContext.createOscillator();
+    osc.type = "sawtooth";
+    osc.frequency.value = 440;
+    vibratoDepth.connect(osc.frequency);
+    osc.connect(highpass);
+
+    const now = audioContext.currentTime + 0.001;
+    vibrato.start(now);
+    osc.start(now);
+
+    trumpetSynth = {
+      osc,
+      vibrato,
+      vibratoDepth,
+      master,
+      currentFreq: 440
+    };
+
+    activeTrumpetOsc = osc;
+    activeTrumpetVibrato = vibrato;
+    activeTrumpetMasterGain = master;
+
+    return trumpetSynth;
+  };
+
+  const synth = ensureTrumpetSynth();
+  const start = Math.max(startTime, audioContext.currentTime + 0.001);
+  const isStaccato = articulation === "staccato";
+  const isLegato = articulation === "legato" || articulation === "tenuto";
+  const attack = isStaccato ? 0.018 : 0.03;
+  const sustainLevel = gainPeak * (isStaccato ? 0.55 : 0.8);
+  const airflowFloor = isLegato ? Math.max(0.0001, sustainLevel * 0.45) : 0.0001;
+  const releaseStart = start + Math.max(0.04, duration * (isStaccato ? 0.55 : 0.9));
+  const releaseEnd = releaseStart + (isStaccato ? 0.045 : 0.08);
+
+  synth.vibratoDepth.gain.cancelScheduledValues(start);
+  synth.vibratoDepth.gain.setValueAtTime(synth.vibratoDepth.gain.value, start);
+  synth.vibratoDepth.gain.linearRampToValueAtTime(isStaccato ? 0.75 : 1.0, start + 0.03);
+
+  synth.osc.frequency.cancelScheduledValues(start);
+  synth.osc.frequency.setValueAtTime(Math.max(80, synth.currentFreq || 440), start);
+  synth.osc.frequency.exponentialRampToValueAtTime(Math.max(80, frequency), start + (isStaccato ? 0.016 : 0.025));
+  synth.currentFreq = Math.max(80, frequency);
+
+  synth.master.gain.cancelScheduledValues(start);
+  synth.master.gain.setValueAtTime(Math.max(airflowFloor, synth.master.gain.value || 0.0001), start);
+  synth.master.gain.linearRampToValueAtTime(sustainLevel, start + attack);
+  synth.master.gain.setValueAtTime(sustainLevel, releaseStart);
+  synth.master.gain.exponentialRampToValueAtTime(isLegato ? airflowFloor : 0.0001, releaseEnd);
+
+  activeTrumpetMasterGain = synth.master;
+  activeTrumpetOsc = synth.osc;
+  activeTrumpetVibrato = synth.vibrato;
+
+  return;
+
+}
+
+function stopCurrentTrumpetNote(fadeSeconds = 0.03) {
+  if (!audioContext) {
+    return;
+  }
+
+  const now = audioContext.currentTime;
+
+  if (activeTrumpetMasterGain) {
+    activeTrumpetMasterGain.gain.cancelScheduledValues(now);
+    activeTrumpetMasterGain.gain.setValueAtTime(Math.max(0.0002, activeTrumpetMasterGain.gain.value || 0.0002), now);
+    activeTrumpetMasterGain.gain.exponentialRampToValueAtTime(0.0001, now + fadeSeconds);
+  }
+
+  if (trumpetSynth) {
+    trumpetSynth.currentFreq = trumpetSynth.currentFreq || 440;
+  }
+}
+
+function playOstinatoPluck(startTime, frequency, gainPeak = 0.02) {
+  if (!audioContext) {
+    return;
+  }
+
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(frequency, startTime);
+  osc.frequency.exponentialRampToValueAtTime(frequency * 0.92, startTime + 0.16);
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(gainPeak, startTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.18);
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+  osc.start(startTime);
+  osc.stop(startTime + 0.2);
+}
+
+function playEmotionalTrumpetPhrase(startTime, notes, noteDuration = 0.72, gainPeak = 0.03) {
+  if (!audioContext || !Array.isArray(notes) || notes.length === 0) {
+    return;
+  }
+
+  notes.forEach((note, idx) => {
+    if (!note) {
+      return;
+    }
+
+    const noteStart = startTime + (idx * noteDuration * 0.86);
+    const swell = gainPeak * (0.9 + (idx / Math.max(1, notes.length - 1)) * 0.25);
+    playTrumpetNote(noteStart, note, noteDuration, swell, "tenuto");
+  });
+}
+
+function playSpanishDrumHit(startTime, kind = "low", gainPeak = 0.045) {
+  if (!audioContext) {
+    return;
+  }
+
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  const filter = audioContext.createBiquadFilter();
+
+  if (kind === "accent") {
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(210, startTime);
+    osc.frequency.exponentialRampToValueAtTime(122, startTime + 0.11);
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(620, startTime);
+    filter.Q.value = 1.1;
+  } else if (kind === "mid") {
+    osc.type = "square";
+    osc.frequency.setValueAtTime(240, startTime);
+    osc.frequency.exponentialRampToValueAtTime(170, startTime + 0.085);
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(700, startTime);
+    filter.Q.value = 0.85;
+  } else {
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(132, startTime);
+    osc.frequency.exponentialRampToValueAtTime(84, startTime + 0.11);
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(980, startTime);
+    filter.Q.value = 0.82;
+  }
+
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(gainPeak * BGM_DRUM_VOLUME, startTime + 0.006);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + (kind === "accent" ? 0.21 : 0.17));
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioContext.destination);
+  osc.start(startTime);
+  osc.stop(startTime + (kind === "accent" ? 0.24 : 0.19));
 }
 
 function getBgmProfile(mode) {
+  // Profiles use arranged parts: lead trumpet, optional harmony, and low ostinato.
   const profiles = {
     idle: {
-      stepMs: 560,
-      duration: 0.26,
-      gain: 0.03,
-      notes: [392, 440, 523.25, 440, 392, 349.23, 329.63, 349.23]
+      stepMs: 210,
+      leadDur: 0.36,
+      leadGain: 0.032,
+      lead: [329.63, 349.23, 415.3, 440.0, 493.88, 440.0, 415.3, 349.23, 329.63, 349.23, 415.3, null],
+      rhythm: [1.0, 0.5, 1.5, 0.75, 1.25, 0.5, 1.5, 1.0, 0.75, 1.25, 1.0, 0.5],
+      harmony: [null, null, 261.63, null, 293.66, null, null, null],
+      bass: [164.81, null, 196.0, null, 174.61, null, 164.81, null],
+      phraseEvery: 16,
+      phraseGain: 0.034,
+      drumGain: 0.03,
+      drums: ["low", null, "mid", null, "accent", null, "mid", null, "low", null, "mid", null],
+      emotionalPhrases: [
+        [493.88, 523.25, 587.33, 659.25],
+        [523.25, 587.33, 659.25, 587.33]
+      ]
     },
     spinning: {
-      stepMs: 190,
-      duration: 0.12,
-      gain: 0.024,
-      notes: [392, 440, 466.16, 523.25, 466.16, 440, 392, 349.23]
+      stepMs: 80,
+      leadDur: 0.16,
+      leadGain: 0.03,
+      lead: [329.63, 349.23, 415.3, 440.0, 493.88, 523.25, 493.88, 440.0, 415.3, 349.23, 329.63, null],
+      rhythm: [0.5, 0.5, 1.0, 0.5, 1.0, 0.75, 0.5, 1.0, 0.5, 0.75, 1.0, 0.5],
+      harmony: [null, null, null, 392.0, null, null, null, 329.63],
+      bass: [196.0, 196.0, 220.0, 246.94, 220.0, 196.0, 174.61, 164.81],
+      drumGain: 0.035,
+      drums: ["low", "mid", null, "mid", "accent", "mid", null, "mid", "low", "mid", null, "mid"]
     },
     suspense: {
-      stepMs: 220,
-      duration: 0.2,
-      gain: 0.037,
-      notes: [329.63, 349.23, 392, 415.3, 466.16, 523.25, 587.33, 523.25]
+      stepMs: 90,
+      leadDur: 0.2,
+      leadGain: 0.034,
+      lead: [349.23, 415.3, 440.0, 493.88, 523.25, 587.33, 523.25, 493.88, 440.0, 415.3, 349.23, null],
+      rhythm: [0.75, 0.5, 1.0, 0.5, 1.0, 0.75, 0.5, 1.0, 0.5, 0.75, 1.25, 0.5],
+      harmony: [null, 261.63, null, 293.66, null, 349.23, null, 392.0],
+      bass: [164.81, null, 174.61, null, 196.0, null, 220.0, null],
+      phraseEvery: 12,
+      phraseGain: 0.036,
+      drumGain: 0.038,
+      drums: ["low", null, "mid", "mid", "accent", null, "mid", "mid", "low", null, "mid", "mid"],
+      emotionalPhrases: [
+        [523.25, 587.33, 659.25, 587.33],
+        [493.88, 523.25, 587.33, 659.25]
+      ]
     },
     free: {
-      stepMs: 300,
-      duration: 0.18,
-      gain: 0.036,
-      notes: [523.25, 587.33, 659.25, 698.46, 659.25, 587.33, 523.25, 493.88]
+      stepMs: 92,
+      leadDur: 0.18,
+      leadGain: 0.033,
+      lead: [440.0, 493.88, 523.25, 587.33, 659.25, 587.33, 523.25, 493.88, 440.0, 523.25, 587.33, null],
+      rhythm: [0.5, 0.5, 1.0, 0.5, 1.0, 0.75, 0.5, 1.0, 0.5, 0.75, 1.25, 0.5],
+      harmony: [392.0, null, 493.88, null, 523.25, null, 493.88, null],
+      bass: [261.63, null, 293.66, null, 329.63, null, 293.66, null],
+      phraseEvery: 10,
+      phraseGain: 0.037,
+      drumGain: 0.04,
+      drums: ["low", "mid", "mid", null, "accent", "mid", "mid", null, "low", "mid", "mid", null],
+      emotionalPhrases: [
+        [587.33, 659.25, 783.99, 659.25],
+        [659.25, 783.99, 880.0, 783.99]
+      ]
     },
     bigwin: {
-      stepMs: 170,
-      duration: 0.2,
-      gain: 0.05,
-      notes: [523.25, 659.25, 783.99, 880, 783.99, 659.25, 587.33, 523.25]
+      stepMs: 78,
+      leadDur: 0.18,
+      leadGain: 0.038,
+      lead: [523.25, 587.33, 659.25, 783.99, 880.0, 783.99, 659.25, 587.33, 523.25, 587.33, 659.25, null],
+      rhythm: [0.5, 0.5, 0.75, 0.5, 1.0, 0.5, 0.75, 0.5, 1.0, 0.5, 1.0, 0.5],
+      harmony: [523.25, 587.33, null, 659.25, null, 587.33, null, 523.25],
+      bass: [329.63, null, 392.0, null, 440.0, null, 392.0, null],
+      phraseEvery: 8,
+      phraseGain: 0.041,
+      drumGain: 0.046,
+      drums: ["accent", "mid", "mid", "low", "accent", "mid", "mid", "low", "accent", "mid", "mid", "low"],
+      emotionalPhrases: [
+        [783.99, 880.0, 987.77, 880.0],
+        [880.0, 987.77, 1046.5, 987.77]
+      ]
     }
   };
 
@@ -410,13 +669,45 @@ function playBackgroundMusicStep() {
   }
 
   const profile = getBgmProfile(state.bgmMode);
-  const index = state.bgmStep % profile.notes.length;
-  const note = profile.notes[index];
-  const start = audioContext.currentTime + 0.01;
-  playTrumpetNote(start, note, profile.duration, profile.gain);
+  const index = state.bgmStep % profile.lead.length;
+  const start = audioContext.currentTime + 0.012;
+  const now = audioContext.currentTime;
 
-  if (state.bgmMode === "free" || state.bgmMode === "bigwin") {
-    playTrumpetNote(start + 0.04, note * 1.25, Math.max(0.1, profile.duration - 0.03), profile.gain * 0.56);
+  const trumpetReady = now >= state.bgmTrumpetBusyUntil;
+
+  let noteToPlay = profile.lead[index];
+  const rhythm = profile.rhythm && profile.rhythm.length > 0
+    ? profile.rhythm[index % profile.rhythm.length]
+    : 1;
+  let durationToPlay = Math.max(0.06, profile.leadDur * rhythm);
+  let gainToPlay = profile.leadGain;
+  let articulation = (state.bgmMode === "spinning" || state.bgmMode === "bigwin") ? "staccato" : "legato";
+
+  // Emotional moments are long single-note holds, not layered polyphony.
+  if (trumpetReady && profile.phraseEvery && profile.emotionalPhrases && (state.bgmStep % profile.phraseEvery === 0)) {
+    const phraseIndex = Math.floor(state.bgmStep / profile.phraseEvery) % profile.emotionalPhrases.length;
+    const phrase = profile.emotionalPhrases[phraseIndex];
+    noteToPlay = phrase && phrase.length ? phrase[0] : noteToPlay;
+    const actionMode = state.bgmMode === "spinning" || state.bgmMode === "suspense" || state.bgmMode === "free" || state.bgmMode === "bigwin";
+    durationToPlay = Math.max(durationToPlay, actionMode ? 0.55 : 0.85);
+    gainToPlay = Math.max(gainToPlay, profile.phraseGain || (profile.leadGain * 0.8));
+    articulation = "tenuto";
+  }
+
+  if (trumpetReady && noteToPlay) {
+    playTrumpetNote(start, noteToPlay, durationToPlay, gainToPlay * BGM_TRUMPET_VOLUME, articulation);
+    state.bgmTrumpetBusyUntil = start + (articulation === "staccato" ? durationToPlay * 0.8 : durationToPlay * 0.96);
+  } else if (trumpetReady && !noteToPlay) {
+    // Intentional breathing pause.
+    stopCurrentTrumpetNote(0.055);
+    state.bgmTrumpetBusyUntil = start + 0.08;
+  }
+
+  if (profile.drums && profile.drums.length > 0) {
+    const drumHit = profile.drums[index % profile.drums.length];
+    if (drumHit) {
+      playSpanishDrumHit(start, drumHit, profile.drumGain || 0.035);
+    }
   }
 
   state.bgmStep += 1;
@@ -428,7 +719,8 @@ function setBackgroundMusicMode(mode, holdMs = 0) {
   }
 
   const profile = getBgmProfile(mode);
-  const needsRestart = state.bgmMode !== mode || !state.bgmTimer;
+  const modeChanged = state.bgmMode !== mode;
+  const needsRestart = modeChanged || !state.bgmTimer;
   state.bgmMode = mode;
 
   if (holdMs > 0) {
@@ -439,6 +731,12 @@ function setBackgroundMusicMode(mode, holdMs = 0) {
 
   if (!needsRestart) {
     return;
+  }
+
+  if (modeChanged) {
+    // New stance should be audible immediately.
+    stopCurrentTrumpetNote(0.035);
+    state.bgmTrumpetBusyUntil = 0;
   }
 
   if (state.bgmTimer) {
