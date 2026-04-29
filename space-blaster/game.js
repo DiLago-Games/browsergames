@@ -121,7 +121,10 @@
   setupMobileControls();
 
   function setupMobileControls() {
-    if (!window.matchMedia || !window.matchMedia("(pointer: coarse)").matches) {
+    const hasCoarsePointer = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    const hasTouchSupport = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
+
+    if (!hasCoarsePointer && !hasTouchSupport) {
       return;
     }
 
