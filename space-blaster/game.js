@@ -30,6 +30,10 @@
   const highScoreEl    = document.getElementById("high-score");
   const btnRestart     = document.getElementById("btn-restart");
   const btnFullscreen  = document.getElementById("btn-fullscreen");
+  const mobileControls = document.getElementById("mobile-controls");
+  const btnLeft        = document.getElementById("btn-left");
+  const btnRight       = document.getElementById("btn-right");
+  const btnShoot       = document.getElementById("btn-shoot");
   const ctx            = canvas.getContext("2d");
 
   /* ── Constants ─────────────────────────────────── */
@@ -113,6 +117,42 @@
     if (e.code === "Space" || e.code === "KeyZ") e.preventDefault();
   });
   document.addEventListener("keyup",  e => { keys[e.code] = false; });
+
+  setupMobileControls();
+
+  function setupMobileControls() {
+    if (!window.matchMedia || !window.matchMedia("(pointer: coarse)").matches) {
+      return;
+    }
+
+    mobileControls.style.display = "flex";
+    canvas.style.cursor = "default";
+
+    bindHold(btnLeft, "ArrowLeft");
+    bindHold(btnRight, "ArrowRight");
+    bindHold(btnShoot, "Space");
+  }
+
+  function bindHold(button, keyCode) {
+    if (!button) {
+      return;
+    }
+
+    const press = (event) => {
+      event.preventDefault();
+      keys[keyCode] = true;
+    };
+
+    const release = (event) => {
+      event.preventDefault();
+      keys[keyCode] = false;
+    };
+
+    button.addEventListener("pointerdown", press);
+    button.addEventListener("pointerup", release);
+    button.addEventListener("pointercancel", release);
+    button.addEventListener("pointerleave", release);
+  }
 
   /* ── Fullscreen ─────────────────────────────────── */
   btnFullscreen.addEventListener("click", () => {

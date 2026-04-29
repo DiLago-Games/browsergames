@@ -331,6 +331,8 @@ body {
   font-weight: 700;
   font-family: var(--font-display);
   cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
   transition: transform 120ms ease, filter 120ms ease;
 }
 
