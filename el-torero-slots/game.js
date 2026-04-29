@@ -2,6 +2,15 @@ const ROWS = 3;
 const REELS = 5;
 
 const BET_LEVELS = [5, 10, 20, 40, 80];
+const SYMBOL_META = {
+  BULL: { emoji: "🐂", name: "BULL" },
+  ROSE: { emoji: "🌹", name: "ROSE" },
+  HAT: { emoji: "🎩", name: "HAT" },
+  BOOT: { emoji: "👢", name: "BOOT" },
+  MOON: { emoji: "🌙", name: "MOON" },
+  WILD: { emoji: "🟥", name: "WILD" }
+};
+
 const SYMBOL_POOL = [
   "BULL",
   "BULL",
@@ -64,6 +73,120 @@ const betDownBtn = document.getElementById("bet-down");
 const reelCells = [];
 let audioContext = null;
 
+function renderCell(cell, symbol, isWin) {
+  const meta = SYMBOL_META[symbol] || { emoji: symbol, name: symbol };
+  cell.innerHTML = `<span class="emoji">${meta.emoji}</span><span class="name">${meta.name}</span>`;
+  cell.classList.toggle("wild", symbol === "WILD");
+  cell.classList.toggle("win", isWin);
+}
+
+function initWebGLBackground() {
+  const canvas = document.getElementById("arena-bg");
+
+  if (!canvas) {
+    return;
+  }
+
+  const gl = canvas.getContext("webgl", { alpha: true, antialias: true });
+
+  if (!gl) {
+    return;
+  }
+
+  const vertexSource = `
+    attribute vec2 position;
+    void main() {
+      gl_Position = vec4(position, 0.0, 1.0);
+    }
+  `;
+
+  const fragmentSource = `
+    precision mediump float;
+    uniform vec2 uResolution;
+    uniform float uTime;
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy / uResolution.xy;
+      vec2 p = uv * 2.0 - 1.0;
+      p.x *= uResolution.x / uResolution.y;
+
+      float waveA = sin((p.x * 3.2) + uTime * 0.9);
+      float waveB = cos((p.y * 3.6) - uTime * 0.7);
+      float pulse = 0.5 + 0.5 * sin(uTime * 0.5 + length(p) * 4.0);
+
+      vec3 gold = vec3(0.86, 0.63, 0.22);
+      vec3 red = vec3(0.65, 0.14, 0.14);
+      vec3 cream = vec3(0.96, 0.90, 0.74);
+
+      float mixMask = 0.5 + 0.5 * (waveA * 0.6 + waveB * 0.4);
+      vec3 color = mix(red, gold, mixMask);
+      color = mix(color, cream, 0.22 * pulse);
+
+      float vignette = smoothstep(1.3, 0.25, length(p));
+      color *= vignette;
+
+      gl_FragColor = vec4(color, 0.55);
+    }
+  `;
+
+  function compileShader(type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    return shader;
+  }
+
+  const vertexShader = compileShader(gl.VERTEX_SHADER, vertexSource);
+  const fragmentShader = compileShader(gl.FRAGMENT_SHADER, fragmentSource);
+  const program = gl.createProgram();
+
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+  gl.linkProgram(program);
+  gl.useProgram(program);
+
+  const vertices = new Float32Array([
+    -1, -1,
+    1, -1,
+    -1, 1,
+    1, 1
+  ]);
+
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+  const positionLoc = gl.getAttribLocation(program, "position");
+  gl.enableVertexAttribArray(positionLoc);
+  gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+  const resolutionLoc = gl.getUniformLocation(program, "uResolution");
+  const timeLoc = gl.getUniformLocation(program, "uTime");
+
+  function resize() {
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const width = Math.floor(window.innerWidth * dpr);
+    const height = Math.floor(window.innerHeight * dpr);
+
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      gl.viewport(0, 0, width, height);
+    }
+  }
+
+  function draw(timeMs) {
+    resize();
+    gl.uniform2f(resolutionLoc, canvas.width, canvas.height);
+    gl.uniform1f(timeLoc, timeMs * 0.001);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  requestAnimationFrame(draw);
+}
+
 function getBet() {
   return BET_LEVELS[state.betIndex];
 }
@@ -105,10 +228,7 @@ function paintGrid(grid, winningCoordinates = new Set()) {
     for (let reel = 0; reel < REELS; reel += 1) {
       const cell = reelCells[row][reel];
       const symbol = grid[row][reel];
-
-      cell.textContent = symbol;
-      cell.classList.toggle("wild", symbol === "WILD");
-      cell.classList.toggle("win", winningCoordinates.has(`${row}-${reel}`));
+      renderCell(cell, symbol, winningCoordinates.has(`${row}-${reel}`));
     }
   }
 }
@@ -223,7 +343,7 @@ async function spinAnimation() {
   for (let tick = 0; tick < 12; tick += 1) {
     for (let row = 0; row < ROWS; row += 1) {
       for (let reel = 0; reel < REELS; reel += 1) {
-        reelCells[row][reel].textContent = randomSymbol();
+        renderCell(reelCells[row][reel], randomSymbol(), false);
       }
     }
     await wait(70);
@@ -347,5 +467,6 @@ betUpBtn.addEventListener("click", () => changeBet(1));
 betDownBtn.addEventListener("click", () => changeBet(-1));
 
 setupReels();
+initWebGLBackground();
 paintGrid(state.grid);
 updateHud();
