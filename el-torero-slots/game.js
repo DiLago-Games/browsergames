@@ -81,7 +81,11 @@ const state = {
   expandingWildReels: 0,
   bannerTimeout: null,
   spinTickTimer: null,
-  freeSpinCheerTimer: null
+  freeSpinCheerTimer: null,
+  bgmTimer: null,
+  bgmMode: "idle",
+  bgmStep: 0,
+  bgmModeExpiresAt: 0
 };
 
 const reelsEl = document.getElementById("reels");
@@ -236,6 +240,8 @@ function initAudio() {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
+
+  updateBackgroundMusicForState();
 }
 
 function ringTone(startTime, frequency, duration, gainPeak = 0.22, wave = "triangle") {
@@ -322,6 +328,149 @@ function stopSpinSound() {
     clearInterval(state.spinTickTimer);
     state.spinTickTimer = null;
   }
+}
+
+function playTrumpetNote(startTime, frequency, duration, gainPeak = 0.045) {
+  if (!audioContext) {
+    return;
+  }
+
+  const lead = audioContext.createOscillator();
+  const leadGain = audioContext.createGain();
+  lead.type = "sawtooth";
+  lead.frequency.setValueAtTime(frequency, startTime);
+  lead.frequency.exponentialRampToValueAtTime(frequency * 0.985, startTime + duration);
+  leadGain.gain.setValueAtTime(0.0001, startTime);
+  leadGain.gain.exponentialRampToValueAtTime(gainPeak, startTime + 0.03);
+  leadGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+  lead.connect(leadGain);
+  leadGain.connect(audioContext.destination);
+  lead.start(startTime);
+  lead.stop(startTime + duration + 0.03);
+
+  // A softer overtone adds brass-like shimmer.
+  const overtone = audioContext.createOscillator();
+  const overtoneGain = audioContext.createGain();
+  overtone.type = "triangle";
+  overtone.frequency.setValueAtTime(frequency * 2.01, startTime);
+  overtoneGain.gain.setValueAtTime(0.0001, startTime);
+  overtoneGain.gain.exponentialRampToValueAtTime(gainPeak * 0.35, startTime + 0.02);
+  overtoneGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.88);
+  overtone.connect(overtoneGain);
+  overtoneGain.connect(audioContext.destination);
+  overtone.start(startTime);
+  overtone.stop(startTime + duration + 0.02);
+}
+
+function getBgmProfile(mode) {
+  const profiles = {
+    idle: {
+      stepMs: 560,
+      duration: 0.26,
+      gain: 0.03,
+      notes: [392, 440, 523.25, 440, 392, 349.23, 329.63, 349.23]
+    },
+    spinning: {
+      stepMs: 190,
+      duration: 0.12,
+      gain: 0.024,
+      notes: [392, 440, 466.16, 523.25, 466.16, 440, 392, 349.23]
+    },
+    suspense: {
+      stepMs: 220,
+      duration: 0.2,
+      gain: 0.037,
+      notes: [329.63, 349.23, 392, 415.3, 466.16, 523.25, 587.33, 523.25]
+    },
+    free: {
+      stepMs: 300,
+      duration: 0.18,
+      gain: 0.036,
+      notes: [523.25, 587.33, 659.25, 698.46, 659.25, 587.33, 523.25, 493.88]
+    },
+    bigwin: {
+      stepMs: 170,
+      duration: 0.2,
+      gain: 0.05,
+      notes: [523.25, 659.25, 783.99, 880, 783.99, 659.25, 587.33, 523.25]
+    }
+  };
+
+  return profiles[mode] || profiles.idle;
+}
+
+function playBackgroundMusicStep() {
+  if (!audioContext) {
+    return;
+  }
+
+  if (state.bgmModeExpiresAt && performance.now() >= state.bgmModeExpiresAt) {
+    state.bgmModeExpiresAt = 0;
+    updateBackgroundMusicForState();
+  }
+
+  const profile = getBgmProfile(state.bgmMode);
+  const index = state.bgmStep % profile.notes.length;
+  const note = profile.notes[index];
+  const start = audioContext.currentTime + 0.01;
+  playTrumpetNote(start, note, profile.duration, profile.gain);
+
+  if (state.bgmMode === "free" || state.bgmMode === "bigwin") {
+    playTrumpetNote(start + 0.04, note * 1.25, Math.max(0.1, profile.duration - 0.03), profile.gain * 0.56);
+  }
+
+  state.bgmStep += 1;
+}
+
+function setBackgroundMusicMode(mode, holdMs = 0) {
+  if (!audioContext) {
+    return;
+  }
+
+  const profile = getBgmProfile(mode);
+  const needsRestart = state.bgmMode !== mode || !state.bgmTimer;
+  state.bgmMode = mode;
+
+  if (holdMs > 0) {
+    state.bgmModeExpiresAt = performance.now() + holdMs;
+  } else {
+    state.bgmModeExpiresAt = 0;
+  }
+
+  if (!needsRestart) {
+    return;
+  }
+
+  if (state.bgmTimer) {
+    clearInterval(state.bgmTimer);
+    state.bgmTimer = null;
+  }
+
+  state.bgmStep = 0;
+  playBackgroundMusicStep();
+  state.bgmTimer = setInterval(playBackgroundMusicStep, profile.stepMs);
+}
+
+function updateBackgroundMusicForState() {
+  if (!audioContext) {
+    return;
+  }
+
+  if (state.spinning) {
+    if (document.body.classList.contains("scatter-suspense")) {
+      setBackgroundMusicMode("suspense");
+      return;
+    }
+    setBackgroundMusicMode("spinning");
+    return;
+  }
+
+  if (state.freeSpinSessionActive) {
+    setBackgroundMusicMode("free");
+    return;
+  }
+
+  setBackgroundMusicMode("idle");
 }
 
 function playExpandSound(step) {
@@ -472,6 +621,7 @@ function triggerBigWinFlash() {
 
 async function announceBigWin(payout, bet) {
   const tier = classifyBigWin(payout, bet);
+  setBackgroundMusicMode("bigwin", 1900);
   triggerBigWinFlash();
   showBanner(`${tier.name} WIN!`, 1600);
   playBigWinRingRing();
@@ -634,35 +784,20 @@ function signalSpecialsOnReelStop(trackEl, stopIndex) {
   const symbols = Array.from(trackEl.children);
   const visible = symbols.slice(stopIndex, stopIndex + ROWS);
 
-  let hasWild = false;
-  let hasScatter = false;
-
   visible.forEach((el) => {
     const symbol = el.dataset.symbol;
     if (symbol === "WILD") {
-      hasWild = true;
       el.classList.add("hit-wild");
       setTimeout(() => el.classList.remove("hit-wild"), 780);
     }
     if (symbol === "SCATTER") {
-      hasScatter = true;
       el.classList.add("hit-scatter");
       setTimeout(() => el.classList.remove("hit-scatter"), 900);
     }
   });
-
-  if (hasWild) {
-    playWildSignal();
-  }
-  if (hasScatter) {
-    playScatterSignal();
-  }
 }
 
 function signalSpecialsOnFinalReel(reelIndex, columnSymbols) {
-  let hasWild = false;
-  let hasScatter = false;
-
   for (let row = 0; row < ROWS; row += 1) {
     const symbol = columnSymbols[row];
     const cell = reelCells[row]?.[reelIndex];
@@ -672,7 +807,6 @@ function signalSpecialsOnFinalReel(reelIndex, columnSymbols) {
     }
 
     if (symbol === "WILD") {
-      hasWild = true;
       cell.classList.add("scatter-hit");
       cell.classList.add("win");
       setTimeout(() => {
@@ -682,17 +816,9 @@ function signalSpecialsOnFinalReel(reelIndex, columnSymbols) {
     }
 
     if (symbol === "SCATTER") {
-      hasScatter = true;
       cell.classList.add("scatter-hit");
       setTimeout(() => cell.classList.remove("scatter-hit"), 900);
     }
-  }
-
-  if (hasWild) {
-    playWildSignal();
-  }
-  if (hasScatter) {
-    playScatterSignal();
   }
 }
 
@@ -913,6 +1039,7 @@ async function spinAnimation(targetGrid) {
           if (suspenseEnabled && !suspenseCuePlayed && landedScatterReels >= 2) {
             suspenseCuePlayed = true;
             document.body.classList.add("scatter-suspense");
+            setBackgroundMusicMode("suspense", scatterSuspenseDelayMs + 500);
             showBanner("2 SCATTERS! Hold for one more...", scatterSuspenseDelayMs + 400);
             playScatterSignal();
             playScatterSignal();
@@ -932,6 +1059,7 @@ async function spinAnimation(targetGrid) {
   for (const reelEl of reelElements) {
     reelEl.classList.remove("scatter-suspense");
   }
+  updateBackgroundMusicForState();
 
   // Re-apply spin blur cleanup state just in case animation classes were present.
   for (const cell of reelCells.flat()) {
@@ -961,11 +1089,13 @@ function startFreeSpins() {
     state.freeSpinsTotalWin = 0;
     state.expandingWildReels = 3;
     playBigWinRingRing();
+    setBackgroundMusicMode("free");
     showBanner("10 FREE SPINS!", 2200);
     setMessage("Matador bonus! 10 free spins awarded. Session total starts at 0.");
     startFreeSpinCheerLoop();
   } else {
     playBigWinRingRing();
+    setBackgroundMusicMode("free", 1400);
     showBanner(`RETRIGGER +${FREE_SPINS_AWARD} SPINS!`, 2300);
     setMessage(`Scatter retrigger! +${FREE_SPINS_AWARD} free spins. Session total keeps counting.`);
     playCheerBurst(2);
@@ -1001,6 +1131,7 @@ async function spin() {
 
   state.spinning = true;
   setButtonsDisabled(true);
+  updateBackgroundMusicForState();
 
   if (inFreeSpins) {
     state.freeSpinsRemaining -= 1;
@@ -1113,6 +1244,7 @@ async function spin() {
   }
 
   state.spinning = false;
+  updateBackgroundMusicForState();
 
   if (state.freeSpinSessionActive && state.freeSpinsRemaining > 0) {
     queueNextAutoFreeSpin(FREE_SPIN_INTERVAL_MS);
@@ -1143,6 +1275,7 @@ const welcomeStartBtn = document.getElementById("welcome-btn");
 if (welcomeOverlayEl && welcomeStartBtn) {
   welcomeStartBtn.addEventListener("click", () => {
     initAudio();
+    updateBackgroundMusicForState();
     welcomeOverlayEl.classList.add("hide");
     welcomeOverlayEl.addEventListener("transitionend", () => welcomeOverlayEl.remove(), { once: true });
   });
