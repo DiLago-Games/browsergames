@@ -587,6 +587,15 @@ function createSpinSymbolCell(symbol) {
   return cell;
 }
 
+function getReelStepPx(trackEl) {
+  const firstSymbol = trackEl.firstElementChild;
+  const symbolHeight = firstSymbol ? firstSymbol.getBoundingClientRect().height : 0;
+  const trackStyles = window.getComputedStyle(trackEl);
+  const gap = parseFloat(trackStyles.rowGap || trackStyles.gap || "0") || 0;
+
+  return symbolHeight + gap;
+}
+
 function signalSpecialsOnReelStop(trackEl, stopIndex) {
   const symbols = Array.from(trackEl.children);
   const visible = symbols.slice(stopIndex, stopIndex + ROWS);
@@ -633,9 +642,12 @@ function buildAnimatedReel(reelIndex, strip, stopPos) {
   windowEl.appendChild(trackEl);
   reelEl.appendChild(windowEl);
 
+  const stepPx = getReelStepPx(trackEl);
+
   return {
     trackEl,
-    stopPx: stopPos * 70
+    stepPx,
+    stopPx: stopPos * stepPx
   };
 }
 
@@ -743,12 +755,12 @@ async function spinAnimation(targetGrid) {
     const decelDistance = cruiseSpeed * decelDuration / 3;
     const cruiseDistance = cruiseSpeed * cruiseDuration;
     const totalDistance = cruiseDistance + decelDistance;
-    const startPos = stopPos + Math.ceil(totalDistance / 70) + 3;
     const strip = buildReelStrip(targetColumn, stopPos);
     reelAnimations[reel] = buildAnimatedReel(reel, strip, stopPos);
 
-    const { trackEl, stopPx } = reelAnimations[reel];
-    const startPx = startPos * 70;
+    const { trackEl, stepPx, stopPx } = reelAnimations[reel];
+    const startPos = stopPos + Math.ceil(totalDistance / stepPx) + 3;
+    const startPx = startPos * stepPx;
     trackEl.style.transform = `translateY(-${startPx}px)`;
     trackEl.style.transition = "none";
 
