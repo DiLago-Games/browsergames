@@ -1,0 +1,44 @@
+name: Build & Deploy Unity WebGL
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache Unity
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/unity3d
+          key: Unity-cache
+
+      - name: Build WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          targetPlatform: WebGL
+          projectPath: .
+          buildName: WebGLBuild
+
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/WebGLBuild
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
