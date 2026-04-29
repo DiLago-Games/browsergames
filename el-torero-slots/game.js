@@ -146,18 +146,26 @@ function setupReels() {
     reelEl.className = "reel";
     reelElements[reel] = reelEl;
 
-    for (let row = 0; row < ROWS; row += 1) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      reelEl.appendChild(cell);
-
-      if (!reelCells[row]) {
-        reelCells[row] = [];
-      }
-      reelCells[row][reel] = cell;
-    }
+    mountFinalReel(reel, Array.from({ length: ROWS }, () => "MOON"));
 
     reelsEl.appendChild(reelEl);
+  }
+}
+
+function mountFinalReel(reelIndex, columnSymbols) {
+  const reelEl = reelElements[reelIndex];
+  reelEl.innerHTML = "";
+
+  for (let row = 0; row < ROWS; row += 1) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    renderCell(cell, columnSymbols[row], false);
+    reelEl.appendChild(cell);
+
+    if (!reelCells[row]) {
+      reelCells[row] = [];
+    }
+    reelCells[row][reelIndex] = cell;
   }
 }
 
@@ -660,7 +668,7 @@ function setTrackPhase(trackEl, phase) {
   trackEl.classList.add(phase);
 }
 
-function animateSingleReel(trackEl, startPx, stopPx, reelIndex, stopIndex, config) {
+function animateSingleReel(trackEl, startPx, stopPx, reelIndex, stopIndex, config, onStop) {
   const {
     cruiseSpeed,
     cruiseDuration,
@@ -698,6 +706,9 @@ function animateSingleReel(trackEl, startPx, stopPx, reelIndex, stopIndex, confi
       } else {
         setTrackPhase(trackEl, "speed-slow");
         trackEl.style.transform = `translateY(-${stopPx}px)`;
+        if (onStop) {
+          onStop();
+        }
         resolve();
         return;
       }
@@ -775,15 +786,15 @@ async function spinAnimation(targetGrid) {
           cruiseSpeed,
           cruiseDuration,
           decelDuration
+        },
+        () => {
+          mountFinalReel(reel, targetColumn);
         }
       )
     );
   }
 
   await Promise.all(animations);
-
-  setupReels();
-  paintGrid(targetGrid);
 
   // Re-apply spin blur cleanup state just in case animation classes were present.
   for (const cell of reelCells.flat()) {
