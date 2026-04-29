@@ -633,6 +633,43 @@ function signalSpecialsOnReelStop(trackEl, stopIndex) {
   }
 }
 
+function signalSpecialsOnFinalReel(reelIndex, columnSymbols) {
+  let hasWild = false;
+  let hasScatter = false;
+
+  for (let row = 0; row < ROWS; row += 1) {
+    const symbol = columnSymbols[row];
+    const cell = reelCells[row]?.[reelIndex];
+
+    if (!cell) {
+      continue;
+    }
+
+    if (symbol === "WILD") {
+      hasWild = true;
+      cell.classList.add("scatter-hit");
+      cell.classList.add("win");
+      setTimeout(() => {
+        cell.classList.remove("scatter-hit");
+        cell.classList.remove("win");
+      }, 780);
+    }
+
+    if (symbol === "SCATTER") {
+      hasScatter = true;
+      cell.classList.add("scatter-hit");
+      setTimeout(() => cell.classList.remove("scatter-hit"), 900);
+    }
+  }
+
+  if (hasWild) {
+    playWildSignal();
+  }
+  if (hasScatter) {
+    playScatterSignal();
+  }
+}
+
 function buildAnimatedReel(reelIndex, strip, stopPos) {
   const reelEl = reelElements[reelIndex];
   reelEl.innerHTML = "";
@@ -700,7 +737,6 @@ function animateSingleReel(trackEl, startPx, stopPx, reelIndex, stopIndex, confi
 
         if (!stopSoundPlayed && p > 0.88) {
           playReelStop(reelIndex);
-          signalSpecialsOnReelStop(trackEl, stopIndex);
           stopSoundPlayed = true;
         }
       } else {
@@ -789,6 +825,7 @@ async function spinAnimation(targetGrid) {
         },
         () => {
           mountFinalReel(reel, targetColumn);
+          signalSpecialsOnFinalReel(reel, targetColumn);
         }
       )
     );
