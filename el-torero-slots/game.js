@@ -758,12 +758,29 @@ function animateSingleReel(trackEl, startPx, stopPx, reelIndex, stopIndex, confi
 }
 
 async function animateExpandingWilds(rawGrid) {
-  const targetCount = getExpandingWildTargetCount();
+  // Only expand reels that actually contain at least one WILD symbol.
+  const wildReels = [];
+  for (let reel = 0; reel < REELS; reel += 1) {
+    for (let row = 0; row < ROWS; row += 1) {
+      if (rawGrid[row][reel] === "WILD") {
+        wildReels.push(reel);
+        break;
+      }
+    }
+  }
+
+  // Nothing to expand if no wilds landed.
+  if (wildReels.length === 0) {
+    state.expandingWildReels = 0;
+    return { grid: rawGrid.map((row) => [...row]), expandedReels: [] };
+  }
+
+  const targetCount = wildReels.length;
   state.expandingWildReels = targetCount;
 
-  const selected = getShuffledReels().slice(0, targetCount).sort((a, b) => a - b);
+  const selected = wildReels.slice().sort((a, b) => a - b);
   const working = rawGrid.map((row) => [...row]);
-  featureLabelEl.textContent = `Free Spins: ${targetCount} expanding wild reels`;
+  featureLabelEl.textContent = `Free Spins: ${selected.length} expanding wild reels`;
 
   for (let step = 0; step < selected.length; step += 1) {
     const reel = selected[step];
