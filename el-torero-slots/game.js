@@ -758,7 +758,7 @@ function animateSingleReel(trackEl, startPx, stopPx, reelIndex, stopIndex, confi
 }
 
 async function animateExpandingWilds(rawGrid) {
-  // Only expand reels that actually contain at least one WILD symbol.
+  // Collect which reels have at least one WILD symbol.
   const wildReels = [];
   for (let reel = 0; reel < REELS; reel += 1) {
     for (let row = 0; row < ROWS; row += 1) {
@@ -769,22 +769,24 @@ async function animateExpandingWilds(rawGrid) {
     }
   }
 
-  // Nothing to expand if no wilds landed.
-  if (wildReels.length === 0) {
+  // Expansion only triggers when at least 2 reels contain a WILD.
+  // Each qualifying reel expands vertically (all rows become WILD).
+  // No horizontal spreading — only the exact reels that have wilds expand.
+  if (wildReels.length < 2) {
     state.expandingWildReels = 0;
     return { grid: rawGrid.map((row) => [...row]), expandedReels: [] };
   }
 
-  const targetCount = wildReels.length;
-  state.expandingWildReels = targetCount;
-
   const selected = wildReels.slice().sort((a, b) => a - b);
+  state.expandingWildReels = selected.length;
+
   const working = rawGrid.map((row) => [...row]);
   featureLabelEl.textContent = `Free Spins: ${selected.length} expanding wild reels`;
 
   for (let step = 0; step < selected.length; step += 1) {
     const reel = selected[step];
 
+    // Expand this reel vertically — all rows become WILD.
     for (let row = 0; row < ROWS; row += 1) {
       working[row][reel] = "WILD";
     }
@@ -792,10 +794,10 @@ async function animateExpandingWilds(rawGrid) {
     paintGrid(working);
     playExpandSound(step + 1);
     showBanner(`Wild reel ${reel + 1} expands`, 700);
-    await wait(220);
+    await wait(400);
   }
 
-  if (targetCount === 5) {
+  if (selected.length === REELS) {
     showBanner("Full house wilds!", 1000);
   }
 
