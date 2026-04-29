@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>El Torero Slots</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <header class="topbar">
+      <h1>El Torero</h1>
+      <p>Five Reels of Fiesta Fortune</p>
+    </header>
+
+    <section class="status-panel">
+      <div class="stat">
+        <span class="label">Balance</span>
+        <span id="balance" class="value">500</span>
+      </div>
+      <div class="stat">
+        <span class="label">Bet</span>
+        <span id="bet" class="value">10</span>
+      </div>
+      <div class="stat">
+        <span class="label">Win</span>
+        <span id="win" class="value">0</span>
+      </div>
+      <div class="stat feature">
+        <span class="label">Feature</span>
+        <span id="feature-label" class="value">Ready</span>
+      </div>
+    </section>
+
+    <section class="machine-wrap">
+      <div id="reels" class="reels" aria-label="Slot reels"></div>
+      <div class="payline-overlay" aria-hidden="true"></div>
+    </section>
+
+    <section class="controls">
+      <button id="bet-down" class="btn secondary">Bet -</button>
+      <button id="spin" class="btn spin">Spin</button>
+      <button id="bet-up" class="btn secondary">Bet +</button>
+    </section>
+
+    <section class="message-box" id="message-box" aria-live="polite">
+      Press Spin to enter the arena.
+    </section>
+
+    <section class="legend">
+      <h2>Expanding Wilds</h2>
+      <p>Any WILD that lands expands to fill its full reel for that spin.</p>
+      <p>Big wins trigger a celebratory ring-ring bell sound.</p>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>

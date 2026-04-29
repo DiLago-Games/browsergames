@@ -7,6 +7,7 @@ A collection of casual browser games built with HTML5 and JavaScript.
 | Folder | Game | Description |
 |--------|------|-------------|
 | [`space-blaster/`](space-blaster/) | 🚀 Space Blaster | Shoot asteroids, collect power-ups, survive as long as you can |
+| [`el-torero-slots/`](el-torero-slots/) | 🎰 El Torero Slots | Five-reel slot machine with expanding wilds and big-win ring-ring bells |
 
 ## Adding a new game
 
