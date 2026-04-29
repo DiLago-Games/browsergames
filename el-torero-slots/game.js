@@ -620,20 +620,20 @@ function getBgmProfile(mode) {
       ]
     },
     free: {
-      stepMs: 92,
-      leadDur: 0.18,
-      leadGain: 0.033,
-      lead: [440.0, 493.88, 523.25, 587.33, 659.25, 587.33, 523.25, 493.88, 440.0, 523.25, 587.33, null],
-      rhythm: [0.5, 0.5, 1.0, 0.5, 1.0, 0.75, 0.5, 1.0, 0.5, 0.75, 1.25, 0.5],
-      harmony: [392.0, null, 493.88, null, 523.25, null, 493.88, null],
-      bass: [261.63, null, 293.66, null, 329.63, null, 293.66, null],
-      phraseEvery: 10,
-      phraseGain: 0.037,
-      drumGain: 0.04,
-      drums: ["low", "mid", "mid", null, "accent", "mid", "mid", null, "low", "mid", "mid", null],
+      stepMs: 74,
+      leadDur: 0.22,
+      leadGain: 0.036,
+      lead: [523.25, 587.33, 659.25, 783.99, 880.0, 783.99, 659.25, 783.99, 987.77, 880.0, 783.99, null],
+      rhythm: [0.5, 0.5, 0.75, 0.5, 1.0, 0.5, 0.75, 0.5, 1.0, 0.5, 1.25, 0.5],
+      harmony: [440.0, null, 523.25, null, 587.33, null, 523.25, null],
+      bass: [261.63, null, 329.63, null, 349.23, null, 329.63, null],
+      phraseEvery: 6,
+      phraseGain: 0.043,
+      drumGain: 0.046,
+      drums: ["accent", "mid", "mid", "low", "accent", "mid", "mid", "low", "accent", "mid", "mid", null],
       emotionalPhrases: [
-        [587.33, 659.25, 783.99, 659.25],
-        [659.25, 783.99, 880.0, 783.99]
+        [659.25, 783.99, 880.0, 987.77],
+        [783.99, 880.0, 987.77, 1046.5]
       ]
     },
     bigwin: {
