@@ -1,4 +1,4 @@
-const ROWS = 3;
+const ROWS = 5;
 const REELS = 5;
 
 const BET_LEVELS = [5, 10, 20, 40, 80];
@@ -8,205 +8,143 @@ const SYMBOL_META = {
   HAT: { emoji: "🎩", name: "HAT" },
   BOOT: { emoji: "👢", name: "BOOT" },
   MOON: { emoji: "🌙", name: "MOON" },
+  SCATTER: { emoji: "🎪", name: "SCATTER" },
   WILD: { emoji: "🟥", name: "WILD" }
 };
 
-const SYMBOL_POOL = [
-  "BULL",
-  "BULL",
-  "BULL",
-  "ROSE",
-  "ROSE",
-  "HAT",
-  "HAT",
-  "BOOT",
-  "BOOT",
-  "MOON",
-  "MOON",
-  "MOON",
-  "WILD"
+const SYMBOL_POOL_BASE = [
+  "BULL", "BULL", "BULL", "BULL",
+  "ROSE", "ROSE", "ROSE", "ROSE", "ROSE",
+  "HAT", "HAT", "HAT", "HAT", "HAT",
+  "BOOT", "BOOT", "BOOT", "BOOT", "BOOT", "BOOT",
+  "MOON", "MOON", "MOON", "MOON", "MOON", "MOON", "MOON",
+  "WILD",
+  "SCATTER"
+];
+
+const SYMBOL_POOL_FREE = [
+  "BULL", "BULL", "BULL", "BULL",
+  "ROSE", "ROSE", "ROSE", "ROSE", "ROSE", "ROSE",
+  "HAT", "HAT", "HAT", "HAT", "HAT", "HAT",
+  "BOOT", "BOOT", "BOOT", "BOOT", "BOOT", "BOOT", "BOOT",
+  "MOON", "MOON", "MOON", "MOON", "MOON", "MOON", "MOON", "MOON",
+  "WILD", "WILD",
+  "SCATTER"
 ];
 
 const PAYLINES = [
   [0, 0, 0, 0, 0],
   [1, 1, 1, 1, 1],
   [2, 2, 2, 2, 2],
-  [0, 1, 2, 1, 0],
-  [2, 1, 0, 1, 2],
+  [3, 3, 3, 3, 3],
+  [4, 4, 4, 4, 4],
+  [0, 1, 2, 3, 4],
+  [4, 3, 2, 1, 0],
   [0, 0, 1, 0, 0],
-  [2, 2, 1, 2, 2],
-  [1, 0, 0, 0, 1],
-  [1, 2, 2, 2, 1],
-  [0, 1, 1, 1, 0]
+  [4, 4, 3, 4, 4],
+  [1, 2, 3, 2, 1],
+  [3, 2, 1, 2, 3],
+  [0, 1, 1, 1, 0],
+  [4, 3, 3, 3, 4],
+  [2, 1, 0, 1, 2],
+  [2, 3, 4, 3, 2]
 ];
 
 const PAYTABLE = {
-  BULL: { 3: 10, 4: 25, 5: 60 },
-  ROSE: { 3: 8, 4: 20, 5: 40 },
-  HAT: { 3: 6, 4: 15, 5: 30 },
-  BOOT: { 3: 5, 4: 12, 5: 24 },
-  MOON: { 3: 4, 4: 10, 5: 20 },
-  WILD: { 3: 15, 4: 35, 5: 120 }
+  BULL: { 3: 4, 4: 10, 5: 24 },
+  ROSE: { 3: 3, 4: 8, 5: 18 },
+  HAT: { 3: 2, 4: 6, 5: 14 },
+  BOOT: { 3: 2, 4: 5, 5: 12 },
+  MOON: { 3: 1, 4: 4, 5: 10 },
+  WILD: { 3: 6, 4: 16, 5: 40 }
 };
 
+const FREE_SPINS_AWARD = 10;
 const BIG_WIN_MULTIPLIER = 25;
+const MAX_POSSIBLE_WIN_MULTIPLIER = PAYLINES.length * PAYTABLE.WILD[5];
+const FREE_SPIN_INTERVAL_MS = 1400;
 
 const state = {
   balance: 500,
   betIndex: 1,
   win: 0,
   spinning: false,
-  grid: createRandomGrid()
+  grid: createRandomGrid(),
+  freeSpinsRemaining: 0,
+  freeSpinIndex: 0,
+  freeSpinsTotalWin: 0,
+  freeSpinSessionActive: false,
+  expandingWildReels: 0,
+  bannerTimeout: null,
+  spinTickTimer: null,
+  freeSpinCheerTimer: null
 };
 
 const reelsEl = document.getElementById("reels");
 const balanceEl = document.getElementById("balance");
 const betEl = document.getElementById("bet");
 const winEl = document.getElementById("win");
+const freeSpinsEl = document.getElementById("free-spins");
 const featureLabelEl = document.getElementById("feature-label");
 const messageBoxEl = document.getElementById("message-box");
+const bonusBannerEl = document.getElementById("bonus-banner");
+const announcementOverlayEl = document.getElementById("announcement-overlay");
+const announcementCardEl = document.getElementById("announcement-card");
 
 const spinBtn = document.getElementById("spin");
 const betUpBtn = document.getElementById("bet-up");
 const betDownBtn = document.getElementById("bet-down");
 
 const reelCells = [];
+const reelElements = [];
 let audioContext = null;
 
-function renderCell(cell, symbol, isWin) {
-  const meta = SYMBOL_META[symbol] || { emoji: symbol, name: symbol };
-  cell.innerHTML = `<span class="emoji">${meta.emoji}</span><span class="name">${meta.name}</span>`;
-  cell.classList.toggle("wild", symbol === "WILD");
-  cell.classList.toggle("win", isWin);
-}
-
-function initWebGLBackground() {
-  const canvas = document.getElementById("arena-bg");
-
-  if (!canvas) {
-    return;
-  }
-
-  const gl = canvas.getContext("webgl", { alpha: true, antialias: true });
-
-  if (!gl) {
-    return;
-  }
-
-  const vertexSource = `
-    attribute vec2 position;
-    void main() {
-      gl_Position = vec4(position, 0.0, 1.0);
-    }
-  `;
-
-  const fragmentSource = `
-    precision mediump float;
-    uniform vec2 uResolution;
-    uniform float uTime;
-
-    void main() {
-      vec2 uv = gl_FragCoord.xy / uResolution.xy;
-      vec2 p = uv * 2.0 - 1.0;
-      p.x *= uResolution.x / uResolution.y;
-
-      float waveA = sin((p.x * 3.2) + uTime * 0.9);
-      float waveB = cos((p.y * 3.6) - uTime * 0.7);
-      float pulse = 0.5 + 0.5 * sin(uTime * 0.5 + length(p) * 4.0);
-
-      vec3 gold = vec3(0.86, 0.63, 0.22);
-      vec3 red = vec3(0.65, 0.14, 0.14);
-      vec3 cream = vec3(0.96, 0.90, 0.74);
-
-      float mixMask = 0.5 + 0.5 * (waveA * 0.6 + waveB * 0.4);
-      vec3 color = mix(red, gold, mixMask);
-      color = mix(color, cream, 0.22 * pulse);
-
-      float vignette = smoothstep(1.3, 0.25, length(p));
-      color *= vignette;
-
-      gl_FragColor = vec4(color, 0.55);
-    }
-  `;
-
-  function compileShader(type, source) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    return shader;
-  }
-
-  const vertexShader = compileShader(gl.VERTEX_SHADER, vertexSource);
-  const fragmentShader = compileShader(gl.FRAGMENT_SHADER, fragmentSource);
-  const program = gl.createProgram();
-
-  gl.attachShader(program, vertexShader);
-  gl.attachShader(program, fragmentShader);
-  gl.linkProgram(program);
-  gl.useProgram(program);
-
-  const vertices = new Float32Array([
-    -1, -1,
-    1, -1,
-    -1, 1,
-    1, 1
-  ]);
-
-  const buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-  const positionLoc = gl.getAttribLocation(program, "position");
-  gl.enableVertexAttribArray(positionLoc);
-  gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-  const resolutionLoc = gl.getUniformLocation(program, "uResolution");
-  const timeLoc = gl.getUniformLocation(program, "uTime");
-
-  function resize() {
-    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-    const width = Math.floor(window.innerWidth * dpr);
-    const height = Math.floor(window.innerHeight * dpr);
-
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-      gl.viewport(0, 0, width, height);
-    }
-  }
-
-  function draw(timeMs) {
-    resize();
-    gl.uniform2f(resolutionLoc, canvas.width, canvas.height);
-    gl.uniform1f(timeLoc, timeMs * 0.001);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    requestAnimationFrame(draw);
-  }
-
-  resize();
-  requestAnimationFrame(draw);
+function money(value) {
+  return `$${value}`;
 }
 
 function getBet() {
   return BET_LEVELS[state.betIndex];
 }
 
-function randomSymbol() {
-  return SYMBOL_POOL[Math.floor(Math.random() * SYMBOL_POOL.length)];
+function randomSymbol(inFreeSpins = false) {
+  const pool = inFreeSpins ? SYMBOL_POOL_FREE : SYMBOL_POOL_BASE;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function createRandomGrid() {
-  return Array.from({ length: ROWS }, () =>
-    Array.from({ length: REELS }, () => randomSymbol())
-  );
+function createRandomGrid(inFreeSpins = false) {
+  const grid = Array.from({ length: ROWS }, () => Array(REELS).fill("MOON"));
+
+  for (let reel = 0; reel < REELS; reel += 1) {
+    let scatterPlaced = false;
+
+    for (let row = 0; row < ROWS; row += 1) {
+      let symbol = randomSymbol(inFreeSpins);
+
+      // Hard cap: at most one scatter symbol per reel.
+      while (symbol === "SCATTER" && scatterPlaced) {
+        symbol = randomSymbol(inFreeSpins);
+      }
+
+      if (symbol === "SCATTER") {
+        scatterPlaced = true;
+      }
+
+      grid[row][reel] = symbol;
+    }
+  }
+
+  return grid;
 }
 
 function setupReels() {
   reelsEl.innerHTML = "";
+  reelElements.length = 0;
 
   for (let reel = 0; reel < REELS; reel += 1) {
     const reelEl = document.createElement("div");
     reelEl.className = "reel";
+    reelElements[reel] = reelEl;
 
     for (let row = 0; row < ROWS; row += 1) {
       const cell = document.createElement("div");
@@ -223,12 +161,20 @@ function setupReels() {
   }
 }
 
-function paintGrid(grid, winningCoordinates = new Set()) {
+function renderCell(cell, symbol, isWin) {
+  const meta = SYMBOL_META[symbol] || { emoji: symbol, name: symbol };
+  cell.innerHTML = `<span class="emoji" aria-label="${meta.name}">${meta.emoji}</span>`;
+  cell.classList.toggle("wild", symbol === "WILD");
+  cell.classList.toggle("win", isWin);
+}
+
+function paintGrid(grid, winningCoordinates = new Set(), scatterCoordinates = new Set()) {
   for (let row = 0; row < ROWS; row += 1) {
     for (let reel = 0; reel < REELS; reel += 1) {
       const cell = reelCells[row][reel];
       const symbol = grid[row][reel];
       renderCell(cell, symbol, winningCoordinates.has(`${row}-${reel}`));
+      cell.classList.toggle("scatter-hit", scatterCoordinates.has(`${row}-${reel}`));
     }
   }
 }
@@ -237,10 +183,35 @@ function setMessage(text) {
   messageBoxEl.textContent = text;
 }
 
+function showBanner(text, ms = 1600) {
+  bonusBannerEl.textContent = text;
+  bonusBannerEl.classList.add("show");
+
+  if (state.bannerTimeout) {
+    clearTimeout(state.bannerTimeout);
+  }
+
+  state.bannerTimeout = setTimeout(() => {
+    bonusBannerEl.classList.remove("show");
+  }, ms);
+}
+
+async function showAnnouncement(text, ms = 2600, tone = "") {
+  announcementCardEl.textContent = text;
+  announcementCardEl.className = "announcement-card";
+  if (tone) {
+    announcementCardEl.classList.add(tone);
+  }
+  announcementOverlayEl.classList.add("show");
+  await wait(ms);
+  announcementOverlayEl.classList.remove("show");
+}
+
 function updateHud() {
-  balanceEl.textContent = String(state.balance);
-  betEl.textContent = String(getBet());
-  winEl.textContent = String(state.win);
+  balanceEl.textContent = money(state.balance);
+  betEl.textContent = money(getBet());
+  winEl.textContent = money(state.win);
+  freeSpinsEl.textContent = String(state.freeSpinsRemaining);
 }
 
 function setButtonsDisabled(disabled) {
@@ -249,10 +220,239 @@ function setButtonsDisabled(disabled) {
   betDownBtn.disabled = disabled;
 }
 
+function initAudio() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function ringTone(startTime, frequency, duration, gainPeak = 0.22, wave = "triangle") {
+  if (!audioContext) {
+    return;
+  }
+
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  osc.type = wave;
+  osc.frequency.value = frequency;
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(gainPeak, startTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.02);
+}
+
+function bloopTone(startTime, frequency, duration, gainPeak = 0.16) {
+  if (!audioContext) {
+    return;
+  }
+
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(frequency * 1.08, startTime);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(90, frequency * 0.92), startTime + duration);
+
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(gainPeak, startTime + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.02);
+}
+
+function playToreroFlourish(startTime, root, gain = 0.12) {
+  // Andalusian-style color movement (i - VII - VI - V contour).
+  bloopTone(startTime, root, 0.16, gain);
+  bloopTone(startTime + 0.12, root * 0.89, 0.16, gain);
+  bloopTone(startTime + 0.24, root * 0.84, 0.16, gain);
+  bloopTone(startTime + 0.36, root * 0.75, 0.18, gain + 0.02);
+}
+
+function playSpinTick() {
+  if (!audioContext) {
+    return;
+  }
+
+  bloopTone(audioContext.currentTime, 170 + Math.random() * 30, 0.09, 0.055);
+}
+
+function playReelStop(reelIndex) {
+  if (!audioContext) {
+    return;
+  }
+
+  const start = audioContext.currentTime + 0.01;
+  const base = 290 + reelIndex * 34;
+  bloopTone(start, base, 0.11, 0.09);
+  bloopTone(start + 0.08, base * 1.24, 0.13, 0.08);
+}
+
+function startSpinSound() {
+  if (!audioContext) {
+    return;
+  }
+
+  stopSpinSound();
+  playSpinTick();
+  state.spinTickTimer = setInterval(playSpinTick, 105);
+}
+
+function stopSpinSound() {
+  if (state.spinTickTimer) {
+    clearInterval(state.spinTickTimer);
+    state.spinTickTimer = null;
+  }
+}
+
+function playExpandSound(step) {
+  if (!audioContext) {
+    return;
+  }
+
+  const start = audioContext.currentTime;
+  const root = 340 + step * 42;
+  bloopTone(start, root, 0.14, 0.11);
+  bloopTone(start + 0.09, root * 1.33, 0.14, 0.1);
+}
+
+function playWinChime() {
+  if (!audioContext) {
+    return;
+  }
+
+  const start = audioContext.currentTime;
+  playToreroFlourish(start, 640, 0.115);
+  bloopTone(start + 0.52, 920, 0.18, 0.12);
+}
+
+function playScatterBell() {
+  if (!audioContext) {
+    return;
+  }
+
+  const start = audioContext.currentTime + 0.02;
+  playToreroFlourish(start, 780, 0.14);
+  bloopTone(start + 0.54, 1180, 0.22, 0.15);
+}
+
+function playWildSignal() {
+  if (!audioContext) {
+    return;
+  }
+
+  const start = audioContext.currentTime + 0.01;
+  bloopTone(start, 520, 0.12, 0.1);
+  bloopTone(start + 0.1, 700, 0.13, 0.1);
+}
+
+function playScatterSignal() {
+  if (!audioContext) {
+    return;
+  }
+
+  const start = audioContext.currentTime + 0.01;
+  bloopTone(start, 700, 0.14, 0.12);
+  bloopTone(start + 0.12, 940, 0.16, 0.12);
+}
+
+function triggerScatterImpact() {
+  document.body.classList.add("scatter-flash");
+  setTimeout(() => {
+    document.body.classList.remove("scatter-flash");
+  }, 950);
+}
+
+function playBigWinRingRing() {
+  if (!audioContext) {
+    return;
+  }
+
+  const start = audioContext.currentTime + 0.02;
+  playToreroFlourish(start, 760, 0.14);
+  playToreroFlourish(start + 0.52, 840, 0.15);
+  bloopTone(start + 1.08, 1280, 0.24, 0.16);
+}
+
+function playCheerBurst(intensity = 1) {
+  if (!audioContext) {
+    return;
+  }
+
+  const start = audioContext.currentTime + 0.01;
+  const base = 520 + 60 * intensity;
+  bloopTone(start, base, 0.12, 0.07 + 0.025 * intensity);
+  bloopTone(start + 0.1, base * 1.24, 0.14, 0.07 + 0.025 * intensity);
+  if (intensity >= 3) {
+    bloopTone(start + 0.22, base * 1.56, 0.16, 0.08 + 0.02 * intensity);
+  }
+}
+
+function startFreeSpinCheerLoop() {
+  if (!audioContext || state.freeSpinCheerTimer) {
+    return;
+  }
+
+  playCheerBurst(1);
+  state.freeSpinCheerTimer = setInterval(() => {
+    playCheerBurst(1);
+  }, 1650);
+}
+
+function stopFreeSpinCheerLoop() {
+  if (state.freeSpinCheerTimer) {
+    clearInterval(state.freeSpinCheerTimer);
+    state.freeSpinCheerTimer = null;
+  }
+}
+
+function classifyBigWin(payout, bet) {
+  const ratioToMax = payout / (bet * MAX_POSSIBLE_WIN_MULTIPLIER);
+
+  if (ratioToMax >= 0.65) {
+    return { name: "LEGENDARY", tone: "legendary", cheer: 4 };
+  }
+  if (ratioToMax >= 0.4) {
+    return { name: "COLOSSAL", tone: "colossal", cheer: 3 };
+  }
+  if (ratioToMax >= 0.2) {
+    return { name: "MEGA", tone: "mega", cheer: 2 };
+  }
+
+  return { name: "BIG", tone: "big", cheer: 1 };
+}
+
+function triggerBigWinFlash() {
+  document.body.classList.add("big-win-flash");
+  setTimeout(() => {
+    document.body.classList.remove("big-win-flash");
+  }, 1100);
+}
+
+async function announceBigWin(payout, bet) {
+  const tier = classifyBigWin(payout, bet);
+  triggerBigWinFlash();
+  showBanner(`${tier.name} WIN!`, 1600);
+  playBigWinRingRing();
+  playCheerBurst(tier.cheer);
+  await showAnnouncement(`${tier.name} WIN ${money(payout)}!`, 1700, tier.tone);
+}
+
 function countConsecutive(symbols, targetSymbol) {
   let count = 0;
 
   for (const symbol of symbols) {
+    if (symbol === "SCATTER") {
+      break;
+    }
+
     const isMatch = targetSymbol === "WILD"
       ? symbol === "WILD"
       : symbol === targetSymbol || symbol === "WILD";
@@ -312,22 +512,45 @@ function evaluateGrid(grid, bet) {
   return { totalWin, winCoords, hits };
 }
 
-function applyExpandingWilds(grid) {
-  const expandedReels = [];
-  const nextGrid = grid.map((row) => [...row]);
+function countScatters(grid) {
+  let total = 0;
+  const coords = new Set();
 
-  for (let reel = 0; reel < REELS; reel += 1) {
-    const hasWild = nextGrid.some((row) => row[reel] === "WILD");
-
-    if (hasWild) {
-      expandedReels.push(reel + 1);
-      for (let row = 0; row < ROWS; row += 1) {
-        nextGrid[row][reel] = "WILD";
+  for (let row = 0; row < ROWS; row += 1) {
+    for (let reel = 0; reel < REELS; reel += 1) {
+      if (grid[row][reel] === "SCATTER") {
+        total += 1;
+        coords.add(`${row}-${reel}`);
       }
     }
   }
 
-  return { grid: nextGrid, expandedReels };
+  return { total, coords };
+}
+
+function getShuffledReels() {
+  const list = [0, 1, 2, 3, 4];
+
+  for (let i = list.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+
+  return list;
+}
+
+function getExpandingWildTargetCount() {
+  // Balance mode: each free spin independently rolls 3/4/5 expanding reels.
+  // 5-reel full house remains rare and does not become permanent.
+  const roll = Math.random();
+
+  if (roll < 0.64) {
+    return 3;
+  }
+  if (roll < 0.91) {
+    return 4;
+  }
+  return 5;
 }
 
 function wait(ms) {
@@ -336,59 +559,267 @@ function wait(ms) {
   });
 }
 
-async function spinAnimation() {
-  const spinCells = reelCells.flat();
-  spinCells.forEach((cell) => cell.classList.add("spin-blur"));
+function buildReelStrip(targetColumn, stopPos) {
+  const strip = Array.from({ length: stopPos + ROWS + 120 }, () => randomSymbol());
 
-  for (let tick = 0; tick < 12; tick += 1) {
-    for (let row = 0; row < ROWS; row += 1) {
-      for (let reel = 0; reel < REELS; reel += 1) {
-        renderCell(reelCells[row][reel], randomSymbol(), false);
-      }
+  for (let row = 0; row < ROWS; row += 1) {
+    strip[stopPos + row] = targetColumn[row];
+  }
+
+  return strip;
+}
+
+function renderReelFromStrip(reelIndex, strip, position) {
+  for (let row = 0; row < ROWS; row += 1) {
+    renderCell(reelCells[row][reelIndex], strip[position + row], false);
+  }
+}
+
+function createSpinSymbolCell(symbol) {
+  const meta = SYMBOL_META[symbol] || { emoji: symbol, name: symbol };
+  const cell = document.createElement("div");
+  cell.className = "spin-symbol";
+  cell.dataset.symbol = symbol;
+  cell.innerHTML = `<span class="emoji" aria-label="${meta.name}">${meta.emoji}</span>`;
+  if (symbol === "WILD") {
+    cell.classList.add("wild");
+  }
+  return cell;
+}
+
+function signalSpecialsOnReelStop(trackEl, stopIndex) {
+  const symbols = Array.from(trackEl.children);
+  const visible = symbols.slice(stopIndex, stopIndex + ROWS);
+
+  let hasWild = false;
+  let hasScatter = false;
+
+  visible.forEach((el) => {
+    const symbol = el.dataset.symbol;
+    if (symbol === "WILD") {
+      hasWild = true;
+      el.classList.add("hit-wild");
+      setTimeout(() => el.classList.remove("hit-wild"), 780);
     }
-    await wait(70);
+    if (symbol === "SCATTER") {
+      hasScatter = true;
+      el.classList.add("hit-scatter");
+      setTimeout(() => el.classList.remove("hit-scatter"), 900);
+    }
+  });
+
+  if (hasWild) {
+    playWildSignal();
+  }
+  if (hasScatter) {
+    playScatterSignal();
+  }
+}
+
+function buildAnimatedReel(reelIndex, strip, stopPos) {
+  const reelEl = reelElements[reelIndex];
+  reelEl.innerHTML = "";
+
+  const windowEl = document.createElement("div");
+  windowEl.className = "reel-window";
+
+  const trackEl = document.createElement("div");
+  trackEl.className = "reel-track";
+
+  strip.forEach((symbol) => {
+    trackEl.appendChild(createSpinSymbolCell(symbol));
+  });
+
+  windowEl.appendChild(trackEl);
+  reelEl.appendChild(windowEl);
+
+  return {
+    trackEl,
+    stopPx: stopPos * 70
+  };
+}
+
+function easeOutCubic(t) {
+  return 1 - ((1 - t) ** 3);
+}
+
+function setTrackPhase(trackEl, phase) {
+  trackEl.classList.remove("speed-fast", "speed-medium", "speed-slow");
+  trackEl.classList.add(phase);
+}
+
+function animateSingleReel(trackEl, startPx, stopPx, reelIndex, stopIndex, config) {
+  const {
+    cruiseSpeed,
+    cruiseDuration,
+    decelDuration
+  } = config;
+
+  const totalDistance = startPx - stopPx;
+  const decelDistance = cruiseSpeed * decelDuration / 3;
+  const cruiseDistance = totalDistance - decelDistance;
+  const adjustedCruiseSpeed = cruiseDistance / cruiseDuration;
+  const totalDuration = cruiseDuration + decelDuration;
+
+  return new Promise((resolve) => {
+    let stopSoundPlayed = false;
+    const startTs = performance.now();
+
+    function frame(now) {
+      const elapsed = now - startTs;
+      let position;
+
+      if (elapsed < cruiseDuration) {
+        setTrackPhase(trackEl, "speed-fast");
+        position = startPx - (adjustedCruiseSpeed * elapsed);
+      } else if (elapsed < totalDuration) {
+        setTrackPhase(trackEl, "speed-slow");
+        const slowElapsed = elapsed - cruiseDuration;
+        const p = Math.min(1, slowElapsed / decelDuration);
+        position = startPx - cruiseDistance - (decelDistance * easeOutCubic(p));
+
+        if (!stopSoundPlayed && p > 0.88) {
+          playReelStop(reelIndex);
+          signalSpecialsOnReelStop(trackEl, stopIndex);
+          stopSoundPlayed = true;
+        }
+      } else {
+        setTrackPhase(trackEl, "speed-slow");
+        trackEl.style.transform = `translateY(-${stopPx}px)`;
+        resolve();
+        return;
+      }
+
+      trackEl.style.transform = `translateY(-${position}px)`;
+      requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
+  });
+}
+
+async function animateExpandingWilds(rawGrid) {
+  const targetCount = getExpandingWildTargetCount();
+  state.expandingWildReels = targetCount;
+
+  const selected = getShuffledReels().slice(0, targetCount).sort((a, b) => a - b);
+  const working = rawGrid.map((row) => [...row]);
+  featureLabelEl.textContent = `Free Spins: ${targetCount} expanding wild reels`;
+
+  for (let step = 0; step < selected.length; step += 1) {
+    const reel = selected[step];
+
+    for (let row = 0; row < ROWS; row += 1) {
+      working[row][reel] = "WILD";
+    }
+
+    paintGrid(working);
+    playExpandSound(step + 1);
+    showBanner(`Wild reel ${reel + 1} expands`, 700);
+    await wait(220);
   }
 
-  spinCells.forEach((cell) => cell.classList.remove("spin-blur"));
+  if (targetCount === 5) {
+    showBanner("Full house wilds!", 1000);
+  }
+
+  return { grid: working, expandedReels: selected.map((r) => r + 1) };
 }
 
-function initAudio() {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+async function spinAnimation(targetGrid) {
+  const baseCruiseMs = 1900;
+  const staggerCruiseMs = 450;
+  const baseDecelMs = 1080;
+  const decelStepMs = 60;
+  const cruiseSpeed = 1.16;
+  const reelAnimations = [];
+  const animations = [];
+
+  for (let reel = 0; reel < REELS; reel += 1) {
+    const targetColumn = Array.from({ length: ROWS }, (_, row) => targetGrid[row][reel]);
+    const stopPos = 34 + reel * 2;
+    const cruiseDuration = baseCruiseMs + reel * staggerCruiseMs;
+    const decelDuration = baseDecelMs + reel * decelStepMs;
+    const decelDistance = cruiseSpeed * decelDuration / 3;
+    const cruiseDistance = cruiseSpeed * cruiseDuration;
+    const totalDistance = cruiseDistance + decelDistance;
+    const startPos = stopPos + Math.ceil(totalDistance / 70) + 3;
+    const strip = buildReelStrip(targetColumn, stopPos);
+    reelAnimations[reel] = buildAnimatedReel(reel, strip, stopPos);
+
+    const { trackEl, stopPx } = reelAnimations[reel];
+    const startPx = startPos * 70;
+    trackEl.style.transform = `translateY(-${startPx}px)`;
+    trackEl.style.transition = "none";
+
+    animations.push(
+      animateSingleReel(
+        trackEl,
+        startPx,
+        stopPx,
+        reel,
+        stopPos,
+        {
+          cruiseSpeed,
+          cruiseDuration,
+          decelDuration
+        }
+      )
+    );
+  }
+
+  await Promise.all(animations);
+
+  setupReels();
+  paintGrid(targetGrid);
+
+  // Re-apply spin blur cleanup state just in case animation classes were present.
+  for (const cell of reelCells.flat()) {
+    cell.classList.remove("spin-blur");
   }
 }
 
-function ringTone(startTime, frequency) {
-  const osc = audioContext.createOscillator();
-  const gain = audioContext.createGain();
+function describeWinEvent(payout, bet) {
+  const totalMultiplier = Math.round((payout.totalWin / bet) * 10) / 10;
+  const topHits = payout.hits.slice(0, 2).map((hit) => {
+    const symbolName = SYMBOL_META[hit.symbol]?.name || hit.symbol;
+    return `Line ${hit.line}: ${hit.count} ${symbolName} pays ${money(hit.lineWin)}`;
+  });
 
-  osc.type = "triangle";
-  osc.frequency.value = frequency;
-
-  gain.gain.setValueAtTime(0.0001, startTime);
-  gain.gain.exponentialRampToValueAtTime(0.35, startTime + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.35);
-
-  osc.connect(gain);
-  gain.connect(audioContext.destination);
-
-  osc.start(startTime);
-  osc.stop(startTime + 0.37);
+  const details = topHits.length > 0 ? ` ${topHits.join(". ")}.` : "";
+  return `Win ${money(payout.totalWin)} (${totalMultiplier}x bet).${details}`;
 }
 
-function playBigWinRingRing() {
-  if (!audioContext) {
+function startFreeSpins() {
+  const wasActive = state.freeSpinSessionActive;
+  state.freeSpinsRemaining += FREE_SPINS_AWARD;
+
+  if (!wasActive) {
+    state.freeSpinSessionActive = true;
+    document.body.classList.add("free-spins-active");
+    state.freeSpinIndex = 0;
+    state.freeSpinsTotalWin = 0;
+    state.expandingWildReels = 3;
+    showBanner("10 FREE SPINS!", 2200);
+    setMessage("Matador bonus! 10 free spins awarded. Session total starts at 0.");
+    startFreeSpinCheerLoop();
+  } else {
+    showBanner(`RETRIGGER +${FREE_SPINS_AWARD} SPINS!`, 2300);
+    setMessage(`Scatter retrigger! +${FREE_SPINS_AWARD} free spins. Session total keeps counting.`);
+    playCheerBurst(2);
+  }
+}
+
+function queueNextAutoFreeSpin(delayMs = FREE_SPIN_INTERVAL_MS) {
+  if (state.freeSpinsRemaining <= 0) {
     return;
   }
 
-  const start = audioContext.currentTime + 0.02;
-  // Three clear "ring-ring" bell pairs.
-  ringTone(start, 1174.66);
-  ringTone(start + 0.22, 1318.51);
-  ringTone(start + 0.55, 1174.66);
-  ringTone(start + 0.78, 1318.51);
-  ringTone(start + 1.1, 1174.66);
-  ringTone(start + 1.33, 1318.51);
+  setTimeout(() => {
+    if (!state.spinning && state.freeSpinsRemaining > 0) {
+      spin();
+    }
+  }, delayMs);
 }
 
 async function spin() {
@@ -398,62 +829,136 @@ async function spin() {
 
   initAudio();
 
+  const inFreeSpins = state.freeSpinSessionActive && state.freeSpinsRemaining > 0;
   const bet = getBet();
 
-  if (state.balance < bet) {
+  if (!inFreeSpins && state.balance < bet) {
     setMessage("Not enough balance. Lower your bet.");
     return;
   }
 
   state.spinning = true;
   setButtonsDisabled(true);
-  state.balance -= bet;
+
+  if (inFreeSpins) {
+    state.freeSpinsRemaining -= 1;
+    state.freeSpinIndex += 1;
+    featureLabelEl.textContent = `Free Spin ${state.freeSpinIndex}`;
+    setMessage(`Free spin ${state.freeSpinIndex} in play. Session total: ${money(state.freeSpinsTotalWin)}.`);
+  } else {
+    state.balance -= bet;
+    featureLabelEl.textContent = "Base Spin";
+    setMessage("The crowd is roaring...");
+  }
+
   state.win = 0;
-  featureLabelEl.textContent = "Spinning";
   updateHud();
-  setMessage("The crowd is roaring...");
 
-  await spinAnimation();
+  const rawGrid = createRandomGrid(inFreeSpins);
+  startSpinSound();
+  await spinAnimation(rawGrid);
+  stopSpinSound();
 
-  const rawGrid = createRandomGrid();
-  const featureResult = applyExpandingWilds(rawGrid);
-  const payout = evaluateGrid(featureResult.grid, bet);
+  const scatterResult = countScatters(rawGrid);
+  const scatterCount = scatterResult.total;
 
-  state.grid = featureResult.grid;
+  let outcomeGrid = rawGrid;
+  let expandedText = "";
+
+  if (inFreeSpins) {
+    const expanded = await animateExpandingWilds(rawGrid);
+    outcomeGrid = expanded.grid;
+    expandedText = ` Expanding reels: ${expanded.expandedReels.join(", ")}.`;
+  }
+
+  const payout = evaluateGrid(outcomeGrid, bet);
+
+  state.grid = outcomeGrid;
   state.win = payout.totalWin;
   state.balance += payout.totalWin;
 
-  paintGrid(state.grid, payout.winCoords);
+  paintGrid(state.grid, payout.winCoords, scatterResult.coords);
   updateHud();
 
-  if (featureResult.expandedReels.length > 0) {
-    featureLabelEl.textContent = `Toro Charge on reel ${featureResult.expandedReels.join(", ")}`;
-  } else {
-    featureLabelEl.textContent = "Ready";
+  if (scatterCount >= 3) {
+    triggerScatterImpact();
+    playScatterBell();
+    showBanner(`${scatterCount} SCATTERS!`, 1700);
+    await showAnnouncement(`${scatterCount} SCATTERS!`, 1250, "bonus");
+  }
+
+  if (scatterCount >= 3 && !state.freeSpinSessionActive) {
+    startFreeSpins();
+    await showAnnouncement(`Ole! ${FREE_SPINS_AWARD} Free Spins!`, 2800, "bonus");
+  } else if (scatterCount >= 3 && state.freeSpinSessionActive) {
+    startFreeSpins();
+    showAnnouncement(`Retrigger! +${FREE_SPINS_AWARD} Free Spins!`, 1800, "bonus");
+  }
+
+  if (inFreeSpins) {
+    state.freeSpinsTotalWin += payout.totalWin;
   }
 
   if (payout.totalWin > 0) {
-    const lineSummary = payout.hits
-      .slice(0, 3)
-      .map((hit) => `L${hit.line} ${hit.symbol}x${hit.count}`)
-      .join(" | ");
+    playWinChime();
+    if (inFreeSpins) {
+      playCheerBurst(1);
+    }
+    const winExplanation = describeWinEvent(payout, bet);
 
-    setMessage(`Win ${payout.totalWin}! ${lineSummary}`);
+    if (inFreeSpins) {
+      setMessage(`${winExplanation} Session total ${money(state.freeSpinsTotalWin)}.${expandedText}`);
+    } else {
+      setMessage(`${winExplanation}${expandedText}`);
+    }
+    showBanner(`WIN EVENT ${money(payout.totalWin)}`, 1400);
+  } else if (state.freeSpinSessionActive) {
+    setMessage(`No payline win. Session total ${money(state.freeSpinsTotalWin)}. ${state.freeSpinsRemaining} free spins remain.${expandedText}`);
   } else {
-    setMessage("No hit this spin. Hold your nerve and spin again.");
+    setMessage("No payline win this spin. Hold your nerve and spin again.");
   }
 
   if (payout.totalWin >= bet * BIG_WIN_MULTIPLIER) {
-    setMessage(`BIG WIN ${payout.totalWin}! Ring-ring!`);
+    if (inFreeSpins) {
+      announceBigWin(payout.totalWin, bet);
+    } else {
+      await announceBigWin(payout.totalWin, bet);
+    }
+    if (inFreeSpins) {
+      setMessage(`Big hit inside free spins! Session total ${money(state.freeSpinsTotalWin)}.`);
+    }
+  }
+
+  if (state.freeSpinSessionActive && state.freeSpinsRemaining > 0) {
+    featureLabelEl.textContent = `Free Spins Active (${state.freeSpinsRemaining} left)`;
+    setButtonsDisabled(true);
+  } else if (state.freeSpinSessionActive && state.freeSpinsRemaining === 0) {
+    stopFreeSpinCheerLoop();
+    await showAnnouncement(`Free Spins End! Session Win ${money(state.freeSpinsTotalWin)}`, 2600, "summary");
+    playCheerBurst(3);
     playBigWinRingRing();
+    setMessage(`Free spins complete. Isolated session win: ${money(state.freeSpinsTotalWin)}.`);
+    featureLabelEl.textContent = "Ready";
+    state.freeSpinSessionActive = false;
+    document.body.classList.remove("free-spins-active");
+    state.freeSpinIndex = 0;
+    state.expandingWildReels = 0;
+    setButtonsDisabled(false);
+  } else {
+    featureLabelEl.textContent = "Ready";
+    state.freeSpinIndex = 0;
+    setButtonsDisabled(false);
   }
 
   state.spinning = false;
-  setButtonsDisabled(false);
+
+  if (state.freeSpinSessionActive && state.freeSpinsRemaining > 0) {
+    queueNextAutoFreeSpin(FREE_SPIN_INTERVAL_MS);
+  }
 }
 
 function changeBet(delta) {
-  if (state.spinning) {
+  if (state.spinning || state.freeSpinsRemaining > 0) {
     return;
   }
 
@@ -467,6 +972,5 @@ betUpBtn.addEventListener("click", () => changeBet(1));
 betDownBtn.addEventListener("click", () => changeBet(-1));
 
 setupReels();
-initWebGLBackground();
 paintGrid(state.grid);
 updateHud();
