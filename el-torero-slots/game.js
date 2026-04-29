@@ -3,6 +3,7 @@ const REELS = 5;
 
 const BET_LEVELS = [5, 10, 20, 40, 80];
 const SYMBOL_META = {
+  DANCER: { emoji: "💃", name: "DANCER" },
   BULL: { emoji: "🐂", name: "BULL" },
   ROSE: { emoji: "🌹", name: "ROSE" },
   HAT: { emoji: "🎩", name: "HAT" },
@@ -13,6 +14,7 @@ const SYMBOL_META = {
 };
 
 const SYMBOL_POOL_BASE = [
+  "DANCER", "DANCER", "DANCER",
   "BULL", "BULL", "BULL", "BULL",
   "ROSE", "ROSE", "ROSE", "ROSE", "ROSE",
   "HAT", "HAT", "HAT", "HAT", "HAT",
@@ -23,6 +25,7 @@ const SYMBOL_POOL_BASE = [
 ];
 
 const SYMBOL_POOL_FREE = [
+  "DANCER", "DANCER", "DANCER", "DANCER",
   "BULL", "BULL", "BULL", "BULL",
   "ROSE", "ROSE", "ROSE", "ROSE", "ROSE", "ROSE",
   "HAT", "HAT", "HAT", "HAT", "HAT", "HAT",
@@ -51,6 +54,7 @@ const PAYLINES = [
 ];
 
 const PAYTABLE = {
+  DANCER: { 3: 5, 4: 12, 5: 28 },
   BULL: { 3: 4, 4: 10, 5: 24 },
   ROSE: { 3: 3, 4: 8, 5: 18 },
   HAT: { 3: 2, 4: 6, 5: 14 },
@@ -378,15 +382,37 @@ function triggerScatterImpact() {
   }, 950);
 }
 
+function ringBell(freq, startTime, gainVal = 0.18) {
+  if (!audioContext) {
+    return;
+  }
+
+  // Simulate a bell: fundamental + two inharmonic overtones with long decay.
+  [[1, gainVal], [2.756, gainVal * 0.42], [5.404, gainVal * 0.22]].forEach(([mult, g]) => {
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq * mult, startTime);
+    gain.gain.setValueAtTime(g, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 1.6);
+    osc.start(startTime);
+    osc.stop(startTime + 1.7);
+  });
+}
+
 function playBigWinRingRing() {
   if (!audioContext) {
     return;
   }
 
   const start = audioContext.currentTime + 0.02;
-  playToreroFlourish(start, 760, 0.14);
-  playToreroFlourish(start + 0.52, 840, 0.15);
-  bloopTone(start + 1.08, 1280, 0.24, 0.16);
+  ringBell(880, start, 0.24);
+  ringBell(1108, start + 0.33, 0.22);
+  ringBell(880, start + 0.66, 0.24);
+  ringBell(1108, start + 0.99, 0.22);
+  playToreroFlourish(start + 1.35, 780, 0.14);
 }
 
 function playCheerBurst(intensity = 1) {
@@ -476,7 +502,7 @@ function countConsecutive(symbols, targetSymbol) {
 }
 
 function evaluateLine(lineSymbols) {
-  const candidates = ["BULL", "ROSE", "HAT", "BOOT", "MOON", "WILD"];
+  const candidates = ["DANCER", "BULL", "ROSE", "HAT", "BOOT", "MOON", "WILD"];
   let best = { symbol: null, count: 0, multiplier: 0 };
 
   for (const symbol of candidates) {
@@ -758,20 +784,20 @@ function animateSingleReel(trackEl, startPx, stopPx, reelIndex, stopIndex, confi
 }
 
 async function animateExpandingWilds(rawGrid) {
-  // Collect which reels have at least one WILD symbol.
+  // Collect which reels have at least one WILD and record the origin row of each.
   const wildReels = [];
+  const wildOrigin = {};
   for (let reel = 0; reel < REELS; reel += 1) {
     for (let row = 0; row < ROWS; row += 1) {
       if (rawGrid[row][reel] === "WILD") {
         wildReels.push(reel);
+        wildOrigin[reel] = row;
         break;
       }
     }
   }
 
   // Expansion only triggers when at least 2 reels contain a WILD.
-  // Each qualifying reel expands vertically (all rows become WILD).
-  // No horizontal spreading — only the exact reels that have wilds expand.
   if (wildReels.length < 2) {
     state.expandingWildReels = 0;
     return { grid: rawGrid.map((row) => [...row]), expandedReels: [] };
@@ -785,16 +811,31 @@ async function animateExpandingWilds(rawGrid) {
 
   for (let step = 0; step < selected.length; step += 1) {
     const reel = selected[step];
+    const originRow = wildOrigin[reel];
+    const maxDist = Math.max(originRow, ROWS - 1 - originRow);
 
-    // Expand this reel vertically — all rows become WILD.
-    for (let row = 0; row < ROWS; row += 1) {
-      working[row][reel] = "WILD";
-    }
-
-    paintGrid(working);
     playExpandSound(step + 1);
     showBanner(`Wild reel ${reel + 1} expands`, 700);
-    await wait(400);
+
+    // Animate outward from the wild's origin row, one distance step at a time.
+    for (let dist = 0; dist <= maxDist; dist += 1) {
+      const rowsToFill = dist === 0
+        ? [originRow]
+        : [originRow - dist, originRow + dist].filter((r) => r >= 0 && r < ROWS);
+
+      for (const row of rowsToFill) {
+        working[row][reel] = "WILD";
+        const cell = reelCells[row]?.[reel];
+        if (cell) {
+          renderCell(cell, "WILD", false);
+          cell.classList.add("wild-expand-pop");
+          setTimeout(() => cell.classList.remove("wild-expand-pop"), 520);
+        }
+      }
+      await wait(170);
+    }
+
+    await wait(230);
   }
 
   if (selected.length === REELS) {
@@ -809,14 +850,33 @@ async function spinAnimation(targetGrid) {
   const staggerCruiseMs = 450;
   const baseDecelMs = 1080;
   const decelStepMs = 60;
+  const scatterSuspenseDelayMs = 980;
   const cruiseSpeed = 1.16;
   const reelAnimations = [];
   const animations = [];
+  const scatterReels = [];
+
+  for (let reel = 0; reel < REELS; reel += 1) {
+    for (let row = 0; row < ROWS; row += 1) {
+      if (targetGrid[row][reel] === "SCATTER") {
+        scatterReels.push(reel);
+        break;
+      }
+    }
+  }
+
+  const suspenseTriggerReel = scatterReels.length >= 2 ? scatterReels[1] : -1;
+  const suspenseEnabled = scatterReels.length >= 3 && suspenseTriggerReel >= 0 && suspenseTriggerReel < REELS - 1;
+  let landedScatterReels = 0;
+  let suspenseCuePlayed = false;
+
+  document.body.classList.remove("scatter-suspense");
 
   for (let reel = 0; reel < REELS; reel += 1) {
     const targetColumn = Array.from({ length: ROWS }, (_, row) => targetGrid[row][reel]);
     const stopPos = 34 + reel * 2;
-    const cruiseDuration = baseCruiseMs + reel * staggerCruiseMs;
+    const suspenseExtraMs = suspenseEnabled && reel > suspenseTriggerReel ? scatterSuspenseDelayMs : 0;
+    const cruiseDuration = baseCruiseMs + reel * staggerCruiseMs + suspenseExtraMs;
     const decelDuration = baseDecelMs + reel * decelStepMs;
     const decelDistance = cruiseSpeed * decelDuration / 3;
     const cruiseDistance = cruiseSpeed * cruiseDuration;
@@ -845,12 +905,33 @@ async function spinAnimation(targetGrid) {
         () => {
           mountFinalReel(reel, targetColumn);
           signalSpecialsOnFinalReel(reel, targetColumn);
+
+          if (targetColumn.includes("SCATTER")) {
+            landedScatterReels += 1;
+          }
+
+          if (suspenseEnabled && !suspenseCuePlayed && landedScatterReels >= 2) {
+            suspenseCuePlayed = true;
+            document.body.classList.add("scatter-suspense");
+            showBanner("2 SCATTERS! Hold for one more...", scatterSuspenseDelayMs + 400);
+            playScatterSignal();
+            playScatterSignal();
+
+            for (let i = reel + 1; i < REELS; i += 1) {
+              reelElements[i]?.classList.add("scatter-suspense");
+            }
+          }
         }
       )
     );
   }
 
   await Promise.all(animations);
+
+  document.body.classList.remove("scatter-suspense");
+  for (const reelEl of reelElements) {
+    reelEl.classList.remove("scatter-suspense");
+  }
 
   // Re-apply spin blur cleanup state just in case animation classes were present.
   for (const cell of reelCells.flat()) {
@@ -879,10 +960,12 @@ function startFreeSpins() {
     state.freeSpinIndex = 0;
     state.freeSpinsTotalWin = 0;
     state.expandingWildReels = 3;
+    playBigWinRingRing();
     showBanner("10 FREE SPINS!", 2200);
     setMessage("Matador bonus! 10 free spins awarded. Session total starts at 0.");
     startFreeSpinCheerLoop();
   } else {
+    playBigWinRingRing();
     showBanner(`RETRIGGER +${FREE_SPINS_AWARD} SPINS!`, 2300);
     setMessage(`Scatter retrigger! +${FREE_SPINS_AWARD} free spins. Session total keeps counting.`);
     playCheerBurst(2);
@@ -968,7 +1051,7 @@ async function spin() {
 
   if (scatterCount >= 3 && !state.freeSpinSessionActive) {
     startFreeSpins();
-    await showAnnouncement(`Ole! ${FREE_SPINS_AWARD} Free Spins!`, 2800, "bonus");
+    await showAnnouncement(`¡Olé! ${FREE_SPINS_AWARD} Free Spins!`, 2800, "bonus");
   } else if (scatterCount >= 3 && state.freeSpinSessionActive) {
     startFreeSpins();
     showAnnouncement(`Retrigger! +${FREE_SPINS_AWARD} Free Spins!`, 1800, "bonus");
@@ -1053,3 +1136,14 @@ betDownBtn.addEventListener("click", () => changeBet(-1));
 setupReels();
 paintGrid(state.grid);
 updateHud();
+
+// Welcome overlay — dismiss on click/tap and initialise audio context.
+const welcomeOverlayEl = document.getElementById("welcome-overlay");
+const welcomeStartBtn = document.getElementById("welcome-btn");
+if (welcomeOverlayEl && welcomeStartBtn) {
+  welcomeStartBtn.addEventListener("click", () => {
+    initAudio();
+    welcomeOverlayEl.classList.add("hide");
+    welcomeOverlayEl.addEventListener("transitionend", () => welcomeOverlayEl.remove(), { once: true });
+  });
+}
