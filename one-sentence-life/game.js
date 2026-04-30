@@ -220,12 +220,12 @@
   }
 
   function buildSentenceParts() {
-    const name = `<span class="sentence-filled">${firstName} ${lastName}</span>`;
+    const name = `<span class="sentence-filled">${esc(firstName)} ${esc(lastName)}</span>`;
     const parts = [name + ","];
 
     const slot = id => {
       if (chosen[id]) {
-        return `<span class="sentence-filled">${chosen[id]}</span>`;
+        return `<span class="sentence-filled">${esc(chosen[id])}</span>`;
       }
       return `<span class="sentence-blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>`;
     };
@@ -250,8 +250,8 @@
       btn.style.animationDelay = (idx * 0.08) + "s";
       btn.style.opacity = "0";
       btn.innerHTML = `
-        <span class="choice-label">${choice.label}</span>
-        <span class="choice-text">${choice.description}</span>
+        <span class="choice-label">${esc(choice.label)}</span>
+        <span class="choice-text">${esc(choice.description)}</span>
       `;
       btn.addEventListener("click", () => onChoose(stage, choice));
       choicesEl.appendChild(btn);
@@ -312,6 +312,16 @@
 
   function pick(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  /** Escape a plain-text string for safe insertion into HTML. */
+  function esc(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
 })();
