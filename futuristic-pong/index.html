@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pong 3001 – Futuristic Pong</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="game-container">
+
+    <!-- Title / Loading screen -->
+    <div id="title-screen">
+      <div id="logo-wrap">
+        <div id="game-logo">⚡ PONG 3001</div>
+        <p id="subtitle">The Future of Table Tennis</p>
+      </div>
+
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+
+      <div id="controls-hint" style="display:none;">
+        <p>W / S &nbsp;or&nbsp; ↑ / ↓ &nbsp;to move your paddle</p>
+        <p>SPACE to pause</p>
+      </div>
+
+      <button id="btn-start" style="display:none;">▶ PLAY</button>
+    </div>
+
+    <!-- Canvas – the actual game viewport -->
+    <canvas id="game-canvas" tabindex="1" style="display:none;"></canvas>
+
+    <!-- HUD overlay -->
+    <div id="hud" style="display:none;">
+      <span id="hud-player">YOU: 0</span>
+      <span id="hud-level">LEVEL 1</span>
+      <span id="hud-ai">AI: 0</span>
+    </div>
+
+    <!-- Pause overlay -->
+    <div id="pause-screen" style="display:none;">
+      <div id="pause-box">
+        <h2>⏸ PAUSED</h2>
+        <p>Press SPACE to resume</p>
+      </div>
+    </div>
+
+    <!-- Game-over screen -->
+    <div id="gameover-screen" style="display:none;">
+      <div id="gameover-box">
+        <h1 id="result-title">GAME OVER</h1>
+        <p>Your Score: <span id="final-player">0</span></p>
+        <p>AI Score: <span id="final-ai">0</span></p>
+        <button id="btn-restart">↺ PLAY AGAIN</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
