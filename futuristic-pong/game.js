@@ -47,6 +47,7 @@
   const PLAYER_COLOR = "#00ffff";
   const AI_COLOR     = "#ff00ff";
   const GRID_SIZE    = 40;
+  const PADDLE_GRADIENT_ALPHA = "99"; // hex opacity suffix for paddle gradient end-stop
 
   /* ── State ─────────────────────────────────────────── */
   let state, paused, raf;
@@ -301,7 +302,6 @@
   }
 
   /* mark balls that went out; handled after iteration to avoid splice-during-loop */
-  let pendingScore = null;
   function removeScoredBalls() {
     if (scoreCooldown > 0) { scoreCooldown--; return; }
 
@@ -546,7 +546,7 @@
     ctx.shadowColor = color;
     const grad = ctx.createLinearGradient(pad.x, pad.y, pad.x + pad.w, pad.y + pad.h);
     grad.addColorStop(0, color);
-    grad.addColorStop(1, color + "99");
+    grad.addColorStop(1, color + PADDLE_GRADIENT_ALPHA);
     ctx.fillStyle = grad;
     ctx.beginPath();
     roundRect(ctx, pad.x, pad.y, pad.w, pad.h, 4);
