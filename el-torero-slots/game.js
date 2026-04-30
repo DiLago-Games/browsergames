@@ -1228,8 +1228,8 @@ async function animateExpandingWilds(rawGrid) {
     }
   }
 
-  // Expansion only triggers when at least 2 reels contain a WILD.
-  if (wildReels.length < 2) {
+  // Expansion triggers for any reel with a WILD (free spins always guarantee ≥3).
+  if (wildReels.length < 1) {
     state.expandingWildReels = 0;
     return { grid: rawGrid.map((row) => [...row]), expandedReels: [] };
   }
@@ -1238,7 +1238,7 @@ async function animateExpandingWilds(rawGrid) {
   state.expandingWildReels = selected.length;
 
   const working = rawGrid.map((row) => [...row]);
-  featureLabelEl.textContent = `Free Spins: ${selected.length} expanding wild reels`;
+  featureLabelEl.textContent = `Expanding wilds: ${selected.length} reel${selected.length > 1 ? "s" : ""}!`;
 
   for (let step = 0; step < selected.length; step += 1) {
     const reel = selected[step];
@@ -1392,11 +1392,11 @@ function startFreeSpins() {
     document.body.classList.add("free-spins-active");
     state.freeSpinIndex = 0;
     state.freeSpinsTotalWin = 0;
-    state.expandingWildReels = 3;
+    state.expandingWildReels = 0;
     playBigWinRingRing();
     setBackgroundMusicMode("free");
     showBanner("10 FREE SPINS!", 2200);
-    setMessage("Matador bonus! 10 free spins awarded. Session total starts at 0.");
+    setMessage("Matador bonus! 10 free spins with guaranteed expanding wilds each spin!");
     startFreeSpinCheerLoop();
   } else {
     playBigWinRingRing();
@@ -1441,8 +1441,6 @@ async function spin() {
   if (inFreeSpins) {
     state.freeSpinsRemaining -= 1;
     state.freeSpinIndex += 1;
-    featureLabelEl.textContent = `Free Spin ${state.freeSpinIndex}`;
-    setMessage(`Free spin ${state.freeSpinIndex} in play. Session total: ${money(state.freeSpinsTotalWin)}.`);
   } else {
     state.balance -= bet;
     featureLabelEl.textContent = "Base Spin";
@@ -1453,6 +1451,24 @@ async function spin() {
   updateHud();
 
   const rawGrid = createRandomGrid(inFreeSpins);
+
+  // Core El Torero Plus feature: every free spin guarantees N expanding wild reels.
+  // N is rolled fresh each spin (3 = 64 %, 4 = 27 %, 5 = 9 %) via getExpandingWildTargetCount().
+  let numGuaranteedWilds = 0;
+  if (inFreeSpins) {
+    numGuaranteedWilds = getExpandingWildTargetCount();
+    const reelOrder = getShuffledReels();
+    const guaranteedReels = reelOrder.slice(0, numGuaranteedWilds);
+    guaranteedReels.forEach((reel) => {
+      // Ensure at least one WILD lands on each guaranteed expanding reel.
+      if (!rawGrid.some((row) => row[reel] === "WILD")) {
+        rawGrid[Math.floor(Math.random() * ROWS)][reel] = "WILD";
+      }
+    });
+    featureLabelEl.textContent = `Free Spin ${state.freeSpinIndex} · ${numGuaranteedWilds}× Wild`;
+    setMessage(`Free spin ${state.freeSpinIndex} — ${numGuaranteedWilds} reels guaranteed wild! Session total: ${money(state.freeSpinsTotalWin)}.`);
+  }
+
   startSpinSound();
   await spinAnimation(rawGrid);
   stopSpinSound();
@@ -1573,6 +1589,100 @@ betDownBtn.addEventListener("click", () => changeBet(-1));
 setupReels();
 paintGrid(state.grid);
 updateHud();
+
+// ── Arena canvas background ──────────────────────────────────
+// Draws an animated bullfighting-arena scene behind the game shell.
+(function initArenaBackground() {
+  const canvas = document.getElementById("arena-bg");
+  if (!canvas) {
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
+
+  // Dust particles drifting across the arena floor
+  const PARTICLE_COUNT = 65;
+  const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
+    x: Math.random(),
+    y: 0.55 + Math.random() * 0.45,
+    r: 0.5 + Math.random() * 1.8,
+    vx: (Math.random() - 0.5) * 0.00015,
+    vy: -Math.random() * 0.00008,
+    alpha: 0.04 + Math.random() * 0.12,
+    life: Math.random()
+  }));
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  window.addEventListener("resize", resize);
+  resize();
+
+  function drawArena(w, h) {
+    // Sky gradient — deep dusk purple fading to burnt orange at horizon
+    const sky = ctx.createLinearGradient(0, 0, 0, h * 0.6);
+    sky.addColorStop(0,    "#050208");
+    sky.addColorStop(0.35, "#120318");
+    sky.addColorStop(0.65, "#380a22");
+    sky.addColorStop(1,    "#8a2510");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h * 0.6);
+
+    // Ground gradient — dark earth tones
+    const ground = ctx.createLinearGradient(0, h * 0.6, 0, h);
+    ground.addColorStop(0, "#3a1508");
+    ground.addColorStop(0.5, "#162208");
+    ground.addColorStop(1, "#0a1508");
+    ctx.fillStyle = ground;
+    ctx.fillRect(0, h * 0.6, w, h * 0.4);
+
+    // Horizon glow — warm sunset bloom
+    const bloom = ctx.createRadialGradient(w * 0.55, h * 0.38, 0, w * 0.55, h * 0.38, w * 0.35);
+    bloom.addColorStop(0,   "rgba(200, 90, 20, 0.28)");
+    bloom.addColorStop(0.4, "rgba(180, 60, 10, 0.12)");
+    bloom.addColorStop(1,   "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = bloom;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function loop() {
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+    drawArena(w, h);
+
+    // Animate and render dust particles
+    for (const p of particles) {
+      p.life += 0.003;
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.life >= 1 || p.y < 0 || p.x < -0.05 || p.x > 1.05) {
+        // Respawn at the bottom
+        p.x = Math.random();
+        p.y = 0.7 + Math.random() * 0.3;
+        p.vx = (Math.random() - 0.5) * 0.00015;
+        p.vy = -0.00004 - Math.random() * 0.00008;
+        p.r = 0.5 + Math.random() * 1.8;
+        p.alpha = 0.04 + Math.random() * 0.12;
+        p.life = 0;
+      }
+
+      const fade = Math.sin(p.life * Math.PI);  // fade in/out
+      ctx.beginPath();
+      ctx.arc(p.x * w, p.y * h, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(220, 160, 80, ${p.alpha * fade})`;
+      ctx.fill();
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  loop();
+}());
 
 // Welcome overlay — dismiss on click/tap and initialise audio context.
 const welcomeOverlayEl = document.getElementById("welcome-overlay");
