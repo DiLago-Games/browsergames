@@ -389,7 +389,6 @@
   }
 
   function updateParticles() {
-    particles = particles.filter(p => p.life > 0);
     particles.forEach(p => {
       p.x  += p.vx;
       p.y  += p.vy;
@@ -397,6 +396,7 @@
       p.vy *= 0.95;
       p.life -= p.decay;
     });
+    particles = particles.filter(p => p.life > 0);
   }
 
   /* ── Power-ups ──────────────────────────────────────── */
