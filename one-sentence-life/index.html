@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One Sentence Life</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="app">
+
+    <!-- ── Title / Loading screen ─────────────────────── -->
+    <div id="title-screen" class="screen active">
+      <div class="title-inner">
+        <div id="title-logo">✍ One Sentence Life</div>
+        <p id="title-sub">Your entire life — in a single sentence.</p>
+
+        <div id="unity-loading-bar">
+          <div id="unity-progress-bar-empty">
+            <div id="unity-progress-bar-full"></div>
+          </div>
+          <p id="loading-label">Loading…</p>
+        </div>
+
+        <button id="btn-start" style="display:none;">▶ BEGIN YOUR LIFE</button>
+      </div>
+    </div>
+
+    <!-- ── Game screen ────────────────────────────────── -->
+    <div id="game-screen" class="screen">
+
+      <!-- Life timeline bar -->
+      <div id="timeline">
+        <div id="timeline-fill"></div>
+        <div id="stage-dots"></div>
+      </div>
+
+      <!-- Stage label -->
+      <div id="stage-label-wrap">
+        <span id="stage-emoji"></span>
+        <span id="stage-label"></span>
+      </div>
+
+      <!-- Running sentence -->
+      <div id="sentence-wrap">
+        <p id="sentence-text"></p>
+      </div>
+
+      <!-- Stage narrative + choices -->
+      <div id="choice-area">
+        <p id="stage-prompt"></p>
+        <div id="choices"></div>
+      </div>
+
+    </div>
+
+    <!-- ── Results screen ─────────────────────────────── -->
+    <div id="results-screen" class="screen">
+      <div id="results-box">
+        <h2 id="results-title">A Life, Told in One Sentence</h2>
+        <blockquote id="final-sentence"></blockquote>
+        <div id="results-stats">
+          <span id="result-years"></span>
+          <span id="result-score"></span>
+        </div>
+        <button id="btn-restart">↺ LIVE AGAIN</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
