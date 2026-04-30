@@ -1,66 +1,65 @@
-const ROWS = 5;
+const ROWS = 3;
 const REELS = 5;
 
 const BET_LEVELS = [5, 10, 20, 40, 80];
 const SYMBOL_META = {
-  DANCER: { emoji: "💃", name: "DANCER" },
-  BULL: { emoji: "🐂", name: "BULL" },
-  ROSE: { emoji: "🌹", name: "ROSE" },
-  HAT: { emoji: "🎩", name: "HAT" },
-  BOOT: { emoji: "👢", name: "BOOT" },
-  MOON: { emoji: "🌙", name: "MOON" },
-  SCATTER: { emoji: "🎪", name: "SCATTER" },
-  WILD: { emoji: "🟥", name: "WILD" }
+  TORERO:  { emoji: "🧑",  name: "TORERO" },
+  ROSE:    { emoji: "🌹",  name: "ROSE" },
+  HAT:     { emoji: "🎩",  name: "HAT" },
+  ACE:     { label: "A",   cssClass: "card-ace",   name: "ACE",   isCard: true },
+  KING:    { label: "K",   cssClass: "card-king",  name: "KING",  isCard: true },
+  QUEEN:   { label: "Q",   cssClass: "card-queen", name: "QUEEN", isCard: true },
+  JACK:    { label: "J",   cssClass: "card-jack",  name: "JACK",  isCard: true },
+  SCATTER: { emoji: "⭐",  name: "SCATTER" },
+  WILD:    { emoji: "🐂",  name: "WILD" }
 };
 
 const SYMBOL_POOL_BASE = [
-  "DANCER", "DANCER", "DANCER",
-  "BULL", "BULL", "BULL", "BULL",
-  "ROSE", "ROSE", "ROSE", "ROSE", "ROSE",
+  "TORERO", "TORERO", "TORERO",
+  "ROSE", "ROSE", "ROSE", "ROSE",
   "HAT", "HAT", "HAT", "HAT", "HAT",
-  "BOOT", "BOOT", "BOOT", "BOOT", "BOOT", "BOOT",
-  "MOON", "MOON", "MOON", "MOON", "MOON", "MOON", "MOON",
+  "ACE", "ACE", "ACE", "ACE", "ACE",
+  "KING", "KING", "KING", "KING", "KING", "KING",
+  "QUEEN", "QUEEN", "QUEEN", "QUEEN", "QUEEN", "QUEEN",
+  "JACK", "JACK", "JACK", "JACK", "JACK", "JACK", "JACK",
   "WILD",
   "SCATTER"
 ];
 
 const SYMBOL_POOL_FREE = [
-  "DANCER", "DANCER", "DANCER", "DANCER",
-  "BULL", "BULL", "BULL", "BULL",
-  "ROSE", "ROSE", "ROSE", "ROSE", "ROSE", "ROSE",
-  "HAT", "HAT", "HAT", "HAT", "HAT", "HAT",
-  "BOOT", "BOOT", "BOOT", "BOOT", "BOOT", "BOOT", "BOOT",
-  "MOON", "MOON", "MOON", "MOON", "MOON", "MOON", "MOON", "MOON",
+  "TORERO", "TORERO", "TORERO", "TORERO",
+  "ROSE", "ROSE", "ROSE", "ROSE",
+  "HAT", "HAT", "HAT", "HAT", "HAT",
+  "ACE", "ACE", "ACE", "ACE", "ACE",
+  "KING", "KING", "KING", "KING", "KING",
+  "QUEEN", "QUEEN", "QUEEN", "QUEEN", "QUEEN", "QUEEN",
+  "JACK", "JACK", "JACK", "JACK", "JACK", "JACK",
   "WILD", "WILD",
   "SCATTER"
 ];
 
 const PAYLINES = [
-  [0, 0, 0, 0, 0],
-  [1, 1, 1, 1, 1],
-  [2, 2, 2, 2, 2],
-  [3, 3, 3, 3, 3],
-  [4, 4, 4, 4, 4],
-  [0, 1, 2, 3, 4],
-  [4, 3, 2, 1, 0],
-  [0, 0, 1, 0, 0],
-  [4, 4, 3, 4, 4],
-  [1, 2, 3, 2, 1],
-  [3, 2, 1, 2, 3],
-  [0, 1, 1, 1, 0],
-  [4, 3, 3, 3, 4],
-  [2, 1, 0, 1, 2],
-  [2, 3, 4, 3, 2]
+  [0, 0, 0, 0, 0],  // line  1: top row
+  [1, 1, 1, 1, 1],  // line  2: middle row
+  [2, 2, 2, 2, 2],  // line  3: bottom row
+  [0, 1, 2, 1, 0],  // line  4: V shape
+  [2, 1, 0, 1, 2],  // line  5: inverted V
+  [1, 0, 0, 0, 1],  // line  6: dip top
+  [1, 2, 2, 2, 1],  // line  7: dip bottom
+  [0, 0, 1, 2, 2],  // line  8: diagonal down
+  [2, 2, 1, 0, 0],  // line  9: diagonal up
+  [1, 0, 1, 2, 1]   // line 10: zigzag
 ];
 
 const PAYTABLE = {
-  DANCER: { 3: 5, 4: 12, 5: 28 },
-  BULL: { 3: 4, 4: 10, 5: 24 },
-  ROSE: { 3: 3, 4: 8, 5: 18 },
-  HAT: { 3: 2, 4: 6, 5: 14 },
-  BOOT: { 3: 2, 4: 5, 5: 12 },
-  MOON: { 3: 1, 4: 4, 5: 10 },
-  WILD: { 3: 6, 4: 16, 5: 40 }
+  TORERO: { 3: 5, 4: 12, 5: 28 },
+  ROSE:   { 3: 4, 4: 10, 5: 24 },
+  HAT:    { 3: 3, 4: 8,  5: 18 },
+  ACE:    { 3: 2, 4: 6,  5: 14 },
+  KING:   { 3: 2, 4: 5,  5: 12 },
+  QUEEN:  { 3: 1, 4: 4,  5: 10 },
+  JACK:   { 3: 1, 4: 3,  5:  8 },
+  WILD:   { 3: 6, 4: 16, 5: 40 }
 };
 
 const FREE_SPINS_AWARD = 10;
@@ -188,7 +187,11 @@ function mountFinalReel(reelIndex, columnSymbols) {
 
 function renderCell(cell, symbol, isWin) {
   const meta = SYMBOL_META[symbol] || { emoji: symbol, name: symbol };
-  cell.innerHTML = `<span class="emoji" aria-label="${meta.name}">${meta.emoji}</span>`;
+  if (meta.isCard) {
+    cell.innerHTML = `<span class="card-label ${meta.cssClass}" aria-label="${meta.name}">${meta.label}</span>`;
+  } else {
+    cell.innerHTML = `<span class="emoji" aria-label="${meta.name}">${meta.emoji}</span>`;
+  }
   cell.classList.toggle("wild", symbol === "WILD");
   cell.classList.toggle("win", isWin);
 }
@@ -950,7 +953,7 @@ function countConsecutive(symbols, targetSymbol) {
 }
 
 function evaluateLine(lineSymbols) {
-  const candidates = ["DANCER", "BULL", "ROSE", "HAT", "BOOT", "MOON", "WILD"];
+  const candidates = ["TORERO", "ROSE", "HAT", "ACE", "KING", "QUEEN", "JACK", "WILD"];
   let best = { symbol: null, count: 0, multiplier: 0 };
 
   for (const symbol of candidates) {
@@ -1062,7 +1065,11 @@ function createSpinSymbolCell(symbol) {
   const cell = document.createElement("div");
   cell.className = "spin-symbol";
   cell.dataset.symbol = symbol;
-  cell.innerHTML = `<span class="emoji" aria-label="${meta.name}">${meta.emoji}</span>`;
+  if (meta.isCard) {
+    cell.innerHTML = `<span class="card-label ${meta.cssClass}" aria-label="${meta.name}">${meta.label}</span>`;
+  } else {
+    cell.innerHTML = `<span class="emoji" aria-label="${meta.name}">${meta.emoji}</span>`;
+  }
   if (symbol === "WILD") {
     cell.classList.add("wild");
   }
