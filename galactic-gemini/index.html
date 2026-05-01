@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Galactic Gemini Slots</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="space-bg" aria-hidden="true"></canvas>
+  <div id="announcement-overlay" class="announcement-overlay" aria-live="polite">
+    <div id="announcement-card" class="announcement-card"></div>
+  </div>
+  <main class="game-shell">
+    <header class="topbar">
+      <h1>Galactic<span class="gemini-badge">Gemini</span></h1>
+      <p>Three Reels · Three Rows · Cosmic Wild Reels</p>
+    </header>
+
+    <section class="status-panel">
+      <div class="stat">
+        <span class="label">Balance</span>
+        <span id="balance" class="value">500</span>
+      </div>
+      <div class="stat">
+        <span class="label">Bet</span>
+        <span id="bet" class="value">10</span>
+      </div>
+      <div class="stat">
+        <span class="label">Win</span>
+        <span id="win" class="value">0</span>
+      </div>
+      <div class="stat feature">
+        <span class="label">Feature</span>
+        <span id="feature-label" class="value">Ready</span>
+      </div>
+      <div class="stat free-spins">
+        <span class="label">Free Spins</span>
+        <span id="free-spins" class="value">0</span>
+      </div>
+    </section>
+
+    <section class="machine-wrap">
+      <div id="reels" class="reels" aria-label="Slot reels"></div>
+      <div class="payline-overlay" aria-hidden="true"></div>
+      <div id="bonus-banner" class="bonus-banner" aria-live="polite"></div>
+    </section>
+
+    <section class="controls">
+      <button id="bet-down" class="btn secondary">Bet −</button>
+      <button id="spin" class="btn spin">Spin</button>
+      <button id="bet-up" class="btn secondary">Bet +</button>
+    </section>
+
+    <section class="message-box" id="message-box" aria-live="polite">
+      Press Spin to launch into the cosmos.
+    </section>
+
+    <section class="legend">
+      <h2>Cosmic Wild Reels</h2>
+      <p>Land 3 SCATTER (☄️) symbols anywhere to trigger 8 free spins.</p>
+      <p>Every free spin <strong>guarantees</strong> one or two randomly selected reels become full Cosmic Wild reels — massively boosting your chances of a stellar payout.</p>
+      <p>Big wins trigger cosmic chimes and galactic blasts!</p>
+    </section>
+
+    <section class="symbol-guide" aria-label="Symbol explanation">
+      <h2>Symbol Explanation</h2>
+      <div class="symbol-grid">
+        <div class="symbol-item"><span class="icon">♊</span><span>GEMINI: high pay symbol</span></div>
+        <div class="symbol-item"><span class="icon">⭐</span><span>STAR: medium-high pay</span></div>
+        <div class="symbol-item"><span class="icon">🪐</span><span>PLANET: medium pay</span></div>
+        <div class="symbol-item"><span class="icon">💎</span><span>CRYSTAL: medium pay</span></div>
+        <div class="symbol-item"><span class="icon sym-label sym-bar">BAR</span><span>BAR: low-medium pay</span></div>
+        <div class="symbol-item"><span class="icon sym-label sym-seven">7</span><span>SEVEN: jackpot symbol (100×)</span></div>
+        <div class="symbol-item"><span class="icon">🌀</span><span>WILD: substitutes for any symbol</span></div>
+        <div class="symbol-item"><span class="icon">☄️</span><span>SCATTER: 3 anywhere triggers free spins</span></div>
+      </div>
+      <p class="symbol-note">Line wins pay on 3 matching symbols from left to right across all three paylines.</p>
+    </section>
+  </main>
+
+  <div id="welcome-overlay" class="welcome-overlay" role="dialog" aria-modal="true" aria-label="Welcome to Galactic Gemini Slots">
+    <div class="welcome-card">
+      <span class="welcome-logo">♊</span>
+      <h2 class="welcome-title">Galactic Gemini</h2>
+      <p class="welcome-sub">Three Reels · Three Rows · Cosmic Wild Reels</p>
+      <button id="welcome-btn" class="btn spin welcome-start-btn">Launch into the Cosmos!</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

@@ -8,6 +8,7 @@ A collection of casual browser games built with HTML5 and JavaScript.
 |--------|------|-------------|
 | [`space-blaster/`](space-blaster/) | 🚀 Space Blaster | Shoot asteroids, collect power-ups, survive as long as you can |
 | [`el-torero-slots/`](el-torero-slots/) | 🎰 El Torero Slots | Five-reel slot machine with expanding wilds and big-win ring-ring bells |
+| [`galactic-gemini/`](galactic-gemini/) | ♊ Galactic Gemini | Three-reel space slot with static reel strips, Cosmic Wild reels in free spins, and a starfield background |
 | [`one-sentence-life/`](one-sentence-life/) | ✍ One Sentence Life | Narrative choice game — journey through seven life stages and read your story in one sentence |
 | [`futuristic-pong/`](futuristic-pong/) | ⚡ Pong 3001 | Neon cyber-pong: glow effects, particle hits, AI opponent, power-ups, and level progression |
 
