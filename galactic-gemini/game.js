@@ -6,7 +6,7 @@ const BET_LEVELS = [5, 10, 20, 40, 80];
 
 const SYMBOL_META = {
   GEMINI:  { emoji: "♊",   name: "GEMINI" },
-  STAR:    { emoji: "⭐",   name: "STAR" },
+  STAR:    { emoji: "🚀",   name: "STAR" },
   PLANET:  { emoji: "🪐",   name: "PLANET" },
   CRYSTAL: { emoji: "💎",   name: "CRYSTAL" },
   BAR:     { label: "BAR",  cssClass: "sym-bar",   name: "BAR",   isLabel: true },
@@ -313,7 +313,7 @@ function getBgmProfile(mode) {
     bigwin: {
       stepMs: 85,
       melody: [G4, A4, C5, D5, E5, G5, A5, G5, E5, D5, C5, A4, G4, A4, C5, E5],
-      bass:   [G3 = 196, G3, C4, C4, E4, E4, G4, G4],
+      bass:   [196, 196, C4, C4, E4, E4, G4, G4],
       drums:  ["kick", "hat", "snare", "hat", "kick", "kick", "snare", "hat"],
       melGain: 0.06, bassGain: 0.045, drumGain: 0.06
     }
@@ -441,10 +441,10 @@ function stopSpinSound() {
   }
 }
 
-function playCosmicFlourish(startTime, root) {
+function playCosmicFlourish(startTime, root, gainBase = 0.10) {
   // Rising arpeggio – space victory fanfare
   [1, 1.25, 1.5, 2, 2.5].forEach((mult, i) => {
-    playSynthTone(startTime + i * 0.10, root * mult, 0.15, 0.10 + i * 0.012, "triangle", true);
+    playSynthTone(startTime + i * 0.10, root * mult, 0.15, gainBase + i * 0.012, "triangle", true);
   });
 }
 
