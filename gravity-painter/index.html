@@ -355,8 +355,12 @@
 
     const S = {
       particleCount:        3800,
+      // User-placed nodes are capped at nodeLimit; captured field nodes may add up to 5 more.
       nodeLimit:            9,
-      softening:            95,
+      softening:            95,   // softening radius for node forces (avoids singularity)
+      fieldSoftening:       80,   // separate softening radius used in field force calculations
+      gravityForceScale:    95000, // tuning multiplier for radial node force
+      swirlForceScale:      82000, // tuning multiplier for tangential (swirl) node force
       maxSpeed:             920,
       starCount:            220,
       fieldCount:           7,
@@ -562,7 +566,7 @@
       for (const f of fields) {
         if (f.captured) continue;
         const dx = f.x - p.x, dy = f.y - p.y;
-        const distSq = dx * dx + dy * dy + 80 * 80 * dpr;
+        const distSq = dx * dx + dy * dy + S.fieldSoftening * S.fieldSoftening * dpr;
         const dist   = Math.sqrt(distSq);
         const influence = f.r * 4.2;
         if (dist > influence) continue;
@@ -602,12 +606,12 @@
           const nx = dx / dist, ny = dy / dist;
 
           const strength = (gravityStr * n.polarity * pulseEffect) / distSq;
-          ax += nx * strength * 95000;
-          ay += ny * strength * 95000;
+          ax += nx * strength * S.gravityForceScale;
+          ay += ny * strength * S.gravityForceScale;
 
           const tangent = (swirlStr * n.orbit * pulseEffect) / distSq;
-          ax += -ny * tangent * 82000;
-          ay +=  nx * tangent * 82000;
+          ax += -ny * tangent * S.swirlForceScale;
+          ay +=  nx * tangent * S.swirlForceScale;
         }
 
         // Subtle ambient turbulence.
