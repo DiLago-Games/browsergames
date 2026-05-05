@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gravity Painter — Expanding Universe</title>
+  <style>
+    :root {
+      --bg: #03040b;
+      --cyan: #29f3ff;
+      --pink: #ff2bd6;
+      --orange: #ff9b2f;
+      --violet: #8b5cff;
+      --green: #78ffbe;
+      --red: #ff5840;
+      --text: #eef6ff;
+      --muted: #8ea0c7;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 45%, #101538 0%, #050716 42%, #010208 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      user-select: none;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      cursor: crosshair;
+    }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 50%, transparent 0%, transparent 52%, rgba(0,0,0,0.66) 100%),
+        linear-gradient(180deg, rgba(0,0,0,.22), transparent 35%, rgba(0,0,0,.32));
+      mix-blend-mode: multiply;
+    }
+
+    .hud {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      width: min(420px, calc(100vw - 44px));
+      padding: 18px;
+      border: 1px solid rgba(120, 220, 255, 0.18);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(13,18,43,0.82), rgba(4,6,17,0.58));
+      backdrop-filter: blur(18px);
+      box-shadow: 0 20px 80px rgba(0,0,0,.35), 0 0 44px rgba(41,243,255,.08);
+      overflow-y: auto;
+      max-height: calc(100vh - 44px);
+    }
+
+    .title {
+      font-size: 25px;
+      line-height: 1;
+      margin: 0 0 5px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px rgba(41,243,255,.62), 0 0 28px rgba(255,43,214,.26);
+    }
+
+    .subtitle {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .stat {
+      padding: 10px 11px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.09);
+      font-size: 12px;
+      color: rgba(238,246,255,.78);
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--cyan);
+      font-size: 18px;
+      line-height: 1.1;
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .goalBox {
+      margin-bottom: 14px;
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(120,255,190,.18);
+      background: linear-gradient(135deg, rgba(120,255,190,.08), rgba(255,43,214,.06));
+      color: rgba(238,246,255,.84);
+      font-size: 13px;
+    }
+
+    .goalBox b { color: var(--green); }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+      margin-top: 8px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,.35);
+    }
+
+    .fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--pink), var(--orange));
+      box-shadow: 0 0 18px rgba(41,243,255,.45);
+      transition: width .18s ease;
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      color: #c8d6ff;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .value {
+      color: var(--cyan);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--pink);
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 16px;
+      padding: 11px 12px;
+      background: linear-gradient(135deg, rgba(41,243,255,.16), rgba(255,43,214,.14));
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: inset 0 0 20px rgba(255,255,255,.04), 0 0 26px rgba(255,43,214,.1);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: inset 0 0 20px rgba(255,255,255,.05), 0 0 32px rgba(41,243,255,.18);
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%);
+      color: rgba(238,246,255,.72);
+      font-size: 13px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.13);
+      background: rgba(4,6,17,.46);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 0 34px rgba(41,243,255,.08);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      color: rgba(238,246,255,.7);
+      font-size: 12px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      flex-shrink: 0;
+      background: var(--cyan);
+      box-shadow: 0 0 16px var(--cyan), 0 0 32px var(--pink);
+    }
+
+    @media (max-width: 640px) {
+      .hud { top: 12px; left: 12px; padding: 14px; }
+      .title { font-size: 20px; }
+      .hint { bottom: 14px; max-width: calc(100vw - 24px); white-space: normal; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="fx"></canvas>
+  <div class="vignette"></div>
+
+  <section class="hud">
+    <h1 class="title">Gravity Painter</h1>
+    <p class="subtitle">Bend space and time. Assimilate foreign fields. Expand your universe.</p>
+
+    <div class="stats">
+      <div class="stat">Universe<strong id="universeStat">0%</strong></div>
+      <div class="stat">Fields Assimilated<strong id="fieldStat">0/0</strong></div>
+      <div class="stat">Energy<strong id="energyStat">0</strong></div>
+      <div class="stat">Sector<strong id="sectorStat">1</strong></div>
+    </div>
+
+    <div class="goalBox">
+      <b id="goalTitle">Goal:</b> <span id="goalText">Assimilate fields, expand your universe, unlock the next sector.</span>
+      <div class="bar"><div class="fill" id="goalFill"></div></div>
+    </div>
+
+    <div class="controls">
+      <label>
+        <span class="row">Gravity Strength <span class="value" id="gravityValue"></span></span>
+        <input id="gravity" type="range" min="-2200" max="4200" step="50" value="1800" />
+      </label>
+
+      <label>
+        <span class="row">Gravity Radius <span class="value" id="radiusValue"></span></span>
+        <input id="radius" type="range" min="50" max="700" step="10" value="200" />
+      </label>
+
+      <label>
+        <span class="row">Vortex / Swirl <span class="value" id="swirlValue"></span></span>
+        <input id="swirl" type="range" min="-1800" max="1800" step="25" value="620" />
+      </label>
+
+      <label>
+        <span class="row">Damping <span class="value" id="dampingValue"></span></span>
+        <input id="damping" type="range" min="0.900" max="0.999" step="0.001" value="0.986" />
+      </label>
+
+      <label>
+        <span class="row">Pulse <span class="value" id="pulseValue"></span></span>
+        <input id="pulse" type="range" min="0" max="1" step="0.01" value="0.22" />
+      </label>
+
+      <label>
+        <span class="row">Time Scale <span class="value" id="timeValue"></span></span>
+        <input id="timeScale" type="range" min="0.2" max="2.4" step="0.05" value="1.0" />
+      </label>
+
+      <label>
+        <span class="row">Trail Fade <span class="value" id="trailValue"></span></span>
+        <input id="trail" type="range" min="0.02" max="0.22" step="0.01" value="0.07" />
+      </label>
+
+      <label>
+        <span class="row">Zoom <span class="value" id="zoomValue"></span></span>
+        <input id="zoom" type="range" min="0.5" max="2.0" step="0.1" value="1.0" />
+      </label>
+    </div>
+
+    <div class="buttons">
+      <button id="seedBtn">Nebula Seed</button>
+      <button id="clearBtn">Reset</button>
+    </div>
+
+    <div class="badge">
+      <span class="dot"></span>
+      Left-click / drag = Gravity Well &nbsp;·&nbsp; Right-click = Repulsor
+    </div>
+  </section>
+
+  <div class="hint">Pull particles into foreign fields — assimilation expands your universe.</div>
+
+  <script>
+    const canvas = document.getElementById('fx');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const $ = id => document.getElementById(id);
+
+    const ui = {
+      gravity:      $('gravity'),
+      radius:       $('radius'),
+      swirl:        $('swirl'),
+      damping:      $('damping'),
+      pulse:        $('pulse'),
+      timeScale:    $('timeScale'),
+      trail:        $('trail'),
+      zoom:         $('zoom'),
+      gravityValue: $('gravityValue'),
+      radiusValue:  $('radiusValue'),
+      swirlValue:   $('swirlValue'),
+      dampingValue: $('dampingValue'),
+      pulseValue:   $('pulseValue'),
+      timeValue:    $('timeValue'),
+      trailValue:   $('trailValue'),
+      zoomValue:    $('zoomValue'),
+      clearBtn:     $('clearBtn'),
+      seedBtn:      $('seedBtn'),
+      universeStat: $('universeStat'),
+      fieldStat:    $('fieldStat'),
+      goalTitle:    $('goalTitle'),
+      goalText:     $('goalText'),
+      energyStat:   $('energyStat'),
+      sectorStat:   $('sectorStat'),
+      goalFill:     $('goalFill'),
+    };
+
+    // ─── State ────────────────────────────────────────────────────────────────
+    let w = 0, h = 0, dpr = 1;
+    let particles = [], nodes = [], fields = [], stars = [];
+    let time = 0, last = performance.now(), shake = 0;
+    const pointer = { x: 0, y: 0, down: false, right: false, lastSpawn: 0 };
+
+    const world = {
+      centerX: 0, centerY: 0,
+      unlockedRadius: 0, targetRadius: 0, maxRadius: 0,
+      energy: 0, sector: 1,
+      levelComplete: false, sectorCompleteTimer: 0,
+      sectorGoalFields: 5,
+      message: '',
+    };
+
+    const S = {
+      particleCount:        3800,
+      // User-placed nodes are capped at nodeLimit; captured field nodes may add up to capturedNodeBonus more.
+      nodeLimit:            9,
+      capturedNodeBonus:    5,   // extra node slots reserved for assimilated field nodes
+      softening:            95,   // softening radius for node forces (avoids singularity)
+      fieldSoftening:       80,   // separate softening radius used in field force calculations
+      gravityForceScale:    95000, // tuning multiplier for radial node force
+      swirlForceScale:      82000, // tuning multiplier for tangential (swirl) node force
+      maxSpeed:             920,
+      starCount:            220,
+      fieldCount:           7,
+      assimilationRate:     0.018,
+      drainRate:            0.006,
+      sectorTransitionDelay: 2.2, // seconds before auto-advancing to the next sector
+      fieldRespawnEvery:    3,
+      maxSector:            99,   // soft cap — prevents unbounded progression scaling
+    };
+
+    // Colour palette for particles (neon spectrum).
+    const PALETTE = [
+      [41,  243, 255],   // cyan
+      [255,  43, 214],   // pink
+      [255, 155,  47],   // orange
+      [139,  92, 255],   // violet
+      [120, 255, 190],   // green
+    ];
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+    const rand = (a, b) => a + Math.random() * (b - a);
+
+    function smoothstep(edge0, edge1, x) {
+      const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+      return t * t * (3 - 2 * t);
+    }
+
+    // ─── Resize ───────────────────────────────────────────────────────────────
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = canvas.width  = Math.floor(innerWidth  * dpr);
+      h = canvas.height = Math.floor(innerHeight * dpr);
+      canvas.style.width  = innerWidth  + 'px';
+      canvas.style.height = innerHeight + 'px';
+      buildStars();
+      if (!particles.length) seedNebula();
+    }
+
+    // ─── Stars ────────────────────────────────────────────────────────────────
+    function buildStars() {
+      stars.length = 0;
+      for (let i = 0; i < S.starCount; i++) {
+        stars.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: rand(0.4, 1.8) * dpr,
+          a: rand(0.08, 0.55),
+          tw: rand(0.5, 2.2),
+        });
+      }
+    }
+
+    // ─── Particles ────────────────────────────────────────────────────────────
+    function makeParticle(x, y, burst = false) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = burst ? rand(80, 620) : rand(12, 160);
+      return {
+        x, y, px: x, py: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        age: Math.random() * 100,
+        hueShift: Math.random(),
+        size: rand(0.55, 1.9) * dpr,
+        charged: 0,
+      };
+    }
+
+    // ─── Seed nebula / new game ───────────────────────────────────────────────
+    function seedNebula() {
+      world.centerX          = w * 0.52;
+      world.centerY          = h * 0.52;
+      world.unlockedRadius   = Math.min(w, h) * 0.24;
+      world.targetRadius     = Math.min(w, h) * 0.78;
+      world.maxRadius        = Math.min(w, h) * 0.88;
+      world.energy           = 0;
+      world.sector           = 1;
+      world.levelComplete    = false;
+      world.sectorCompleteTimer = 0;
+      world.sectorGoalFields = 5;
+      world.message          = 'Sector 1: Find and assimilate 5 active fields.';
+
+      particles = [];
+      for (let i = 0; i < S.particleCount; i++) {
+        const a = i * 0.034 + rand(-0.4, 0.4);
+        const r = Math.sqrt(i / S.particleCount) * world.unlockedRadius * rand(0.08, 0.92);
+        const x = world.centerX + Math.cos(a) * r + rand(-18, 18) * dpr;
+        const y = world.centerY + Math.sin(a) * r + rand(-18, 18) * dpr;
+        const p = makeParticle(x, y);
+        p.vx += -Math.sin(a) * rand(20, 130);
+        p.vy +=  Math.cos(a) * rand(20, 130);
+        particles.push(p);
+      }
+
+      nodes = [
+        createNode(w * 0.52, h * 0.48,  1),
+        createNode(w * 0.61, h * 0.56, -0.45),
+      ];
+
+      spawnFields();
+      fadeOverlay(1);
+    }
+
+    // ─── Fields ───────────────────────────────────────────────────────────────
+    function spawnFields() {
+      fields = [];
+      const count = S.fieldCount + Math.min(5, world.sector - 1);
+      for (let i = 0; i < count; i++) spawnField(i, count);
+    }
+
+    function spawnField(i = 0, count = S.fieldCount) {
+      const ring    = rand(Math.min(0.88, 0.31 + world.sector * 0.025), Math.min(0.96, 0.72 + world.sector * 0.018));
+      const angle   = (i / count) * Math.PI * 2 + rand(-0.48, 0.48) + world.sector * 0.41;
+      const radius  = world.maxRadius * ring;
+      const typeRoll = Math.random();
+      const type    = typeRoll < 0.34 ? 'repulsor' : typeRoll < 0.70 ? 'vortex' : 'well';
+      fields.push({
+        x: world.centerX + Math.cos(angle) * radius,
+        y: world.centerY + Math.sin(angle) * radius,
+        r: rand(44, 80) * dpr,
+        pull:  type === 'repulsor' ? -rand(700, 1400) : rand(650, 1550),
+        swirl: type === 'vortex'   ?  rand(-1600, 1600) : rand(-420, 420),
+        type,
+        progress: 0,
+        captured: false,
+        phase: rand(0, Math.PI * 2),
+        particlesInside: 0,
+        bornSector: world.sector,
+      });
+    }
+
+    // ─── Nodes ────────────────────────────────────────────────────────────────
+    function createNode(x, y, polarity = 1) {
+      return { x, y, birth: time, polarity, phase: Math.random() * Math.PI * 2, orbit: rand(0.5, 1.4) };
+    }
+
+    function addNode(x, y, polarity = 1) {
+      // Clamp to just beyond the frontier.
+      const dx = x - world.centerX, dy = y - world.centerY;
+      const dist = Math.hypot(dx, dy);
+      if (dist > world.unlockedRadius + 80 * dpr) {
+        const nx = dx / dist, ny = dy / dist;
+        x = world.centerX + nx * (world.unlockedRadius + 80 * dpr);
+        y = world.centerY + ny * (world.unlockedRadius + 80 * dpr);
+      }
+      nodes.push(createNode(x, y, polarity));
+      while (nodes.length > S.nodeLimit) nodes.shift();
+      shockwave(x, y, polarity);
+      shake = 8 * dpr;
+    }
+
+    function addCapturedNode(f) {
+      nodes.push({
+        x: f.x, y: f.y,
+        birth: time, polarity: 0.45,
+        phase: Math.random() * Math.PI * 2,
+        orbit: rand(0.4, 0.9),
+        captured: true,
+      });
+      while (nodes.length > S.nodeLimit + S.capturedNodeBonus) nodes.shift();
+    }
+
+    // ─── Shockwave ────────────────────────────────────────────────────────────
+    function shockwave(x, y, polarity) {
+      for (const p of particles) {
+        const dx = p.x - x, dy = p.y - y;
+        const dist = Math.hypot(dx, dy) + 0.001;
+        if (dist < 220 * dpr) {
+          const f = (1 - dist / (220 * dpr)) * 520 * polarity;
+          p.vx += (dx / dist) * f;
+          p.vy += (dy / dist) * f;
+        }
+      }
+    }
+
+    // ─── Burst ────────────────────────────────────────────────────────────────
+    function burst(x, y, amount) {
+      for (let i = 0; i < amount; i++) {
+        const p = particles[Math.floor(Math.random() * particles.length)];
+        if (!p) continue;
+        p.x  = x + rand(-20, 20) * dpr;
+        p.y  = y + rand(-20, 20) * dpr;
+        p.px = p.x; p.py = p.y;
+        const a = Math.random() * Math.PI * 2;
+        const s = rand(160, 760) * dpr;
+        p.vx = Math.cos(a) * s;
+        p.vy = Math.sin(a) * s;
+        p.charged = 1;
+      }
+    }
+
+    function celebrationBurst() {
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2;
+        burst(
+          world.centerX + Math.cos(a) * world.unlockedRadius * 0.72,
+          world.centerY + Math.sin(a) * world.unlockedRadius * 0.72,
+          38,
+        );
+      }
+    }
+
+    // ─── Physics ──────────────────────────────────────────────────────────────
+    function applyFieldForces(p, dt) {
+      for (const f of fields) {
+        if (f.captured) continue;
+        const dx = f.x - p.x, dy = f.y - p.y;
+        const distSq = dx * dx + dy * dy + S.fieldSoftening * S.fieldSoftening * dpr;
+        const dist   = Math.sqrt(distSq);
+        const influence = f.r * 4.2;
+        if (dist > influence) continue;
+        const local = 1 - dist / influence;
+        const nx = dx / dist, ny = dy / dist;
+        p.vx += nx * f.pull  * local * dt;
+        p.vy += ny * f.pull  * local * dt;
+        p.vx += -ny * f.swirl * local * dt;
+        p.vy +=  nx * f.swirl * local * dt;
+      }
+    }
+
+    function updateParticles(dt) {
+      const gravityStr = Number(ui.gravity.value) * dpr;
+      const radiusPx   = Number(ui.radius.value)  * dpr;
+      const swirlStr   = Number(ui.swirl.value)   * dpr;
+      const damping    = Number(ui.damping.value);
+      const pulseAmt   = Number(ui.pulse.value);
+      const maxSpd     = S.maxSpeed * dpr;
+      const softenSq   = S.softening * S.softening * dpr;
+
+      for (const f of fields) f.particlesInside = 0;
+
+      for (const p of particles) {
+        p.px = p.x; p.py = p.y;
+        p.age += dt;
+        p.charged *= 0.965;
+
+        let ax = 0, ay = 0;
+
+        for (const n of nodes) {
+          const pulseEffect = 1 + Math.sin(time * 3.2 + n.phase) * pulseAmt;
+          const dx = n.x - p.x, dy = n.y - p.y;
+          const distSq = dx * dx + dy * dy + softenSq;
+          const dist   = Math.sqrt(distSq);
+          if (dist > radiusPx) continue;        // gravity radius limit
+          const nx = dx / dist, ny = dy / dist;
+
+          const strength = (gravityStr * n.polarity * pulseEffect) / distSq;
+          ax += nx * strength * S.gravityForceScale;
+          ay += ny * strength * S.gravityForceScale;
+
+          const tangent = (swirlStr * n.orbit * pulseEffect) / distSq;
+          ax += -ny * tangent * S.swirlForceScale;
+          ay +=  nx * tangent * S.swirlForceScale;
+        }
+
+        // Subtle ambient turbulence.
+        ax += Math.sin(p.y * 0.003 + time * 1.7) * 18 * dpr;
+        ay += Math.cos(p.x * 0.003 - time * 1.2) * 18 * dpr;
+
+        p.vx += ax * dt;
+        p.vy += ay * dt;
+        applyFieldForces(p, dt);
+
+        p.vx *= damping;
+        p.vy *= damping;
+
+        const speed = Math.hypot(p.vx, p.vy);
+        if (speed > maxSpd) {
+          p.vx = (p.vx / speed) * maxSpd;
+          p.vy = (p.vy / speed) * maxSpd;
+        }
+
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        // Bounce off the frontier boundary.
+        const dxw = p.x - world.centerX, dyw = p.y - world.centerY;
+        const distw = Math.hypot(dxw, dyw);
+        const edge  = world.unlockedRadius + 34 * dpr;
+        if (distw > edge) {
+          const nx = dxw / distw, ny = dyw / distw;
+          p.x = world.centerX + nx * edge;
+          p.y = world.centerY + ny * edge;
+          const dot = p.vx * nx + p.vy * ny;
+          if (dot > 0) { p.vx -= dot * nx * 1.45; p.vy -= dot * ny * 1.45; }
+        }
+
+        // Count particles inside each field zone.
+        for (const f of fields) {
+          if (Math.hypot(p.x - f.x, p.y - f.y) < f.r) {
+            f.particlesInside++;
+            p.charged = Math.min(1, p.charged + 0.08);
+          }
+        }
+      }
+    }
+
+    // ─── Fields update / assimilation ─────────────────────────────────────────
+    function captureField(f) {
+      if (f.captured) return;
+      f.captured = true;
+      world.energy       += 140 + world.sector * 22;
+      world.unlockedRadius = Math.min(world.targetRadius, world.unlockedRadius + f.r * (1.02 + world.sector * 0.025));
+      addCapturedNode(f);
+      burst(f.x, f.y, 76);
+      shake = 15 * dpr;
+    }
+
+    function updateFields(dt) {
+      for (const f of fields) {
+        if (f.captured) continue;
+        const threshold = Math.max(18, 30 + world.sector * 2);
+        const density   = Math.min(1, f.particlesInside / threshold);
+        const reachable = Math.hypot(f.x - world.centerX, f.y - world.centerY) < world.unlockedRadius + f.r * 1.25;
+
+        if (reachable && density > 0.2) {
+          f.progress += density * S.assimilationRate * dt * 60;
+        } else {
+          f.progress -= S.drainRate * dt * 60;
+        }
+        f.progress = Math.max(0, Math.min(1, f.progress));
+        if (f.progress >= 1) captureField(f);
+      }
+
+      // Passive expansion proportional to captured fields.
+      const captured = fields.filter(f => f.captured).length;
+      world.unlockedRadius = Math.min(
+        world.targetRadius,
+        world.unlockedRadius + (captured / Math.max(1, fields.length)) * (0.045 + world.sector * 0.004) * dpr,
+      );
+
+      // Dynamic field spawning mid-sector.
+      if (!world.levelComplete && captured > 0 && captured % S.fieldRespawnEvery === 0 && fields.length < 14 + world.sector) {
+        const fresh = fields.filter(f => !f.captured && f.bornSector === world.sector).length;
+        if (fresh < 4) {
+          spawnField(fields.length, fields.length + 1);
+          world.message = 'New resonance detected at the edge of known space.';
+        }
+      }
+
+      // Sector completion check.
+      const goal = Math.min(world.sectorGoalFields, fields.length);
+      const done = captured >= goal && world.unlockedRadius >= world.targetRadius * 0.72;
+      if (!world.levelComplete && done) {
+        world.levelComplete       = true;
+        world.sectorCompleteTimer = S.sectorTransitionDelay;
+        world.energy             += 650 + world.sector * 120;
+        world.message             = `Sector ${world.sector} stabilised.`;
+        celebrationBurst();
+      }
+
+      if (world.levelComplete) {
+        world.sectorCompleteTimer -= dt;
+        world.unlockedRadius = Math.min(world.targetRadius, world.unlockedRadius + 0.55 * dpr);
+        if (world.sectorCompleteTimer <= 0) nextSector();
+      }
+    }
+
+    function nextSector() {
+      world.sector = Math.min(world.sector + 1, S.maxSector);
+      world.levelComplete       = false;
+      world.sectorCompleteTimer = 0;
+      world.sectorGoalFields    = Math.min(10, 4 + world.sector);
+      world.unlockedRadius      = Math.min(w, h) * (0.20 + Math.min(0.08, world.sector * 0.008));
+      world.targetRadius        = Math.min(w, h) * Math.min(0.88, 0.64 + world.sector * 0.025);
+      world.maxRadius           = Math.min(w, h) * Math.min(0.96, 0.84 + world.sector * 0.018);
+      world.message             = `Sector ${world.sector}: Depth increased. Foreign fields grow more unstable.`;
+
+      nodes = nodes.filter(n => n.captured).slice(-4);
+      nodes.push(createNode(world.centerX, world.centerY, 0.75));
+
+      for (const p of particles) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random()) * world.unlockedRadius * rand(0.12, 0.94);
+        p.x  = world.centerX + Math.cos(a) * r;
+        p.y  = world.centerY + Math.sin(a) * r;
+        p.px = p.x; p.py = p.y;
+        p.vx += -Math.sin(a) * rand(20, 180) * dpr;
+        p.vy +=  Math.cos(a) * rand(20, 180) * dpr;
+        p.charged = 1;
+      }
+
+      spawnFields();
+      shake = 18 * dpr;
+    }
+
+    // ─── UI update ────────────────────────────────────────────────────────────
+    function updateUI() {
+      ui.gravityValue.textContent  = Number(ui.gravity.value).toFixed(0);
+      ui.radiusValue.textContent   = Number(ui.radius.value).toFixed(0);
+      ui.swirlValue.textContent    = Number(ui.swirl.value).toFixed(0);
+      ui.dampingValue.textContent  = Number(ui.damping.value).toFixed(3);
+      ui.pulseValue.textContent    = Number(ui.pulse.value).toFixed(2);
+      ui.timeValue.textContent     = Number(ui.timeScale.value).toFixed(2) + 'x';
+      ui.trailValue.textContent    = Number(ui.trail.value).toFixed(2);
+      ui.zoomValue.textContent     = Number(ui.zoom.value).toFixed(1) + 'x';
+
+      const progress = Math.min(1, world.unlockedRadius / world.targetRadius);
+      const captured = fields.filter(f => f.captured).length;
+      const goal     = Math.min(world.sectorGoalFields, fields.length);
+      const sectorP  = Math.min(1, captured / Math.max(1, goal));
+
+      ui.universeStat.textContent = Math.round(progress * 100) + '%';
+      ui.fieldStat.textContent    = `${Math.min(captured, goal)}/${goal}`;
+      ui.energyStat.textContent   = Math.floor(world.energy).toString();
+      ui.sectorStat.textContent   = world.sector.toString();
+      ui.goalFill.style.width     = Math.round(Math.max(progress * 0.35, sectorP) * 100) + '%';
+
+      if (world.levelComplete) {
+        ui.goalTitle.textContent = 'Sector Stabilised:';
+        ui.goalText.textContent  = 'The universe folds anew. Prepare for the next sector.';
+      } else {
+        ui.goalTitle.textContent = `Sector ${world.sector}:`;
+        ui.goalText.textContent  = `Assimilate ${goal} field${goal !== 1 ? 's' : ''}. Each field expands your controlled space.`;
+      }
+    }
+
+    // ─── Drawing ──────────────────────────────────────────────────────────────
+    function fadeOverlay(alpha) {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = `rgba(1,2,8,${alpha})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    function drawBackground() {
+      fadeOverlay(Number(ui.trail.value));
+
+      ctx.globalCompositeOperation = 'lighter';
+
+      // Twinkling stars.
+      for (const s of stars) {
+        const dist     = Math.hypot(s.x - world.centerX, s.y - world.centerY);
+        const unlocked = smoothstep(world.unlockedRadius * 0.6, world.unlockedRadius * 1.25, dist);
+        const twinkle  = (s.a + Math.sin(time * s.tw + s.x) * 0.08) * (0.3 + unlocked * 0.7);
+        ctx.fillStyle  = `rgba(160,220,255,${Math.max(0, twinkle)})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Soft nebula glow at centre.
+      const grad = ctx.createRadialGradient(world.centerX, world.centerY, 0, world.centerX, world.centerY, world.unlockedRadius * 1.3);
+      grad.addColorStop(0,    'rgba(41,243,255,0.045)');
+      grad.addColorStop(0.45, 'rgba(255,43,214,0.024)');
+      grad.addColorStop(1,    'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      drawBoundary();
+    }
+
+    function drawBoundary() {
+      const r    = world.unlockedRadius + Math.sin(time * 2.2) * 5 * dpr;
+      const grad = ctx.createRadialGradient(world.centerX, world.centerY, r * 0.65, world.centerX, world.centerY, r * 1.04);
+      grad.addColorStop(0,    'rgba(41,243,255,0)');
+      grad.addColorStop(0.78, 'rgba(41,243,255,0.025)');
+      grad.addColorStop(0.96, 'rgba(255,43,214,0.15)');
+      grad.addColorStop(1,    'rgba(255,155,47,0.02)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(world.centerX, world.centerY, r * 1.04, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(41,243,255,0.18)';
+      ctx.lineWidth   = 1.4 * dpr;
+      ctx.setLineDash([10 * dpr, 16 * dpr]);
+      ctx.beginPath();
+      ctx.arc(world.centerX, world.centerY, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function colorForParticle(p, speed) {
+      const t  = (Math.sin(p.hueShift * 6.28 + time * 0.7 + speed * 0.004 + p.charged * 0.35) + 1) * 0.5;
+      const i  = Math.floor(t * (PALETTE.length - 1));
+      const j  = Math.min(i + 1, PALETTE.length - 1);
+      const f  = t * (PALETTE.length - 1) - i;
+      const a  = PALETTE[i], b = PALETTE[j];
+      return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+    }
+
+    function drawParticles() {
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.lineCap = 'round';
+      const maxSpd = S.maxSpeed * dpr;
+
+      for (const p of particles) {
+        const speed = Math.hypot(p.vx, p.vy);
+        const [r, g, b] = colorForParticle(p, speed);
+        const alpha = Math.min(0.9, 0.12 + (speed / maxSpd) * 0.60 + p.charged * 0.20);
+
+        // Inner bright core.
+        ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
+        ctx.lineWidth   = p.size * (1 + p.charged * 0.8);
+        ctx.shadowColor = `rgba(${r},${g},${b},${alpha * 0.5})`;
+        ctx.shadowBlur  = 10 * dpr;
+        ctx.beginPath();
+        ctx.moveTo(p.px, p.py);
+        ctx.lineTo(p.x,  p.y);
+        ctx.stroke();
+
+        // Outer soft glow layer.
+        ctx.strokeStyle = `rgba(${r},${g},${b},${alpha * 0.25})`;
+        ctx.lineWidth   = p.size * (1 + p.charged * 1.4);
+        ctx.shadowBlur  = 20 * dpr;
+        ctx.beginPath();
+        ctx.moveTo(p.px, p.py);
+        ctx.lineTo(p.x,  p.y);
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function drawFields() {
+      ctx.globalCompositeOperation = 'lighter';
+
+      for (const f of fields) {
+        const reachable = Math.hypot(f.x - world.centerX, f.y - world.centerY) < world.unlockedRadius + f.r * 1.2;
+        const alpha     = f.captured ? 0.28 : reachable ? 0.42 : 0.16;
+        const base      = f.captured   ? [120, 255, 190]
+                        : f.type === 'repulsor' ? [255, 88,  64]
+                        : f.type === 'vortex'   ? [255, 43, 214]
+                        :                         [41, 243, 255];
+        const rr = f.r * (1 + Math.sin(time * 3.1 + f.phase) * 0.1);
+
+        // Glow halo.
+        const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, rr * 2.9);
+        grad.addColorStop(0,    `rgba(${base[0]},${base[1]},${base[2]},${alpha})`);
+        grad.addColorStop(0.35, `rgba(${base[0]},${base[1]},${base[2]},${alpha * 0.22})`);
+        grad.addColorStop(1,    `rgba(${base[0]},${base[1]},${base[2]},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, rr * 2.9, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ring outline.
+        ctx.strokeStyle = `rgba(${base[0]},${base[1]},${base[2]},${alpha + 0.12})`;
+        ctx.lineWidth   = 1.2 * dpr;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, rr, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Assimilation progress arc.
+        if (!f.captured) {
+          ctx.strokeStyle = `rgba(120,255,190,${reachable ? 0.78 : 0.24})`;
+          ctx.lineWidth   = 4 * dpr;
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, rr + 7 * dpr, -Math.PI / 2, -Math.PI / 2 + f.progress * Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Rotating glyph to distinguish field type.
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate(time * (f.type === 'vortex' ? 1.3 : 0.45) + f.phase);
+        ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+        ctx.lineWidth   = 1 * dpr;
+        if (f.type === 'repulsor') {
+          for (let i = 0; i < 4; i++) {
+            ctx.rotate(Math.PI / 2);
+            ctx.beginPath();
+            ctx.moveTo(8 * dpr, 0);
+            ctx.lineTo(24 * dpr, 0);
+            ctx.stroke();
+          }
+        } else {
+          ctx.beginPath(); ctx.arc(0, 0, 14 * dpr, 0, Math.PI * 1.55); ctx.stroke();
+          ctx.beginPath(); ctx.arc(0, 0, 24 * dpr, Math.PI, Math.PI * 2.45); ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+
+    function drawNodes() {
+      ctx.globalCompositeOperation = 'lighter';
+
+      for (const n of nodes) {
+        const pulse  = 1 + Math.sin(time * 4.4 + n.phase) * 0.14;
+        const base   = n.captured ? [120, 255, 190] : n.polarity > 0 ? [41, 243, 255] : [255, 88, 64];
+        const accent = n.captured ? [41, 243, 255]  : n.polarity > 0 ? [255, 43, 214] : [255, 155, 47];
+        const r      = (n.captured ? 18 : 28) * dpr * pulse;
+
+        const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 5.2);
+        grad.addColorStop(0,    `rgba(${base[0]},${base[1]},${base[2]},0.92)`);
+        grad.addColorStop(0.18, `rgba(${accent[0]},${accent[1]},${accent[2]},0.35)`);
+        grad.addColorStop(1,    `rgba(${accent[0]},${accent[1]},${accent[2]},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r * 5.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Animated orbital rings.
+        ctx.strokeStyle = `rgba(${base[0]},${base[1]},${base[2]},0.28)`;
+        ctx.lineWidth   = 1.5 * dpr;
+        for (let i = 0; i < 3; i++) {
+          const ring = r * (1.8 + i * 1.05) + Math.sin(time * 2.3 + i + n.phase) * 6 * dpr;
+          ctx.beginPath();
+          ctx.ellipse(n.x, n.y, ring * 1.25, ring * 0.72, time * 0.45 + i, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Bright centre dot.
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, Math.max(2.2 * dpr, r * 0.16), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawSectorMessage() {
+      if (!world.message) return;
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.font      = `${15 * dpr}px Inter,system-ui,sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(238,246,255,0.18)';
+      ctx.fillText(world.message, w * 0.5, h * 0.12);
+    }
+
+    // ─── Pointer / input ──────────────────────────────────────────────────────
+    function pointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const zoom = Number(ui.zoom.value);
+      // Undo the centre-based zoom transform to get world coordinates.
+      const cx = (e.clientX - rect.left) * dpr;
+      const cy = (e.clientY - rect.top)  * dpr;
+      pointer.x = (cx - w / 2) / zoom + w / 2;
+      pointer.y = (cy - h / 2) / zoom + h / 2;
+    }
+
+    function spawnDragNode(now) {
+      if (!pointer.down || now - pointer.lastSpawn < 90) return;
+      pointer.lastSpawn = now;
+      addNode(pointer.x, pointer.y, pointer.right ? -0.85 : 0.85);
+    }
+
+    // ─── Main loop ────────────────────────────────────────────────────────────
+    function frame(now) {
+      const rawDt = Math.min(0.033, (now - last) / 1000 || 0.016);
+      last = now;
+      const dt = rawDt * Number(ui.timeScale.value);
+      time += dt;
+
+      updateUI();
+      spawnDragNode(now);
+      updateParticles(dt);
+      updateFields(dt);
+
+      ctx.save();
+
+      // Screen shake.
+      if (shake > 0.1) {
+        ctx.translate(rand(-shake, shake), rand(-shake, shake));
+        shake *= 0.82;
+      }
+
+      // Zoom transform (centred on canvas centre).
+      const zoom = Number(ui.zoom.value);
+      ctx.translate(w / 2, h / 2);
+      ctx.scale(zoom, zoom);
+      ctx.translate(-w / 2, -h / 2);
+
+      drawBackground();
+      drawSectorMessage();
+      drawFields();
+      drawParticles();
+      drawNodes();
+
+      ctx.restore();
+      requestAnimationFrame(frame);
+    }
+
+    // ─── Event listeners ──────────────────────────────────────────────────────
+    canvas.addEventListener('pointerdown', e => {
+      pointerPos(e);
+      pointer.down  = true;
+      pointer.right = e.button === 2;
+      addNode(pointer.x, pointer.y, pointer.right ? -1 : 1);
+    });
+    canvas.addEventListener('pointermove', e => pointerPos(e));
+    window.addEventListener('pointerup',  () => { pointer.down = false; });
+    window.addEventListener('contextmenu', e => e.preventDefault());
+    window.addEventListener('resize', resize);
+
+    ui.seedBtn.addEventListener('click', () => { seedNebula(); shake = 12 * dpr; });
+    ui.clearBtn.addEventListener('click', () => { nodes = []; seedNebula(); });
+
+    // ─── Boot ─────────────────────────────────────────────────────────────────
+    resize();
+    fadeOverlay(1);
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
