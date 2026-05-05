@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Space Blaster – Browser Game</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Unity WebGL–style container -->
+  <div id="unity-container">
+
+    <!-- Loading / Title screen (shown before game starts) -->
+    <div id="loading-screen">
+      <div id="logo-wrap">
+        <div id="game-logo">🚀 SPACE BLASTER</div>
+        <p id="subtitle">A casual browser game</p>
+      </div>
+
+      <!-- Unity WebGL–style loading bar -->
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+
+      <button id="btn-start" style="display:none;">▶ PLAY</button>
+    </div>
+
+    <!-- Canvas – the actual game viewport -->
+    <canvas id="unity-canvas" tabindex="1"></canvas>
+
+    <!-- HUD overlay (score / lives) -->
+    <div id="hud" style="display:none;">
+      <span id="hud-score">Score: 0</span>
+      <span id="hud-lives">❤ ❤ ❤</span>
+      <span id="hud-level">Level 1</span>
+    </div>
+
+    <!-- Game-over screen -->
+    <div id="gameover-screen" style="display:none;">
+      <div id="gameover-box">
+        <h1>GAME OVER</h1>
+        <p>Score: <span id="final-score">0</span></p>
+        <p>High Score: <span id="high-score">0</span></p>
+        <button id="btn-restart">↺ PLAY AGAIN</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>El Torero Plus Slots</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="arena-bg" aria-hidden="true"></canvas>
+  <div id="announcement-overlay" class="announcement-overlay" aria-live="polite">
+    <div id="announcement-card" class="announcement-card"></div>
+  </div>
+  <main class="game-shell">
+    <header class="topbar">
+      <h1>El Torero<span class="plus-badge">Plus</span></h1>
+      <p>Five Reels · Three Rows · Expanding Wilds</p>
+    </header>
+
+    <section class="status-panel">
+      <div class="stat">
+        <span class="label">Balance</span>
+        <span id="balance" class="value">500</span>
+      </div>
+      <div class="stat">
+        <span class="label">Bet</span>
+        <span id="bet" class="value">10</span>
+      </div>
+      <div class="stat">
+        <span class="label">Win</span>
+        <span id="win" class="value">0</span>
+      </div>
+      <div class="stat feature">
+        <span class="label">Feature</span>
+        <span id="feature-label" class="value">Ready</span>
+      </div>
+      <div class="stat free-spins">
+        <span class="label">Free Spins</span>
+        <span id="free-spins" class="value">0</span>
+      </div>
+    </section>
+
+    <section class="machine-wrap">
+      <div id="reels" class="reels" aria-label="Slot reels"></div>
+      <div class="payline-overlay" aria-hidden="true"></div>
+      <div id="bonus-banner" class="bonus-banner" aria-live="polite"></div>
+    </section>
+
+    <section class="controls">
+      <button id="bet-down" class="btn secondary">Bet -</button>
+      <button id="spin" class="btn spin">Spin</button>
+      <button id="bet-up" class="btn secondary">Bet +</button>
+    </section>
+
+    <section class="message-box" id="message-box" aria-live="polite">
+      Press Spin to enter the arena.
+    </section>
+
+    <section class="legend">
+      <h2>Expanding Wilds</h2>
+      <p>Land 3+ SCATTER symbols to trigger 10 free spins.</p>
+      <p>Every free spin <strong>guarantees</strong> 3, 4, or 5 randomly selected reels become full expanding wild reels — so every free spin is a big win opportunity.</p>
+      <p>Big wins trigger ring-ring bells and bling-bling effects.</p>
+    </section>
+
+    <section class="symbol-guide" aria-label="Symbol explanation">
+      <h2>Symbol Explanation</h2>
+      <div class="symbol-grid">
+        <div class="symbol-item"><span class="icon">🧑</span><span>TORERO: highest pay symbol</span></div>
+          <div class="symbol-item"><span class="icon">🌹</span><span>ROSE: high pay symbol</span></div>
+        <div class="symbol-item"><span class="icon">🎩</span><span>HAT: medium-high pay</span></div>
+        <div class="symbol-item"><span class="icon card-label card-ace">A</span><span>ACE: medium pay</span></div>
+        <div class="symbol-item"><span class="icon card-label card-king">K</span><span>KING: medium pay</span></div>
+        <div class="symbol-item"><span class="icon card-label card-queen">Q</span><span>QUEEN: medium-low pay</span></div>
+        <div class="symbol-item"><span class="icon card-label card-jack">J</span><span>JACK: low pay symbol</span></div>
+        <div class="symbol-item"><span class="icon">🐂</span><span>WILD: substitutes line symbols</span></div>
+        <div class="symbol-item"><span class="icon">⭐</span><span>SCATTER: 3+ triggers 10 free spins</span></div>
+      </div>
+      <p class="symbol-note">Line wins pay on 3, 4, or 5 consecutive symbols from the left.</p>
+    </section>
+  </main>
+
+  <div id="welcome-overlay" class="welcome-overlay" role="dialog" aria-modal="true" aria-label="Welcome to El Torero Slots">
+    <div class="welcome-card">
+      <span class="welcome-logo">🌹</span>
+      <h2 class="welcome-title">El Torero Plus</h2>
+      <p class="welcome-sub">Five Reels · Three Rows · Expanding Wilds</p>
+      <button id="welcome-btn" class="btn spin welcome-start-btn">¡Toca para jugar!</button>
+    </div>
+  </div>
+
+
+  <script src="game.js"></script>
+</body>
+</html>
