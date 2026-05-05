@@ -355,8 +355,9 @@
 
     const S = {
       particleCount:        3800,
-      // User-placed nodes are capped at nodeLimit; captured field nodes may add up to 5 more.
+      // User-placed nodes are capped at nodeLimit; captured field nodes may add up to capturedNodeBonus more.
       nodeLimit:            9,
+      capturedNodeBonus:    5,   // extra node slots reserved for assimilated field nodes
       softening:            95,   // softening radius for node forces (avoids singularity)
       fieldSoftening:       80,   // separate softening radius used in field force calculations
       gravityForceScale:    95000, // tuning multiplier for radial node force
@@ -366,8 +367,9 @@
       fieldCount:           7,
       assimilationRate:     0.018,
       drainRate:            0.006,
-      sectorTransitionDelay: 2.2,
+      sectorTransitionDelay: 2.2, // seconds before auto-advancing to the next sector
       fieldRespawnEvery:    3,
+      maxSector:            99,   // soft cap — prevents unbounded progression scaling
     };
 
     // Colour palette for particles (neon spectrum).
@@ -518,7 +520,7 @@
         orbit: rand(0.4, 0.9),
         captured: true,
       });
-      while (nodes.length > S.nodeLimit + 5) nodes.shift();
+      while (nodes.length > S.nodeLimit + S.capturedNodeBonus) nodes.shift();
     }
 
     // ─── Shockwave ────────────────────────────────────────────────────────────
@@ -718,7 +720,7 @@
     }
 
     function nextSector() {
-      world.sector++;
+      world.sector = Math.min(world.sector + 1, S.maxSector);
       world.levelComplete       = false;
       world.sectorCompleteTimer = 0;
       world.sectorGoalFields    = Math.min(10, 4 + world.sector);
