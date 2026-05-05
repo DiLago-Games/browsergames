@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gravity Painter — Expanding Solar System</title>
+  <style>
+    :root {
+      --cyan:#29f3ff; --pink:#ff2bd6; --orange:#ffb23f; --green:#78ffbe;
+      --text:#eef6ff; --muted:#8ea0c7;
+    }
+    * { box-sizing:border-box; }
+    html, body {
+      margin:0; width:100%; height:100%; overflow:hidden;
+      background: radial-gradient(circle at 50% 45%, #101538 0%, #050716 42%, #010208 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color:var(--text); user-select:none;
+    }
+    canvas { position:fixed; inset:0; width:100vw; height:100vh; display:block; cursor:crosshair; }
+    .hud {
+      position:fixed; top:22px; left:22px; width:min(410px, calc(100vw - 44px));
+      padding:18px; border-radius:24px;
+      border:1px solid rgba(120,220,255,.18);
+      background:linear-gradient(180deg, rgba(13,18,43,.78), rgba(4,6,17,.52));
+      backdrop-filter:blur(18px);
+      box-shadow:0 20px 80px rgba(0,0,0,.35), 0 0 44px rgba(41,243,255,.08);
+    }
+    h1 {
+      margin:0 0 5px; font-size:24px; line-height:1; letter-spacing:.11em; text-transform:uppercase;
+      text-shadow:0 0 18px rgba(41,243,255,.62), 0 0 28px rgba(255,43,214,.26);
+    }
+    .subtitle { margin:0 0 14px; color:var(--muted); font-size:13px; }
+    .stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+    .stat {
+      padding:10px 11px; border-radius:16px; background:rgba(255,255,255,.045);
+      border:1px solid rgba(255,255,255,.09); font-size:12px; color:rgba(238,246,255,.78);
+    }
+    .stat strong { display:block; color:var(--cyan); font-size:18px; line-height:1.1; margin-top:2px; font-variant-numeric:tabular-nums; }
+    .goal {
+      margin-bottom:14px; padding:12px; border-radius:18px; font-size:13px;
+      border:1px solid rgba(120,255,190,.18);
+      background:linear-gradient(135deg, rgba(120,255,190,.08), rgba(255,43,214,.06));
+    }
+    .goal b { color:var(--green); }
+    .bar { height:8px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; margin-top:8px; }
+    .fill { width:0%; height:100%; background:linear-gradient(90deg,var(--cyan),var(--pink),var(--orange)); box-shadow:0 0 18px rgba(41,243,255,.45); }
+    .controls { display:grid; gap:12px; }
+    label { display:grid; gap:6px; font-size:12px; color:#c8d6ff; letter-spacing:.04em; text-transform:uppercase; }
+    .row { display:flex; justify-content:space-between; gap:12px; }
+    .value { color:var(--cyan); font-variant-numeric:tabular-nums; }
+    input[type=range] { width:100%; accent-color:var(--pink); }
+    .buttons { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+    button {
+      border:1px solid rgba(255,255,255,.16); border-radius:16px; padding:11px 12px;
+      background:linear-gradient(135deg, rgba(41,243,255,.16), rgba(255,43,214,.14));
+      color:var(--text); font-weight:800; letter-spacing:.07em; text-transform:uppercase; cursor:pointer;
+      box-shadow:inset 0 0 20px rgba(255,255,255,.04), 0 0 26px rgba(255,43,214,.1);
+    }
+    .hint {
+      position:fixed; left:50%; bottom:28px; transform:translateX(-50%);
+      padding:10px 14px; border-radius:999px; white-space:nowrap;
+      border:1px solid rgba(255,255,255,.13); background:rgba(4,6,17,.46);
+      backdrop-filter:blur(14px); color:rgba(238,246,255,.72); font-size:13px;
+    }
+    @media(max-width:640px){ .hud{top:12px;left:12px;padding:14px}.hint{bottom:14px;max-width:calc(100vw - 24px);white-space:normal;text-align:center} h1{font-size:20px} }
+  </style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+
+<section class="hud">
+  <h1>Gravity Painter</h1>
+  <p class="subtitle">Ein expandierendes Solarsystem, das du mit Gravitation stabilisierst.</p>
+
+  <div class="stats">
+    <div class="stat">Systemgröße<strong id="scaleStat">x1.00</strong></div>
+    <div class="stat">Planeten gebunden<strong id="planetStat">0/0</strong></div>
+    <div class="stat">Stabilität<strong id="stabilityStat">100%</strong></div>
+    <div class="stat">Sektor<strong id="sectorStat">1</strong></div>
+  </div>
+
+  <div class="goal">
+    <b id="goalTitle">Ziel:</b> <span id="goalText">Halte Planeten im Orbit und fange äußere Protoplaneten ein, während das System expandiert.</span>
+    <div class="bar"><div class="fill" id="goalFill"></div></div>
+  </div>
+
+  <div class="controls">
+    <label>
+      <span class="row">Gravity Brush <span class="value" id="brushValue"></span></span>
+      <input id="brush" type="range" min="300" max="3600" step="50" value="1600">
+    </label>
+    <label>
+      <span class="row">Orbit Twist <span class="value" id="twistValue"></span></span>
+      <input id="twist" type="range" min="-1400" max="1400" step="25" value="520">
+    </label>
+    <label>
+      <span class="row">Expansion <span class="value" id="expansionValue"></span></span>
+      <input id="expansion" type="range" min="0.4" max="2.4" step="0.05" value="1.15">
+    </label>
+    <label>
+      <span class="row">Zeitfluss <span class="value" id="timeValue"></span></span>
+      <input id="timeScale" type="range" min="0.35" max="2.0" step="0.05" value="1.0">
+    </label>
+  </div>
+
+  <div class="buttons">
+    <button id="seedBtn">New System</button>
+    <button id="pulseBtn">Solar Pulse</button>
+  </div>
+</section>
+
+<div class="hint">Click/Drag = Gravity Well · Rechtsklick = Repulsor · Fange äußere Körper ein, bevor sie entkoppeln.</div>
+
+<script>
+const canvas = document.getElementById('fx');
+const ctx = canvas.getContext('2d', { alpha:false });
+
+const ui = {
+  brush: document.getElementById('brush'),
+  twist: document.getElementById('twist'),
+  expansion: document.getElementById('expansion'),
+  timeScale: document.getElementById('timeScale'),
+  brushValue: document.getElementById('brushValue'),
+  twistValue: document.getElementById('twistValue'),
+  expansionValue: document.getElementById('expansionValue'),
+  timeValue: document.getElementById('timeValue'),
+  scaleStat: document.getElementById('scaleStat'),
+  planetStat: document.getElementById('planetStat'),
+  stabilityStat: document.getElementById('stabilityStat'),
+  sectorStat: document.getElementById('sectorStat'),
+  goalFill: document.getElementById('goalFill'),
+  goalTitle: document.getElementById('goalTitle'),
+  goalText: document.getElementById('goalText'),
+  seedBtn: document.getElementById('seedBtn'),
+  pulseBtn: document.getElementById('pulseBtn')
+};
+
+let w=0,h=0,dpr=1,time=0,last=performance.now(),shake=0;
+let stars=[], dust=[], planets=[], wells=[], protoPlanets=[];
+let pointer={x:0,y:0,down:false,right:false,lastWell:0};
+
+const world = {
+  cx:0, cy:0, sector:1,
+  scale:1, targetScale:1,
+  solarMass: 90000,
+  expansionSpeed:0,
+  stability:1,
+  captureGoal:3,
+  captured:0,
+  danger:0,
+  message:''
+};
+
+const camera = { x:0, y:0, zoom:1, targetZoom:1, vx:0, vy:0, minZoom:.25 };
+
+const SETTINGS = {
+  starCount:260,
+  dustCount:1600,
+  wellLimit:12,
+  baseSystemRadius:560,
+  protoCount:7,
+  damping:.9992,
+  softening:180,
+  captureDistance:34,
+  stableBand:.32,
+  escapeFactor:1.48
+};
+
+const planetPalette = [
+  [41,243,255], [255,43,214], [255,178,63], [120,255,190], [139,92,255]
+];
+
+function rand(a,b){ return a + Math.random()*(b-a); }
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+
+function resize(){
+  dpr = Math.min(devicePixelRatio||1, 2);
+  w = Math.floor(innerWidth*dpr); h = Math.floor(innerHeight*dpr);
+  canvas.width=w; canvas.height=h;
+  canvas.style.width=innerWidth+'px'; canvas.style.height=innerHeight+'px';
+  if(!world.cx) newSystem();
+}
+
+function screenToWorld(clientX, clientY){
+  const r = canvas.getBoundingClientRect();
+  const sx=(clientX-r.left)*dpr, sy=(clientY-r.top)*dpr;
+  return { x: camera.x + (sx-w*.5)/camera.zoom, y: camera.y + (sy-h*.5)/camera.zoom };
+}
+
+function newSystem(){
+  world.cx=w*.5; world.cy=h*.52;
+  world.sector=1; world.scale=1; world.targetScale=1; world.expansionSpeed=0;
+  world.stability=1; world.captured=0; world.captureGoal=3; world.danger=0;
+  world.message='Neues Solarsystem geboren. Halte die inneren Orbits stabil.';
+
+  camera.x=world.cx; camera.y=world.cy; camera.zoom=1; camera.targetZoom=1;
+
+  stars=[]; dust=[]; planets=[]; wells=[]; protoPlanets=[];
+
+  for(let i=0;i<SETTINGS.starCount;i++){
+    stars.push({x:rand(-w,w*2), y:rand(-h,h*2), r:rand(.4,1.7)*dpr, a:rand(.05,.55), tw:rand(.5,2.5)});
+  }
+
+  const baseR = SETTINGS.baseSystemRadius*dpr;
+  const orbitData = [
+    {r:.20, size:7, speed:1.62},
+    {r:.32, size:10, speed:1.16},
+    {r:.47, size:13, speed:.82},
+    {r:.63, size:9, speed:.58}
+  ];
+
+  orbitData.forEach((o,i)=>{
+    const radius=baseR*o.r;
+    const angle=rand(0,Math.PI*2);
+    const speed=Math.sqrt(world.solarMass/(radius+1))*o.speed;
+    planets.push(makeBody(
+      world.cx+Math.cos(angle)*radius,
+      world.cy+Math.sin(angle)*radius,
+      -Math.sin(angle)*speed,
+      Math.cos(angle)*speed,
+      o.size*dpr,
+      120+i*40,
+      planetPalette[i%planetPalette.length],
+      'planet',
+      radius
+    ));
+  });
+
+  for(let i=0;i<SETTINGS.dustCount;i++){
+    const a=rand(0,Math.PI*2);
+    const radius=Math.pow(Math.random(),.65)*baseR*.92 + baseR*.08;
+    const speed=Math.sqrt(world.solarMass/(radius+1))*rand(.72,1.25);
+    dust.push({
+      x:world.cx+Math.cos(a)*radius,
+      y:world.cy+Math.sin(a)*radius,
+      px:0, py:0,
+      vx:-Math.sin(a)*speed*rand(.55,1.25),
+      vy: Math.cos(a)*speed*rand(.55,1.25),
+      size:rand(.45,1.3)*dpr,
+      hue:Math.random(),
+      charge:0
+    });
+  }
+
+  spawnProtoPlanets();
+  fade(1);
+}
+
+function makeBody(x,y,vx,vy,size,mass,color,type,homeOrbit=0){
+  return {x,y,px:x,py:y,vx,vy,size,mass,color,type,homeOrbit, captured:type==='planet', capture:0, alive:true, phase:rand(0,Math.PI*2)};
+}
+
+function spawnProtoPlanets(){
+  const count = SETTINGS.protoCount + Math.min(5, world.sector-1);
+  const systemR = SETTINGS.baseSystemRadius*dpr*world.scale;
+  for(let i=0;i<count;i++){
+    const a=(i/count)*Math.PI*2 + rand(-.35,.35);
+    const radius=systemR*rand(1.05,1.55);
+    const speed=Math.sqrt(world.solarMass/(radius+1))*rand(.48,.86);
+    protoPlanets.push(makeBody(
+      world.cx+Math.cos(a)*radius,
+      world.cy+Math.sin(a)*radius,
+      -Math.sin(a)*speed,
+      Math.cos(a)*speed,
+      rand(7,13)*dpr,
+      rand(95,180),
+      planetPalette[(i+2)%planetPalette.length],
+      'proto',
+      radius
+    ));
+  }
+}
+
+function addWell(x,y,polarity=1){
+  wells.push({x,y,polarity,birth:time,phase:rand(0,Math.PI*2),strength:Number(ui.brush.value)*polarity});
+  while(wells.length>SETTINGS.wellLimit) wells.shift();
+  shake=5*dpr;
+}
+
+function solarPulse(){
+  const bodies=[...dust,...planets,...protoPlanets];
+  for(const b of bodies){
+    const dx=b.x-world.cx, dy=b.y-world.cy, dist=Math.hypot(dx,dy)+1;
+    const nx=dx/dist, ny=dy/dist;
+    b.vx += nx*rand(40,120)*dpr;
+    b.vy += ny*rand(40,120)*dpr;
+    b.charge=1;
+  }
+  world.expansionSpeed += .018;
+  shake=14*dpr;
+}
+
+function updateUI(){
+  ui.brushValue.textContent=Number(ui.brush.value).toFixed(0);
+  ui.twistValue.textContent=Number(ui.twist.value).toFixed(0);
+  ui.expansionValue.textContent=Number(ui.expansion.value).toFixed(2)+'x';
+  ui.timeValue.textContent=Number(ui.timeScale.value).toFixed(2)+'x';
+
+  const total=planets.length+protoPlanets.length;
+  const captured=planets.length + protoPlanets.filter(p=>p.captured).length;
+  ui.scaleStat.textContent='x'+world.scale.toFixed(2);
+  ui.planetStat.textContent=`${captured}/${total}`;
+  ui.stabilityStat.textContent=Math.round(world.stability*100)+'%';
+  ui.sectorStat.textContent=world.sector;
+  const progress=clamp((captured-planets.length)/Math.max(1,world.captureGoal),0,1);
+  ui.goalFill.style.width=Math.round(progress*100)+'%';
+
+  if(world.stability<.42){
+    ui.goalTitle.textContent='WARNUNG:';
+    ui.goalText.textContent='Orbits entkoppeln. Setze Gravity Wells, um Planeten zurück ins System zu ziehen.';
+  } else {
+    ui.goalTitle.textContent=`Sektor ${world.sector}:`;
+    ui.goalText.textContent=`Fange ${world.captureGoal} äußere Protoplaneten ein, während das Solarsystem expandiert.`;
+  }
+}
+
+function updateCamera(dt){
+  const systemR=SETTINGS.baseSystemRadius*dpr*world.scale;
+  camera.targetZoom = clamp((Math.min(w,h)*.42)/Math.max(360*dpr,systemR), camera.minZoom, 1);
+  camera.vx += (world.cx-camera.x)*.06*dt*60;
+  camera.vy += (world.cy-camera.y)*.06*dt*60;
+  camera.vx*=.86; camera.vy*=.86;
+  camera.x+=camera.vx; camera.y+=camera.vy;
+  camera.zoom += (camera.targetZoom-camera.zoom)*(1-Math.pow(.001,dt));
+}
+
+function beginWorld(){
+  ctx.setTransform(camera.zoom,0,0,camera.zoom,w*.5-camera.x*camera.zoom,h*.5-camera.y*camera.zoom);
+}
+function beginScreen(){ ctx.setTransform(1,0,0,1,0,0); }
+
+function fade(alpha){
+  ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle=`rgba(1,2,8,${alpha})`;
+  ctx.fillRect(0,0,w,h);
+}
+
+function gravityFromSun(body){
+  const dx=world.cx-body.x, dy=world.cy-body.y;
+  const distSq=dx*dx+dy*dy+SETTINGS.softening*SETTINGS.softening*dpr;
+  const dist=Math.sqrt(distSq);
+  const g=world.solarMass/distSq;
+  return { ax:(dx/dist)*g, ay:(dy/dist)*g, dist };
+}
+
+function applyWells(body, dt){
+  let ax=0, ay=0;
+  const twist=Number(ui.twist.value)*dpr;
+  for(const well of wells){
+    const dx=well.x-body.x, dy=well.y-body.y;
+    const distSq=dx*dx+dy*dy+(120*dpr)*(120*dpr);
+    const dist=Math.sqrt(distSq);
+    const influence=520*dpr;
+    if(dist>influence) continue;
+    const nx=dx/dist, ny=dy/dist;
+    const local=1-dist/influence;
+    const pulse=1+Math.sin(time*3+well.phase)*.22;
+    const force=well.strength*local*pulse/distSq*90000;
+    ax += nx*force;
+    ay += ny*force;
+    ax += -ny*(twist*local/distSq)*65000;
+    ay += nx*(twist*local/distSq)*65000;
+  }
+  body.vx += ax*dt;
+  body.vy += ay*dt;
+}
+
+function localTimeScale(body){
+  // Zeitdilatation in Sonnennähe und bei Gravity Wells.
+  let warp=0;
+  const ds=Math.hypot(body.x-world.cx, body.y-world.cy);
+  warp += clamp(1-ds/(260*dpr),0,1)*.35;
+  for(const well of wells){
+    const d=Math.hypot(body.x-well.x, body.y-well.y);
+    warp += clamp(1-d/(260*dpr),0,1)*.28;
+  }
+  return clamp(1-warp, .42, 1);
+}
+
+function integrateBody(body, dt, isDust=false){
+  if(!body.alive) return;
+  body.px=body.x; body.py=body.y;
+  const localDt=dt*localTimeScale(body);
+
+  const sun=gravityFromSun(body);
+  body.vx += sun.ax*localDt;
+  body.vy += sun.ay*localDt;
+
+  applyWells(body, localDt);
+
+  // Kosmische Expansion: Der Raum skaliert nach außen.
+  const dx=body.x-world.cx, dy=body.y-world.cy;
+  const dist=Math.hypot(dx,dy)+1;
+  const stretch=clamp(dist/(SETTINGS.baseSystemRadius*dpr*world.scale),0,1.6);
+  body.vx += (dx/dist)*world.expansionSpeed*760*dpr*stretch*localDt;
+  body.vy += (dy/dist)*world.expansionSpeed*760*dpr*stretch*localDt;
+
+  body.vx *= isDust ? .9988 : SETTINGS.damping;
+  body.vy *= isDust ? .9988 : SETTINGS.damping;
+  body.x += body.vx*localDt;
+  body.y += body.vy*localDt;
+
+  if(isDust){
+    body.charge*=.96;
+    const maxR=SETTINGS.baseSystemRadius*dpr*world.scale*1.72;
+    if(dist>maxR){
+      const a=rand(0,Math.PI*2);
+      const r=rand(.1,.6)*SETTINGS.baseSystemRadius*dpr*world.scale;
+      body.x=world.cx+Math.cos(a)*r; body.y=world.cy+Math.sin(a)*r;
+      const s=Math.sqrt(world.solarMass/(r+1))*rand(.6,1.2);
+      body.vx=-Math.sin(a)*s; body.vy=Math.cos(a)*s;
+      body.px=body.x; body.py=body.y;
+    }
+  }
+}
+
+function updateWorld(dt){
+  const expansionInput=Number(ui.expansion.value);
+  world.expansionSpeed += (.004 + world.sector*.0009)*expansionInput*dt;
+  world.expansionSpeed*=.996;
+  world.targetScale += world.expansionSpeed*dt*2.2;
+  world.scale += (world.targetScale-world.scale)*(1-Math.pow(.004,dt));
+
+  for(const d of dust) integrateBody(d,dt,true);
+  for(const p of planets) integrateBody(p,dt,false);
+  for(const p of protoPlanets) integrateBody(p,dt,false);
+
+  checkCapturesAndStability(dt);
+
+  const capturedProto=protoPlanets.filter(p=>p.captured).length;
+  if(capturedProto>=world.captureGoal){
+    nextSector();
+  }
+}
+
+function checkCapturesAndStability(dt){
+  let stable=0, total=0;
+  const systemR=SETTINGS.baseSystemRadius*dpr*world.scale;
+  const all=[...planets,...protoPlanets];
+
+  for(const p of all){
+    total++;
+    const dx=p.x-world.cx, dy=p.y-world.cy;
+    const dist=Math.hypot(dx,dy)+1;
+    const speed=Math.hypot(p.vx,p.vy);
+    const circular=Math.sqrt(world.solarMass/dist);
+    const orbitQuality=1-Math.abs(speed-circular)/Math.max(circular,1);
+    const within=dist < systemR*SETTINGS.escapeFactor;
+
+    if(p.type==='proto' && !p.captured){
+      const inCaptureBand=dist<systemR*.98 && Math.abs(speed-circular)<circular*.55;
+      if(inCaptureBand) p.capture += dt*.38;
+      else p.capture -= dt*.22;
+      p.capture=clamp(p.capture,0,1);
+      if(p.capture>=1){
+        p.captured=true;
+        p.type='planet';
+        p.homeOrbit=dist;
+        world.message='Protoplanet eingefangen. Neuer Orbit stabilisiert.';
+        burst(p.x,p.y,90);
+        shake=16*dpr;
+      }
+    }
+
+    if(within && orbitQuality>.35) stable++;
+    if(!within && p.captured){
+      world.danger += dt*.04;
+    }
+  }
+
+  const protoPenalty=protoPlanets.filter(p=>!p.captured).length*.015;
+  world.stability=clamp(stable/Math.max(1,total)-protoPenalty-world.danger,0,1);
+  world.danger*=.992;
+
+  if(world.stability<.18){
+    world.message='System kollabiert: Solar Pulse ausgelöst.';
+    solarPulse();
+    world.danger=.12;
+  }
+}
+
+function nextSector(){
+  world.sector++;
+  world.captureGoal=Math.min(8, world.captureGoal+1);
+  world.captured=0;
+  world.expansionSpeed*=.35;
+  world.targetScale=Math.max(world.targetScale, world.scale+.18);
+  world.message=`Sektor ${world.sector}: Das Solarsystem expandiert weiter. Neue Körper driften herein.`;
+  protoPlanets = protoPlanets.filter(p=>p.captured).slice(-3);
+  spawnProtoPlanets();
+  burst(world.cx,world.cy,150);
+  shake=18*dpr;
+}
+
+function burst(x,y,n){
+  for(let i=0;i<n;i++){
+    const d=dust[Math.floor(Math.random()*dust.length)];
+    if(!d) continue;
+    const a=rand(0,Math.PI*2), s=rand(120,680)*dpr;
+    d.x=x+Math.cos(a)*rand(8,42)*dpr; d.y=y+Math.sin(a)*rand(8,42)*dpr;
+    d.px=d.x; d.py=d.y;
+    d.vx=Math.cos(a)*s; d.vy=Math.sin(a)*s; d.charge=1;
+  }
+}
+
+function drawBackground(){
+  fade(.075);
+  beginScreen();
+  ctx.globalCompositeOperation='lighter';
+  for(const s of stars){
+    const tw=s.a+Math.sin(time*s.tw+s.x)*.08;
+    ctx.fillStyle=`rgba(160,220,255,${Math.max(0,tw)})`;
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+  }
+}
+
+function drawOrbits(){
+  const systemR=SETTINGS.baseSystemRadius*dpr*world.scale;
+  ctx.globalCompositeOperation='lighter';
+
+  // Expansionsfront
+  ctx.strokeStyle='rgba(255,178,63,.22)';
+  ctx.lineWidth=1.4*dpr/Math.max(.35,camera.zoom);
+  ctx.setLineDash([18*dpr/Math.max(.4,camera.zoom), 18*dpr/Math.max(.4,camera.zoom)]);
+  ctx.beginPath(); ctx.arc(world.cx,world.cy,systemR*SETTINGS.escapeFactor,0,Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Orbit lines
+  for(let r=systemR*.18; r<systemR*1.05; r+=systemR*.14){
+    const alpha=.035 + Math.sin(time+r*.002)*.012;
+    ctx.strokeStyle=`rgba(41,243,255,${alpha})`;
+    ctx.lineWidth=.8*dpr/Math.max(.5,camera.zoom);
+    ctx.beginPath(); ctx.arc(world.cx,world.cy,r,0,Math.PI*2); ctx.stroke();
+  }
+
+  // Spacetime grid rings
+  for(let r=systemR*.28; r<systemR*1.45; r+=systemR*.22){
+    ctx.strokeStyle='rgba(255,43,214,.025)';
+    ctx.beginPath();
+    const steps=180;
+    for(let i=0;i<=steps;i++){
+      const a=i/steps*Math.PI*2;
+      const warp=Math.sin(a*6+time*1.2)*8*dpr*Math.min(1,r/systemR);
+      const rr=r+warp;
+      const x=world.cx+Math.cos(a)*rr, y=world.cy+Math.sin(a)*rr;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+}
+
+function drawSun(){
+  ctx.globalCompositeOperation='lighter';
+  const pulse=1+Math.sin(time*2.4)*.08;
+  const r=42*dpr*pulse;
+  const g=ctx.createRadialGradient(world.cx,world.cy,0,world.cx,world.cy,r*5.8);
+  g.addColorStop(0,'rgba(255,255,255,.95)');
+  g.addColorStop(.12,'rgba(255,218,96,.8)');
+  g.addColorStop(.38,'rgba(255,109,42,.24)');
+  g.addColorStop(1,'rgba(255,43,214,0)');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.arc(world.cx,world.cy,r*5.8,0,Math.PI*2); ctx.fill();
+
+  ctx.fillStyle='rgba(255,255,255,.95)';
+  ctx.beginPath(); ctx.arc(world.cx,world.cy,r*.45,0,Math.PI*2); ctx.fill();
+}
+
+function drawDust(){
+  ctx.globalCompositeOperation='lighter';
+  ctx.lineCap='round';
+  for(const d of dust){
+    const speed=Math.hypot(d.vx,d.vy);
+    const t=(Math.sin(d.hue*6.28+time*.7+speed*.006)+1)*.5;
+    const c1=planetPalette[Math.floor(t*(planetPalette.length-1))];
+    const c2=planetPalette[Math.min(planetPalette.length-1, Math.floor(t*(planetPalette.length-1))+1)];
+    const f=t*(planetPalette.length-1)-Math.floor(t*(planetPalette.length-1));
+    const r=lerp(c1[0],c2[0],f), g=lerp(c1[1],c2[1],f), b=lerp(c1[2],c2[2],f);
+    const a=clamp(.09+speed/(900*dpr)*.45+d.charge*.28,.05,.78);
+    ctx.strokeStyle=`rgba(${r},${g},${b},${a})`;
+    ctx.lineWidth=d.size*(1+d.charge*.8);
+    ctx.beginPath(); ctx.moveTo(d.px,d.py); ctx.lineTo(d.x,d.y); ctx.stroke();
+  }
+}
+
+function drawBody(b){
+  const [r,g,bl]=b.color;
+  const pulse=1+Math.sin(time*3+b.phase)*.06;
+  const glow=b.size*(b.captured?5.2:3.8);
+  const grad=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,glow);
+  grad.addColorStop(0,`rgba(255,255,255,.9)`);
+  grad.addColorStop(.22,`rgba(${r},${g},${bl},.75)`);
+  grad.addColorStop(1,`rgba(${r},${g},${bl},0)`);
+  ctx.fillStyle=grad;
+  ctx.beginPath(); ctx.arc(b.x,b.y,glow,0,Math.PI*2); ctx.fill();
+
+  ctx.fillStyle=`rgba(${r},${g},${bl},.95)`;
+  ctx.beginPath(); ctx.arc(b.x,b.y,b.size*pulse,0,Math.PI*2); ctx.fill();
+
+  if(!b.captured){
+    ctx.strokeStyle=`rgba(120,255,190,.75)`;
+    ctx.lineWidth=3*dpr/Math.max(.5,camera.zoom);
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,b.size*2.3,-Math.PI/2,-Math.PI/2+b.capture*Math.PI*2);
+    ctx.stroke();
+  }
+}
+
+function drawBodies(){
+  ctx.globalCompositeOperation='lighter';
+  for(const p of protoPlanets) drawBody(p);
+  for(const p of planets) drawBody(p);
+}
+
+function drawWells(){
+  ctx.globalCompositeOperation='lighter';
+  for(const well of wells){
+    const age=time-well.birth;
+    const life=clamp(1-age/12,0,1);
+    const base=well.polarity>0?[41,243,255]:[255,88,64];
+    const pulse=1+Math.sin(time*4+well.phase)*.18;
+    const r=32*dpr*pulse;
+    const grad=ctx.createRadialGradient(well.x,well.y,0,well.x,well.y,r*4.8);
+    grad.addColorStop(0,`rgba(${base[0]},${base[1]},${base[2]},${.8*life})`);
+    grad.addColorStop(.25,`rgba(255,43,214,${.24*life})`);
+    grad.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=grad;
+    ctx.beginPath(); ctx.arc(well.x,well.y,r*4.8,0,Math.PI*2); ctx.fill();
+
+    ctx.strokeStyle=`rgba(${base[0]},${base[1]},${base[2]},${.35*life})`;
+    ctx.lineWidth=1.2*dpr/Math.max(.45,camera.zoom);
+    for(let i=0;i<3;i++){
+      ctx.beginPath();
+      ctx.ellipse(well.x,well.y,r*(1.6+i*.9),r*(.75+i*.25),time*.6+i,0,Math.PI*2);
+      ctx.stroke();
+    }
+  }
+}
+
+function drawMessage(){
+  beginScreen();
+  if(!world.message) return;
+  ctx.globalCompositeOperation='lighter';
+  ctx.font=`${15*dpr}px Inter, system-ui, sans-serif`;
+  ctx.textAlign='center';
+  ctx.fillStyle='rgba(238,246,255,.25)';
+  ctx.fillText(world.message,w*.5,h*.12);
+}
+
+function frame(now){
+  const rawDt=Math.min(.033,(now-last)/1000||.016); last=now;
+  const dt=rawDt*Number(ui.timeScale.value);
+  time+=dt;
+
+  updateCamera(dt);
+  updateWorld(dt);
+  updateUI();
+
+  if(pointer.down && now-pointer.lastWell>95){
+    pointer.lastWell=now;
+    addWell(pointer.x,pointer.y,pointer.right?-1:1);
+  }
+
+  beginScreen();
+  ctx.save();
+  if(shake>.1){ ctx.translate(rand(-shake,shake),rand(-shake,shake)); shake*=.83; }
+
+  drawBackground();
+  beginWorld();
+  drawOrbits();
+  drawDust();
+  drawSun();
+  drawBodies();
+  drawWells();
+  drawMessage();
+
+  ctx.restore();
+  requestAnimationFrame(frame);
+}
+
+canvas.addEventListener('pointerdown', e=>{
+  const p=screenToWorld(e.clientX,e.clientY);
+  pointer={...pointer,x:p.x,y:p.y,down:true,right:e.button===2,lastWell:0};
+  addWell(p.x,p.y,e.button===2?-1:1);
+});
+canvas.addEventListener('pointermove', e=>{
+  const p=screenToWorld(e.clientX,e.clientY);
+  pointer.x=p.x; pointer.y=p.y;
+});
+window.addEventListener('pointerup',()=>pointer.down=false);
+window.addEventListener('contextmenu',e=>e.preventDefault());
+window.addEventListener('resize',resize);
+ui.seedBtn.addEventListener('click',newSystem);
+ui.pulseBtn.addEventListener('click',solarPulse);
+
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

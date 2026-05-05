@@ -1,0 +1,414 @@
+GRAVITY PAINTER – SPIELMECHANIK & TECHNISCHES DESIGN
+=====================================================
+
+Kurzbeschreibung
+----------------
+Gravity Painter ist ein browserbasiertes 2D-Spiel, das auf einer interaktiven Partikelsimulation basiert. Der Spieler setzt Gravitationspunkte in ein Feld aus leuchtenden Partikeln. Diese Punkte ziehen Partikel an, stoßen sie ab oder verändern ihre Bewegungsbahnen. Aus Physik, Timing und Ästhetik entsteht ein Spiel zwischen Puzzle, Sandbox und interaktivem Kunstwerk.
+
+Das Spiel soll sofort verständlich sein: klicken, beobachten, beeinflussen. Gleichzeitig entsteht Skill-Tiefe durch das gezielte Platzieren von Kraftfeldern, das Erzeugen stabiler Orbits, Spiralen und Muster.
+
+
+1. Core-Fantasy
+---------------
+Der Spieler ist kein klassischer Charakter, sondern eine Art kosmischer Künstler. Er malt nicht mit Farbe, sondern mit Gravitation.
+
+Zentrale Aussage:
+"Setze Grav-Punkte. Lenke Partikel. Forme den Kosmos."
+
+Das Spielgefühl soll hypnotisch, elegant und reaktiv sein. Jeder Input erzeugt sofort sichtbare Konsequenzen. Der Wow-Effekt entsteht durch Glow, Partikelspuren und emergente Bewegungsmuster.
+
+
+2. Zentrale Spielobjekte
+------------------------
+
+2.1 Partikel
+~~~~~~~~~~~~
+Partikel sind die sichtbaren Elemente der Simulation. Sie bewegen sich frei im Spielfeld und reagieren auf Kräfte.
+
+Mögliche Datenstruktur:
+
+Particle {
+  position: Vec2
+  velocity: Vec2
+  acceleration: Vec2
+  life: float
+  maxLife: float
+  color: Vec3
+  size: float
+}
+
+Eigenschaften:
+- keine eigene Intelligenz
+- reagieren nur auf physikalische Kräfte
+- erzeugen Trails / Leuchtspuren
+- können abhängig von Geschwindigkeit oder Nähe zu Grav-Punkten ihre Farbe ändern
+
+
+2.2 Grav-Punkte
+~~~~~~~~~~~~~~~
+Grav-Punkte sind die wichtigsten Interaktionselemente. Der Spieler setzt sie per Klick oder Touch.
+
+Mögliche Datenstruktur:
+
+GravityPoint {
+  position: Vec2
+  strength: float
+  radius: float
+  polarity: int       // +1 = anziehend, -1 = abstoßend
+  life: float
+  maxLife: float
+}
+
+Eigenschaften:
+- beeinflussen alle Partikel in ihrem Radius
+- können temporär oder permanent sein
+- können anziehend oder abstoßend sein
+- können visuell als leuchtende Sterne, Knoten oder Energiequellen dargestellt werden
+
+
+2.3 Zielzonen
+~~~~~~~~~~~~~
+Für Puzzle- und Challenge-Modi werden Zielbereiche benötigt.
+
+TargetZone {
+  position: Vec2
+  radius: float
+  requiredParticleRatio: float
+}
+
+Beispiele:
+- Halte 70 % der Partikel innerhalb eines Rings
+- Forme eine Spiralbewegung
+- Sammle Partikel in drei Zonen
+- Verhindere, dass Partikel in einen roten Bereich fallen
+
+
+3. Physikmodell
+---------------
+Das Spiel nutzt ein stilisiertes Gravitationsmodell. Ziel ist nicht realistische Physik, sondern gutes Game Feel.
+
+Grundidee:
+Ein Grav-Punkt übt auf jedes Partikel eine Kraft aus. Diese Kraft hängt ab von:
+- Richtung zum Grav-Punkt
+- Entfernung
+- Stärke des Grav-Punkts
+- Dämpfung / Softening zur Stabilisierung
+
+Pseudoformel:
+
+force = direction * strength / (distance * distance + softening)
+
+In Code-Logik:
+
+for each particle:
+  totalForce = Vec2(0, 0)
+
+  for each gravityPoint:
+    direction = gravityPoint.position - particle.position
+    distance = length(direction)
+
+    if distance < gravityPoint.radius:
+      normalizedDirection = normalize(direction)
+      forceAmount = gravityPoint.strength / (distance * distance + softening)
+      totalForce += normalizedDirection * forceAmount * gravityPoint.polarity
+
+  particle.velocity += totalForce * deltaTime
+  particle.velocity *= damping
+  particle.position += particle.velocity * deltaTime
+
+Wichtige Game-Feel-Parameter:
+- softening verhindert extreme Kräfte nahe am Grav-Punkt
+- damping reduziert unkontrolliertes Beschleunigen
+- maxVelocity verhindert chaotisches Ausbrechen
+- maxForce verhindert Instabilität
+
+Empfohlene Startwerte:
+- softening: 100 bis 500
+- damping: 0.985 bis 0.995
+- gravityStrength: 500 bis 3000
+- maxVelocity: abhängig von Canvas-Größe, z. B. 800 px/s
+
+
+4. Input-System
+---------------
+
+Basissteuerung:
+- Linksklick / Tap: anziehenden Grav-Punkt setzen
+- Rechtsklick / langer Touch: abstoßenden Grav-Punkt setzen
+- Drag: Grav-Punkt bewegen oder Kraftfeld malen
+- R: Reset
+- Space: Pause / Resume
+
+Spätere Erweiterungen:
+- Mausrad: Stärke ändern
+- Shift + Klick: temporärer Impuls
+- Doppelklick: Grav-Punkt entfernen
+- Hotkeys für Tools: Attract, Repel, Vortex, Freeze
+
+
+5. Game Loop
+------------
+Der technische Kern läuft in einem klassischen Realtime-Loop.
+
+function update(deltaTime) {
+  handleInput()
+  spawnParticles(deltaTime)
+  updateGravityPoints(deltaTime)
+  applyForces(deltaTime)
+  integrateParticles(deltaTime)
+  evaluateObjectives()
+  render()
+}
+
+Wichtige Reihenfolge:
+1. Input lesen
+2. neue Objekte erzeugen oder ändern
+3. Kräfte berechnen
+4. Bewegung integrieren
+5. Spielziele prüfen
+6. zeichnen
+
+
+6. Rendering-Konzept
+--------------------
+Die Optik ist ein zentraler Teil des Spiels. Der Look soll neonartig, kosmisch und hochwertig wirken.
+
+Empfohlene visuelle Elemente:
+- dunkler Space-Hintergrund
+- additive Blending für Glow
+- farbige Partikeltrails
+- leuchtende Grav-Punkte mit Pulsringen
+- dezente Verbindungslinien zwischen Grav-Punkten und beeinflussten Partikeln
+- Bloom-Effekt, wenn WebGL verwendet wird
+
+Canvas-2D-MVP:
+- Canvas nicht komplett löschen, sondern leicht abdunkeln
+- dadurch entstehen Trails
+
+Beispiel:
+ctx.fillStyle = "rgba(0, 0, 10, 0.12)"
+ctx.fillRect(0, 0, width, height)
+ctx.globalCompositeOperation = "lighter"
+
+Farbregeln:
+- langsame Partikel: Blau / Cyan
+- schnelle Partikel: Pink / Violett
+- instabile / energiereiche Bereiche: Orange / Weiß
+
+
+7. Spielmodi
+------------
+
+7.1 Sandbox Mode
+~~~~~~~~~~~~~~~~
+Der einfachste und wichtigste Startmodus.
+
+Regeln:
+- freie Platzierung von Grav-Punkten
+- keine harte Zielvorgabe
+- Fokus auf Ästhetik und Experimentieren
+- ideal für virale Screenshots oder kurze Clips
+
+Ziel:
+Der Spieler erschafft schöne Muster.
+
+
+7.2 Puzzle Mode
+~~~~~~~~~~~~~~~
+Der Spieler bekommt eine konkrete Aufgabe mit begrenztem Input.
+
+Beispiele:
+- Forme einen stabilen Orbit
+- Sammle 80 % der Partikel in einer Zielzone
+- Trenne blaue und pinke Partikel
+- Erzeuge eine Spirale für mindestens 5 Sekunden
+
+Mechaniken:
+- begrenzte Anzahl an Grav-Punkten
+- Zeitlimit
+- Zielzonen
+- Score nach Effizienz und Stabilität
+
+
+7.3 Flow / Survival Mode
+~~~~~~~~~~~~~~~~~~~~~~~~
+Ein dynamischer Modus mit wachsender Komplexität.
+
+Regeln:
+- Partikel spawnen kontinuierlich
+- Chaos nimmt zu
+- Spieler muss das System stabil halten
+- schlechte Zonen oder Instabilität kosten Energie
+
+Mögliche Loss Conditions:
+- zu viele Partikel verlassen das Spielfeld
+- Energielevel fällt auf 0
+- Zielzone bleibt zu lange leer
+
+
+7.4 Daily Challenge
+~~~~~~~~~~~~~~~~~~~
+Ein täglicher Seed erzeugt für alle Spieler dieselben Startbedingungen.
+
+Technische Idee:
+seed = hash(currentDate)
+rng = new SeededRandom(seed)
+
+Vorteile:
+- vergleichbare Scores
+- Shareability
+- täglicher Wiedereinstieg
+
+
+8. Scoring-System
+-----------------
+Das Scoring sollte nicht nur rohe Punktzahlen messen, sondern Schönheit, Kontrolle und Effizienz belohnen.
+
+Mögliche Score-Komponenten:
+- Stability: Wie stabil ist das Partikelfeld?
+- Control: Wie viele Partikel befinden sich in Zielzonen?
+- Efficiency: Wie wenige Grav-Punkte wurden genutzt?
+- Flow: Wie kontinuierlich bewegen sich Partikel ohne Chaos?
+- Beauty Bonus: Symmetrie, Spiralen oder Farbverläufe erkennen
+
+Einfache MVP-Scoreformel:
+score = particlesInTargetZone * 10
+score += stableOrbitTime * 50
+score -= gravityPointsUsed * 100
+
+Spätere Beauty-Erkennung:
+- Kreisbewegung messen über Winkeländerung um Zentrum
+- Spiralstruktur messen über Radiusveränderung plus Rotation
+- Symmetrie messen über Partikelverteilung
+
+
+9. Progression
+--------------
+Mögliche Unlocks:
+- neue Partikelfarben
+- neue Hintergrundthemen
+- neue Grav-Point-Typen
+- neue Musik / Soundscapes
+- Challenge-Packs
+
+Wichtig:
+Progression sollte die Sandbox nicht beschneiden. Das Spiel soll von Anfang an schön und befriedigend sein.
+
+
+10. MVP-Umfang
+--------------
+Ein sinnvoller erster Prototyp sollte klein bleiben.
+
+Must Have:
+- Canvas Setup
+- Partikelsystem
+- Grav-Punkte per Klick
+- Kraftberechnung
+- Glow / Trail Rendering
+- Reset-Funktion
+
+Should Have:
+- mehrere Grav-Punkte
+- anziehende und abstoßende Punkte
+- Farbwechsel nach Geschwindigkeit
+- einfacher Sandbox-Modus
+
+Could Have:
+- Zielzone
+- Score
+- Daily Seed
+- Export Screenshot
+
+Nicht für MVP:
+- Accountsystem
+- Multiplayer
+- komplexer Level-Editor
+- aufwendiges Meta-Game
+
+
+11. Technischer Stack
+---------------------
+Empfohlener Start:
+- HTML
+- CSS
+- JavaScript
+- Canvas 2D
+
+Warum:
+- schnell prototypisierbar
+- keine Build-Tools nötig
+- direkt im Browser lauffähig
+
+Spätere Version:
+- WebGL oder Three.js für mehr Partikel und bessere Effekte
+- Shader für Bloom, Trails und Farbverläufe
+- Audio-Reactivity mit Web Audio API
+
+
+12. Performance-Hinweise
+------------------------
+Naiver Algorithmus:
+particles * gravityPoints pro Frame
+
+Beispiel:
+5000 Partikel * 10 Grav-Punkte = 50.000 Kraftberechnungen pro Frame
+Das ist im Browser noch machbar, solange der Code sauber ist.
+
+Optimierungen:
+- Grav-Punkte begrenzen
+- Radius-Check vor teurer Normalisierung
+- squaredDistance verwenden
+- Objekt-Pooling für Partikel
+- Float32Arrays statt viele kleine Objekte bei hoher Partikelzahl
+- Rendering und Simulation trennen
+
+
+13. Langfristige Vision
+-----------------------
+Gravity Painter kann sich in drei Richtungen entwickeln:
+
+1. Kunstspiel
+- Fokus auf visuelle Schönheit
+- Export von Bildern und Clips
+- entspannter Sandbox-Charakter
+
+2. Skill-Spiel
+- Daily Challenges
+- Leaderboards
+- schnelle Sessions
+- optimierbare Scores
+
+3. Puzzle-Spiel
+- handgebaute Level
+- klare Ziele
+- neue Grav-Werkzeuge pro Kapitel
+
+Die stärkste Version kombiniert alle drei:
+Ein schöner Sandbox-Einstieg, daraus entstehende Challenges und später kompetitive Daily Runs.
+
+
+14. Erste konkrete Umsetzungsidee
+---------------------------------
+Der erste spielbare Prototyp sollte folgende Features enthalten:
+
+- schwarzer Canvas-Hintergrund
+- 1500 Partikel mit zufälligen Startpositionen
+- Klick erzeugt einen anziehenden Grav-Punkt
+- Shift + Klick erzeugt einen abstoßenden Grav-Punkt
+- Partikel hinterlassen farbige Trails
+- Grav-Punkte pulsieren visuell
+- Reset-Button leert Grav-Punkte und initialisiert Partikel neu
+
+Danach kann sehr schnell getestet werden:
+- Macht das Setzen von Grav-Punkten Spaß?
+- Entstehen schöne Muster?
+- Ist die Simulation stabil?
+- Brauchen wir mehr Kontrolle oder mehr Chaos?
+
+
+15. Design-Leitsatz
+-------------------
+Gravity Painter sollte sich anfühlen wie:
+
+"Ein physikalisches Instrument, mit dem man Licht im Weltraum komponiert."
+

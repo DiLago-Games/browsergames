@@ -1,0 +1,624 @@
+GRAVITY PAINTER — PHYSIK-SYSTEM MIT REGLERN
+===========================================
+
+Ziel
+----
+Dieses Dokument beschreibt die Physik des Spiels Gravity Painter als direkt nutzbares JS/Canvas-Konzept.
+Der Spieler beeinflusst ein Partikelfeld nicht nur durch Klicks, sondern über Regler, die das gesamte
+Gravitationsverhalten live verändern.
+
+Die Idee:
+- Klicks setzen Grav-Punkte.
+- Regler verändern, wie diese Grav-Punkte wirken.
+- Dadurch wird das Spiel halb Puzzle, halb Instrument, halb visuelles Spielzeug.
+
+
+CORE-PHYSIK
+===========
+
+Jedes Partikel hat:
+- Position
+- Geschwindigkeit
+- Farbe / Hue
+- Lebensdauer oder Alpha
+
+Jeder Grav-Punkt hat:
+- Position
+- Stärke
+- Radius
+- Pulsphase
+- Polarität: anziehend oder abstoßend
+
+Die Kraft auf ein Partikel entsteht aus mehreren Komponenten:
+
+1. Gravitation
+   Zieht Partikel zum Grav-Punkt oder stößt sie weg.
+
+2. Wirbelkraft / Vortex
+   Dreht Partikel tangential um Grav-Punkte herum.
+
+3. Pulsation
+   Lässt Grav-Punkte atmen, sodass Kraft und Radius rhythmisch schwanken.
+
+4. Dämpfung
+   Verhindert endloses Beschleunigen.
+
+5. Zeitverzerrung
+   Skaliert die Simulationsgeschwindigkeit für Slow-Motion- oder Hyperdrive-Feeling.
+
+
+REGLER-KONZEPT
+==============
+
+Empfohlene UI-Regler:
+
+1. Gravity Strength
+   Wertebereich: -2000 bis 2000
+   Bedeutung:
+   - positiv = anziehend
+   - negativ = abstoßend
+
+2. Gravity Radius
+   Wertebereich: 50 bis 700
+   Bestimmt, wie groß der Einflussbereich eines Grav-Punkts ist.
+
+3. Vortex
+   Wertebereich: -8 bis 8
+   Erzeugt seitlichen Spin.
+   - negativ = linksdrehend
+   - positiv = rechtsdrehend
+
+4. Damping
+   Wertebereich: 0.90 bis 0.999
+   Bremst Partikel ab.
+   Niedriger Wert = dichter, schwerer Look.
+   Höherer Wert = lange, elegante Bahnen.
+
+5. Pulse
+   Wertebereich: 0 bis 1
+   Lässt Grav-Punkte rhythmisch stärker und schwächer werden.
+
+6. Time Warp
+   Wertebereich: 0.2 bis 2.5
+   Skaliert die Simulationszeit.
+   0.2 = dreamy slow motion
+   2.5 = chaotischer Hyperflow
+
+7. Trail Fade
+   Wertebereich: 0.01 bis 0.20
+   Wie schnell alte Partikelspuren verschwinden.
+   Niedriger Wert = lange Lichtmalerei.
+   Höherer Wert = klareres, schnelleres Bild.
+
+
+COOLER GAMEPLAY-TWIST: GRAVITY MIXER
+====================================
+
+Der Spieler kann per Regler nicht nur eine feste Gravitation einstellen, sondern einen „Gravity Mixer“ bauen:
+
+- Gravity Strength = wie stark zieht/drückt das System?
+- Vortex = wie viel Orbit entsteht?
+- Pulse = wie sehr atmet das Feld?
+- Time Warp = wie schnell läuft die Realität?
+
+Dadurch entstehen Spielstile:
+
+1. Black Hole Mode
+   Strength hoch, Radius mittel, Vortex niedrig.
+   Alles wird brutal eingesaugt.
+
+2. Galaxy Mode
+   Strength mittel, Radius hoch, Vortex hoch.
+   Partikel formen Spiralarme.
+
+3. Nebula Mode
+   Strength niedrig, Vortex leicht, Damping hoch, Trail Fade niedrig.
+   Langsame, schöne Lichtwolken.
+
+4. Chaos Engine
+   Strength wechselnd, Vortex hoch, Pulse hoch, Time Warp hoch.
+   Extrem reaktiv und wild.
+
+5. Zen Painting
+   Strength niedrig, Vortex niedrig, Time Warp niedrig, Trail Fade sehr niedrig.
+   Ruhig, meditativ, perfekt für Screenshots.
+
+
+MINIMALER HTML + JS PROTOTYP
+============================
+
+Speichere diesen Code als gravity_painter_physics.html und öffne ihn im Browser.
+Er enthält:
+- Canvas-Partikelsimulation
+- Klickbare Grav-Punkte
+- Regler für Gravity, Radius, Vortex, Damping, Pulse, Time Warp und Trail Fade
+- Additives Glow-Rendering
+- Lichtspuren
+
+
+CODE
+====
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gravity Painter Physics Prototype</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #03020a;
+      color: white;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at center, #090622 0%, #020109 65%, #000 100%);
+    }
+
+    .panel {
+      position: fixed;
+      left: 18px;
+      top: 18px;
+      width: 300px;
+      padding: 18px;
+      border: 1px solid rgba(140, 220, 255, 0.22);
+      border-radius: 18px;
+      background: rgba(5, 8, 22, 0.72);
+      box-shadow: 0 0 40px rgba(0, 200, 255, 0.14);
+      backdrop-filter: blur(18px);
+      user-select: none;
+    }
+
+    .panel h1 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      letter-spacing: 0.24em;
+      font-weight: 700;
+    }
+
+    .panel p {
+      margin: 0 0 16px;
+      color: rgba(220, 230, 255, 0.7);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    label {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      margin-top: 12px;
+      color: rgba(235, 240, 255, 0.88);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    input[type="range"] {
+      grid-column: 1 / -1;
+      width: 100%;
+      accent-color: #00eaff;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 11px 14px;
+      border: 1px solid rgba(0, 234, 255, 0.42);
+      border-radius: 14px;
+      background: linear-gradient(90deg, rgba(255,0,220,0.14), rgba(0,234,255,0.14));
+      color: white;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      cursor: pointer;
+    }
+
+    .hint {
+      position: fixed;
+      right: 24px;
+      bottom: 22px;
+      color: rgba(220, 230, 255, 0.58);
+      font-size: 13px;
+      letter-spacing: 0.08em;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div class="panel">
+    <h1>GRAVITY MIXER</h1>
+    <p>Klicke ins Feld, um Grav-Punkte zu setzen. Die Regler verändern live die Physik.</p>
+
+    <label>Gravity <span id="gravityValue"></span>
+      <input id="gravity" type="range" min="-2000" max="2000" value="850" step="10">
+    </label>
+
+    <label>Radius <span id="radiusValue"></span>
+      <input id="radius" type="range" min="50" max="700" value="340" step="5">
+    </label>
+
+    <label>Vortex <span id="vortexValue"></span>
+      <input id="vortex" type="range" min="-8" max="8" value="2.6" step="0.1">
+    </label>
+
+    <label>Damping <span id="dampingValue"></span>
+      <input id="damping" type="range" min="0.900" max="0.999" value="0.985" step="0.001">
+    </label>
+
+    <label>Pulse <span id="pulseValue"></span>
+      <input id="pulse" type="range" min="0" max="1" value="0.38" step="0.01">
+    </label>
+
+    <label>Time Warp <span id="timeValue"></span>
+      <input id="timeWarp" type="range" min="0.2" max="2.5" value="1" step="0.05">
+    </label>
+
+    <label>Trail Fade <span id="fadeValue"></span>
+      <input id="trailFade" type="range" min="0.01" max="0.20" value="0.055" step="0.005">
+    </label>
+
+    <button id="reset">RESET FIELD</button>
+  </div>
+
+  <div class="hint">Click = Grav-Punkt · Shift+Click = abstoßender Punkt</div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const ui = {
+      gravity: document.getElementById("gravity"),
+      radius: document.getElementById("radius"),
+      vortex: document.getElementById("vortex"),
+      damping: document.getElementById("damping"),
+      pulse: document.getElementById("pulse"),
+      timeWarp: document.getElementById("timeWarp"),
+      trailFade: document.getElementById("trailFade"),
+      reset: document.getElementById("reset"),
+    };
+
+    const labels = {
+      gravity: document.getElementById("gravityValue"),
+      radius: document.getElementById("radiusValue"),
+      vortex: document.getElementById("vortexValue"),
+      damping: document.getElementById("dampingValue"),
+      pulse: document.getElementById("pulseValue"),
+      timeWarp: document.getElementById("timeValue"),
+      trailFade: document.getElementById("fadeValue"),
+    };
+
+    const particles = [];
+    const gravityPoints = [];
+    const PARTICLE_COUNT = 2600;
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let time = 0;
+    let last = performance.now();
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function rand(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function createParticle() {
+      const angle = rand(0, Math.PI * 2);
+      const speed = rand(10, 80);
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+
+      return {
+        x: cx + Math.cos(angle) * rand(40, Math.min(width, height) * 0.34),
+        y: cy + Math.sin(angle) * rand(40, Math.min(width, height) * 0.34),
+        vx: Math.cos(angle + Math.PI / 2) * speed,
+        vy: Math.sin(angle + Math.PI / 2) * speed,
+        hue: rand(180, 330),
+        size: rand(0.8, 2.2),
+      };
+    }
+
+    function resetParticles() {
+      particles.length = 0;
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push(createParticle());
+      }
+    }
+
+    function addGravityPoint(x, y, polarity = 1) {
+      gravityPoints.push({
+        x,
+        y,
+        polarity,
+        born: time,
+        phase: rand(0, Math.PI * 2),
+      });
+
+      // Mini-Schockwelle beim Setzen eines Punktes.
+      for (const p of particles) {
+        const dx = p.x - x;
+        const dy = p.y - y;
+        const distSq = dx * dx + dy * dy + 0.001;
+        const dist = Math.sqrt(distSq);
+        if (dist < 180) {
+          const push = (1 - dist / 180) * 180 * polarity;
+          p.vx += (dx / dist) * push;
+          p.vy += (dy / dist) * push;
+        }
+      }
+
+      // Begrenzung: das Feld soll lesbar bleiben.
+      if (gravityPoints.length > 8) {
+        gravityPoints.shift();
+      }
+    }
+
+    function readSettings() {
+      const settings = {
+        gravity: Number(ui.gravity.value),
+        radius: Number(ui.radius.value),
+        vortex: Number(ui.vortex.value),
+        damping: Number(ui.damping.value),
+        pulse: Number(ui.pulse.value),
+        timeWarp: Number(ui.timeWarp.value),
+        trailFade: Number(ui.trailFade.value),
+      };
+
+      labels.gravity.textContent = settings.gravity.toFixed(0);
+      labels.radius.textContent = settings.radius.toFixed(0);
+      labels.vortex.textContent = settings.vortex.toFixed(1);
+      labels.damping.textContent = settings.damping.toFixed(3);
+      labels.pulse.textContent = settings.pulse.toFixed(2);
+      labels.timeWarp.textContent = settings.timeWarp.toFixed(2);
+      labels.trailFade.textContent = settings.trailFade.toFixed(3);
+
+      return settings;
+    }
+
+    function updateParticle(p, dt, settings) {
+      let ax = 0;
+      let ay = 0;
+
+      for (const gp of gravityPoints) {
+        const dx = gp.x - p.x;
+        const dy = gp.y - p.y;
+        const distSq = dx * dx + dy * dy + 0.0001;
+        const dist = Math.sqrt(distSq);
+
+        // Pulsierender Radius: Grav-Punkte fühlen sich lebendig an.
+        const pulseWave = Math.sin(time * 3.4 + gp.phase) * settings.pulse;
+        const radius = settings.radius * (1 + pulseWave * 0.35);
+
+        if (dist > radius) continue;
+
+        const nx = dx / dist;
+        const ny = dy / dist;
+
+        // Weiche Falloff-Kurve statt harter Newton-Physik.
+        // Dadurch bleibt das Spiel steuerbar und sieht schöner aus.
+        const influence = 1 - dist / radius;
+        const softenedDistance = dist + 45;
+        const gravityForce =
+          gp.polarity * settings.gravity * influence / softenedDistance;
+
+        // Normale Gravitation: radial zum Punkt hin oder von ihm weg.
+        ax += nx * gravityForce;
+        ay += ny * gravityForce;
+
+        // Vortex-Kraft: tangentiale Rotation um den Grav-Punkt.
+        // Tangente zu (nx, ny) ist (-ny, nx).
+        const vortexForce = settings.vortex * influence * 90 * gp.polarity;
+        ax += -ny * vortexForce;
+        ay += nx * vortexForce;
+      }
+
+      p.vx += ax * dt;
+      p.vy += ay * dt;
+
+      // Damping wird frame-unabhängig angewendet.
+      const frameDamping = Math.pow(settings.damping, dt * 60);
+      p.vx *= frameDamping;
+      p.vy *= frameDamping;
+
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+
+      // Wrap-around statt Wandkollision: kosmischer, flowiger.
+      if (p.x < -20) p.x = width + 20;
+      if (p.x > width + 20) p.x = -20;
+      if (p.y < -20) p.y = height + 20;
+      if (p.y > height + 20) p.y = -20;
+
+      // Farbe reagiert auf Geschwindigkeit.
+      const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      p.hue = 185 + Math.min(speed * 0.35, 150);
+    }
+
+    function render(settings) {
+      // Kein clearRect: stattdessen halbtransparentes Schwarz für Trails.
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `rgba(2, 1, 10, ${settings.trailFade})`;
+      ctx.fillRect(0, 0, width, height);
+
+      // Partikel additiv rendern.
+      ctx.globalCompositeOperation = "lighter";
+      for (const p of particles) {
+        const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        const light = 50 + Math.min(speed * 0.04, 22);
+        ctx.fillStyle = `hsla(${p.hue}, 100%, ${light}%, 0.72)`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Grav-Punkte mit Halo, Puls und Einflussring.
+      ctx.globalCompositeOperation = "lighter";
+      for (const gp of gravityPoints) {
+        const age = time - gp.born;
+        const pulse = 1 + Math.sin(time * 4 + gp.phase) * 0.12;
+        const hue = gp.polarity > 0 ? 190 : 320;
+        const core = 8 * pulse;
+        const aura = 42 * pulse;
+
+        const gradient = ctx.createRadialGradient(gp.x, gp.y, 0, gp.x, gp.y, aura);
+        gradient.addColorStop(0, `hsla(${hue}, 100%, 80%, 1)`);
+        gradient.addColorStop(0.28, `hsla(${hue}, 100%, 58%, 0.42)`);
+        gradient.addColorStop(1, `hsla(${hue}, 100%, 50%, 0)`);
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(gp.x, gp.y, aura, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = `hsla(${hue}, 100%, 65%, ${0.18 + Math.sin(age * 5) * 0.06})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(gp.x, gp.y, Number(ui.radius.value) * 0.5, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = `hsla(${hue}, 100%, 80%, 0.95)`;
+        ctx.beginPath();
+        ctx.arc(gp.x, gp.y, core, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function loop(now) {
+      const settings = readSettings();
+      const rawDt = Math.min((now - last) / 1000, 0.033);
+      const dt = rawDt * settings.timeWarp;
+      last = now;
+      time += dt;
+
+      for (const p of particles) {
+        updateParticle(p, dt, settings);
+      }
+
+      render(settings);
+      requestAnimationFrame(loop);
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      const polarity = event.shiftKey ? -1 : 1;
+      addGravityPoint(event.clientX, event.clientY, polarity);
+    });
+
+    ui.reset.addEventListener("click", () => {
+      gravityPoints.length = 0;
+      resetParticles();
+      ctx.clearRect(0, 0, width, height);
+    });
+
+    window.addEventListener("resize", () => {
+      resize();
+      resetParticles();
+      ctx.clearRect(0, 0, width, height);
+    });
+
+    resize();
+    resetParticles();
+
+    // Start-Setup: drei Punkte erzeugen sofort eine Galaxie-Komposition.
+    setTimeout(() => {
+      addGravityPoint(width * 0.38, height * 0.52, 1);
+      addGravityPoint(width * 0.62, height * 0.46, 1);
+      addGravityPoint(width * 0.50, height * 0.68, -1);
+    }, 100);
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
+
+
+IMPLEMENTIERUNGS-NOTIZEN
+========================
+
+1. Warum keine echte Newton-Physik?
+-----------------------------------
+Echte 1/r²-Physik explodiert schnell numerisch und wirkt im Spiel oft unkontrollierbar.
+Der Code nutzt deshalb:
+
+force = gravity * influence / (distance + softening)
+
+Das ist stabiler, besser steuerbar und visuell eleganter.
+
+
+2. Warum Vortex?
+----------------
+Reine Gravitation macht oft nur Klumpen.
+Vortex erzeugt Orbits, Spiralen und Galaxie-Arme.
+Das ist für Gravity Painter essenziell.
+
+
+3. Warum Damping?
+-----------------
+Ohne Damping beschleunigen Partikel dauerhaft.
+Mit Damping entstehen kontrollierbare, malerische Flows.
+
+
+4. Warum Trail Fade?
+--------------------
+Trail Fade ist der eigentliche „Painting“-Effekt.
+Der Spieler malt nicht mit Pinseln, sondern mit Bewegungsgeschichte.
+
+
+5. Warum Shift+Click?
+---------------------
+Shift+Click setzt abstoßende Punkte.
+Dadurch entstehen deutlich interessantere Setups:
+- Grav-Punkt zieht
+- Repulsor stößt
+- Vortex dreht
+
+Das ergibt komplexe Strömungen aus simplen Eingaben.
+
+
+AUSBLICK
+========
+
+Nächste mögliche Schritte:
+
+1. Presets bauen:
+   - Galaxy
+   - Black Hole
+   - Nebula
+   - Chaos
+   - Zen
+
+2. Scoring-System:
+   - Punkte für stabile Orbits
+   - Punkte für Partikel in Zielzonen
+   - Combo für lange, ununterbrochene Flow-Zustände
+
+3. Audio-Reaktivität:
+   - Pulse-Regler an Beat koppeln
+   - Grav-Punkte erzeugen Bass-Wobble
+   - Partikelgeschwindigkeit steuert Synth-Filter
+
+4. WebGL-Version:
+   - 10.000 bis 100.000 Partikel
+   - Shader-Glow
+   - Bloom
+   - GPU-basierte Simulation
+
