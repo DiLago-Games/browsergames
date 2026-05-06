@@ -15,6 +15,7 @@
   const loadingScreen  = document.getElementById("loading-screen");
   const progressBar    = document.getElementById("unity-progress-bar-full");
   const btnStart       = document.getElementById("btn-start");
+  const unityContainer = document.getElementById("unity-container");
   const canvas         = document.getElementById("unity-canvas");
   const hud            = document.getElementById("hud");
   const hudScore       = document.getElementById("hud-score");
@@ -24,11 +25,6 @@
   const finalScore     = document.getElementById("final-score");
   const highScoreEl    = document.getElementById("high-score");
   const btnRestart     = document.getElementById("btn-restart");
-  const mobileControls = document.getElementById("mobile-controls");
-  const btnLeft        = document.getElementById("btn-left");
-  const btnRight       = document.getElementById("btn-right");
-  const btnFire        = document.getElementById("btn-fire");
-  const btnPause       = document.getElementById("btn-pause");
   const ctx            = canvas.getContext("2d");
 
   /* ── Constants ─────────────────────────────────── */
@@ -73,9 +69,6 @@
       stars, keys, paused, highScore, raf,
       rapidFireTimer, shieldTimer, rapidFireActive, shieldActive;
 
-  let touchLeftPressed = false;
-  let touchRightPressed = false;
-  let touchFirePressed = false;
   let dragTouchX = null;
 
   const isTouchDevice =
@@ -85,7 +78,28 @@
     ("ontouchstart" in window);
 
   /* ── Simulated loading bar ──────────────────────── */
+  resizeCanvasDisplay();
+  window.addEventListener("resize", resizeCanvasDisplay);
+  window.addEventListener("orientationchange", resizeCanvasDisplay);
   simulateLoading();
+
+  function resizeCanvasDisplay() {
+    const containerW = unityContainer.clientWidth;
+    const containerH = unityContainer.clientHeight;
+    const gameAspect = W / H;
+    let displayW = containerW;
+    let displayH = displayW / gameAspect;
+
+    if (displayH > containerH) {
+      displayH = containerH;
+      displayW = displayH * gameAspect;
+    }
+
+    canvas.style.width = `${displayW}px`;
+    canvas.style.height = `${displayH}px`;
+    canvas.style.left = `${(containerW - displayW) / 2}px`;
+    canvas.style.top = `${(containerH - displayH) / 2}px`;
+  }
 
   function simulateLoading() {
     let pct = 0;
@@ -109,10 +123,7 @@
     loadingScreen.style.display  = "none";
     gameoverScreen.style.display = "none";
     hud.style.display            = "flex";
-    if (isTouchDevice) {
-      mobileControls.style.display = "grid";
-      mobileControls.setAttribute("aria-hidden", "false");
-    }
+    resizeCanvasDisplay();
     canvas.focus();
     initState();
     if (raf) cancelAnimationFrame(raf);
@@ -127,34 +138,6 @@
     if (e.code === "Space" || e.code === "KeyZ") e.preventDefault();
   });
   document.addEventListener("keyup",  e => { keys[e.code] = false; });
-
-  function setBtnState(button, active) {
-    if (!button) return;
-    button.style.opacity = active ? "1" : "0.86";
-  }
-
-  function pressHold(button, onPress, onRelease) {
-    if (!button) return;
-    const start = e => {
-      e.preventDefault();
-      onPress();
-      setBtnState(button, true);
-    };
-    const end = e => {
-      e.preventDefault();
-      onRelease();
-      setBtnState(button, false);
-    };
-
-    button.addEventListener("touchstart", start, { passive: false });
-    button.addEventListener("mousedown", start);
-    ["touchend", "touchcancel"].forEach(type => {
-      button.addEventListener(type, end, { passive: false });
-    });
-    ["mouseup", "mouseleave"].forEach(type => {
-      button.addEventListener(type, end);
-    });
-  }
 
   function clientToWorldX(clientX) {
     const rect = canvas.getBoundingClientRect();
@@ -186,13 +169,8 @@
     }, { passive: false });
   });
 
-  function isControlElement(target) {
-    return !!(target && target.closest && target.closest("#mobile-controls"));
-  }
-
   window.addEventListener("touchstart", e => {
     if (state !== "playing") return;
-    if (isControlElement(e.target)) return;
     const touch = e.touches[0] || e.changedTouches[0];
     if (!touch) return;
     e.preventDefault();
@@ -200,7 +178,6 @@
   }, { passive: false });
   window.addEventListener("touchmove", e => {
     if (state !== "playing") return;
-    if (isControlElement(e.target)) return;
     const touch = e.touches[0] || e.changedTouches[0];
     if (!touch) return;
     e.preventDefault();
@@ -226,17 +203,6 @@
     canvas.addEventListener(type, () => { dragTouchX = null; });
   });
 
-  if (btnLeft && btnRight && btnFire && btnPause) {
-    pressHold(btnLeft, () => { touchLeftPressed = true; }, () => { touchLeftPressed = false; });
-    pressHold(btnRight, () => { touchRightPressed = true; }, () => { touchRightPressed = false; });
-    pressHold(btnFire, () => { touchFirePressed = true; }, () => { touchFirePressed = false; });
-    btnPause.addEventListener("click", e => {
-      e.preventDefault();
-      paused = !paused;
-      canvas.focus();
-    });
-  }
-
   /* ── Init ───────────────────────────────────────── */
   function initState() {
     state         = "playing";
@@ -249,9 +215,6 @@
     shieldActive    = false;
     rapidFireTimer  = 0;
     shieldTimer     = 0;
-    touchLeftPressed = false;
-    touchRightPressed = false;
-    touchFirePressed = false;
     dragTouchX = null;
 
     ship = {
@@ -293,8 +256,8 @@
     if (dragTouchX !== null) {
       ship.x = dragTouchX;
     } else {
-      const movingLeft = keys["ArrowLeft"] || keys["KeyA"] || touchLeftPressed;
-      const movingRight = keys["ArrowRight"] || keys["KeyD"] || touchRightPressed;
+      const movingLeft = keys["ArrowLeft"] || keys["KeyA"];
+      const movingRight = keys["ArrowRight"] || keys["KeyD"];
       if (movingLeft) ship.x = Math.max(ship.w / 2, ship.x - SHIP_SPEED);
       if (movingRight) ship.x = Math.min(W - ship.w / 2, ship.x + SHIP_SPEED);
     }
@@ -303,7 +266,7 @@
     ship.shootCooldown--;
     const cooldown = rapidFireActive ? 8 : 18;
     const isTouchDragShooting = isTouchDevice && dragTouchX !== null;
-    const isShooting = keys["Space"] || keys["KeyZ"] || touchFirePressed || isTouchDragShooting;
+    const isShooting = keys["Space"] || keys["KeyZ"] || isTouchDragShooting;
     if (isShooting && ship.shootCooldown <= 0) {
       bullets.push({ x: ship.x, y: ship.y - ship.h / 2 });
       ship.shootCooldown = cooldown;
