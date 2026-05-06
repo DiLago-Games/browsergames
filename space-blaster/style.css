@@ -30,6 +30,7 @@ body {
   height: 100%;
   background: #000010;
   cursor: crosshair;
+  touch-action: none;
 }
 
 /* ── Loading / Title screen ───────────────────────── */
@@ -189,6 +190,51 @@ body {
   box-shadow: 0 0 28px rgba(0,180,255,0.7);
 }
 
+/* ── Mobile controls ─────────────────────────────── */
+#mobile-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  padding: 10px 14px;
+  display: none;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 10px;
+  z-index: 25;
+  pointer-events: none;
+}
+
+.mobile-btn {
+  height: 54px;
+  border: 1px solid rgba(120, 180, 255, 0.55);
+  border-radius: 12px;
+  background: rgba(8, 18, 44, 0.72);
+  color: #d8ebff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-btn:active {
+  transform: translateY(1px) scale(0.98);
+  background: rgba(20, 40, 88, 0.8);
+}
+
+.mobile-btn-fire {
+  color: #fff6ce;
+  border-color: rgba(255, 208, 90, 0.7);
+  background: rgba(98, 62, 12, 0.62);
+}
+
+.mobile-btn-pause {
+  min-width: 64px;
+}
+
 /* ── Animations ───────────────────────────────────── */
 @keyframes pulse {
   0%, 100% { text-shadow: 0 0 20px #4af, 0 0 40px #08f; }
@@ -196,9 +242,34 @@ body {
 }
 
 /* ── Responsive ───────────────────────────────────── */
+@media (hover: none) and (pointer: coarse) {
+  #mobile-controls {
+    display: grid;
+  }
+
+  #unity-canvas {
+    cursor: default;
+  }
+
+  #btn-start,
+  #btn-restart {
+    min-height: 52px;
+  }
+}
+
 @media (max-height: 520px) {
   #hud {
     padding: 6px 10px;
     font-size: 0.82rem;
+  }
+
+  #mobile-controls {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .mobile-btn {
+    height: 46px;
+    font-size: 1rem;
   }
 }

@@ -24,6 +24,11 @@
   const finalScore     = document.getElementById("final-score");
   const highScoreEl    = document.getElementById("high-score");
   const btnRestart     = document.getElementById("btn-restart");
+  const mobileControls = document.getElementById("mobile-controls");
+  const btnLeft        = document.getElementById("btn-left");
+  const btnRight       = document.getElementById("btn-right");
+  const btnFire        = document.getElementById("btn-fire");
+  const btnPause       = document.getElementById("btn-pause");
   const ctx            = canvas.getContext("2d");
 
   /* ── Constants ─────────────────────────────────── */
@@ -68,6 +73,12 @@
       stars, keys, paused, highScore, raf,
       rapidFireTimer, shieldTimer, rapidFireActive, shieldActive;
 
+  let touchLeftPressed = false;
+  let touchRightPressed = false;
+  let touchFirePressed = false;
+
+  const isTouchDevice = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+
   /* ── Simulated loading bar ──────────────────────── */
   simulateLoading();
 
@@ -93,6 +104,10 @@
     loadingScreen.style.display  = "none";
     gameoverScreen.style.display = "none";
     hud.style.display            = "flex";
+    if (isTouchDevice) {
+      mobileControls.style.display = "grid";
+      mobileControls.setAttribute("aria-hidden", "false");
+    }
     canvas.focus();
     initState();
     if (raf) cancelAnimationFrame(raf);
@@ -108,6 +123,69 @@
   });
   document.addEventListener("keyup",  e => { keys[e.code] = false; });
 
+  function setBtnState(button, active) {
+    if (!button) return;
+    button.style.opacity = active ? "1" : "0.86";
+  }
+
+  function pressHold(button, onPress, onRelease) {
+    if (!button) return;
+    button.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      onPress();
+      setBtnState(button, true);
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(type => {
+      button.addEventListener(type, e => {
+        e.preventDefault();
+        onRelease();
+        setBtnState(button, false);
+      });
+    });
+  }
+
+  function pointerToWorldX(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    return Math.max(ship.w / 2, Math.min(W - ship.w / 2, x * W));
+  }
+
+  function moveShipToPointer(e) {
+    if (state !== "playing") return;
+    ship.x = pointerToWorldX(e);
+  }
+
+  canvas.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
+    e.preventDefault();
+    moveShipToPointer(e);
+    touchFirePressed = true;
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
+    if (e.buttons === 0) return;
+    e.preventDefault();
+    moveShipToPointer(e);
+  });
+  ["pointerup", "pointercancel"].forEach(type => {
+    canvas.addEventListener(type, e => {
+      if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
+      e.preventDefault();
+      touchFirePressed = false;
+    });
+  });
+
+  if (btnLeft && btnRight && btnFire && btnPause) {
+    pressHold(btnLeft, () => { touchLeftPressed = true; }, () => { touchLeftPressed = false; });
+    pressHold(btnRight, () => { touchRightPressed = true; }, () => { touchRightPressed = false; });
+    pressHold(btnFire, () => { touchFirePressed = true; }, () => { touchFirePressed = false; });
+    btnPause.addEventListener("click", e => {
+      e.preventDefault();
+      paused = !paused;
+      canvas.focus();
+    });
+  }
+
   /* ── Init ───────────────────────────────────────── */
   function initState() {
     state         = "playing";
@@ -120,6 +198,9 @@
     shieldActive    = false;
     rapidFireTimer  = 0;
     shieldTimer     = 0;
+    touchLeftPressed = false;
+    touchRightPressed = false;
+    touchFirePressed = false;
 
     ship = {
       x: W / 2, y: H - 70,
@@ -157,13 +238,16 @@
   /* ── Update ─────────────────────────────────────── */
   function update() {
     // Ship movement
-    if (keys["ArrowLeft"] || keys["KeyA"]) ship.x = Math.max(ship.w / 2, ship.x - SHIP_SPEED);
-    if (keys["ArrowRight"]|| keys["KeyD"]) ship.x = Math.min(W - ship.w / 2, ship.x + SHIP_SPEED);
+    const movingLeft = keys["ArrowLeft"] || keys["KeyA"] || touchLeftPressed;
+    const movingRight = keys["ArrowRight"] || keys["KeyD"] || touchRightPressed;
+    if (movingLeft) ship.x = Math.max(ship.w / 2, ship.x - SHIP_SPEED);
+    if (movingRight) ship.x = Math.min(W - ship.w / 2, ship.x + SHIP_SPEED);
 
     // Shooting
     ship.shootCooldown--;
     const cooldown = rapidFireActive ? 8 : 18;
-    if ((keys["Space"] || keys["KeyZ"]) && ship.shootCooldown <= 0) {
+    const isShooting = keys["Space"] || keys["KeyZ"] || touchFirePressed;
+    if (isShooting && ship.shootCooldown <= 0) {
       bullets.push({ x: ship.x, y: ship.y - ship.h / 2 });
       ship.shootCooldown = cooldown;
     }
