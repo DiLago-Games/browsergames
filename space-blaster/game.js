@@ -77,7 +77,10 @@
   let touchRightPressed = false;
   let touchFirePressed = false;
 
-  const isTouchDevice = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+  const isTouchDevice =
+    window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
+    navigator.maxTouchPoints > 0 ||
+    ("ontouchstart" in window);
 
   /* ── Simulated loading bar ──────────────────────── */
   simulateLoading();
@@ -130,42 +133,49 @@
 
   function pressHold(button, onPress, onRelease) {
     if (!button) return;
-    button.addEventListener("pointerdown", e => {
+    const start = e => {
       e.preventDefault();
       onPress();
       setBtnState(button, true);
-    });
-    ["pointerup", "pointercancel", "pointerleave"].forEach(type => {
-      button.addEventListener(type, e => {
-        e.preventDefault();
-        onRelease();
-        setBtnState(button, false);
-      });
+    };
+    const end = e => {
+      e.preventDefault();
+      onRelease();
+      setBtnState(button, false);
+    };
+
+    button.addEventListener("pointerdown", start);
+    button.addEventListener("touchstart", start, { passive: false });
+    ["pointerup", "pointercancel", "pointerleave", "touchend", "touchcancel"].forEach(type => {
+      if (type.startsWith("touch")) {
+        button.addEventListener(type, end, { passive: false });
+      } else {
+        button.addEventListener(type, end);
+      }
     });
   }
 
-  function pointerToWorldX(e) {
+  function clientToWorldX(clientX) {
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
+    const x = (clientX - rect.left) / rect.width;
     return Math.max(ship.w / 2, Math.min(W - ship.w / 2, x * W));
   }
 
-  function moveShipToPointer(e) {
+  function moveShipToClientX(clientX) {
     if (state !== "playing") return;
-    ship.x = pointerToWorldX(e);
+    ship.x = clientToWorldX(clientX);
   }
 
   canvas.addEventListener("pointerdown", e => {
     if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
     e.preventDefault();
-    moveShipToPointer(e);
+    moveShipToClientX(e.clientX);
     touchFirePressed = true;
   });
   canvas.addEventListener("pointermove", e => {
     if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
-    if (e.buttons === 0) return;
     e.preventDefault();
-    moveShipToPointer(e);
+    moveShipToClientX(e.clientX);
   });
   ["pointerup", "pointercancel"].forEach(type => {
     canvas.addEventListener(type, e => {
@@ -173,6 +183,26 @@
       e.preventDefault();
       touchFirePressed = false;
     });
+  });
+
+  canvas.addEventListener("touchstart", e => {
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    e.preventDefault();
+    moveShipToClientX(touch.clientX);
+    touchFirePressed = true;
+  }, { passive: false });
+  canvas.addEventListener("touchmove", e => {
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    e.preventDefault();
+    moveShipToClientX(touch.clientX);
+  }, { passive: false });
+  ["touchend", "touchcancel"].forEach(type => {
+    canvas.addEventListener(type, e => {
+      e.preventDefault();
+      touchFirePressed = false;
+    }, { passive: false });
   });
 
   if (btnLeft && btnRight && btnFire && btnPause) {
