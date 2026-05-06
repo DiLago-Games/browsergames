@@ -242,7 +242,7 @@ body {
 }
 
 /* ── Responsive ───────────────────────────────────── */
-@media (hover: none) and (pointer: coarse) {
+@media (hover: none) and (pointer: coarse), (max-width: 900px) and (any-pointer: coarse) {
   #mobile-controls {
     display: grid;
   }

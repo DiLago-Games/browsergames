@@ -79,6 +79,7 @@
 
   const isTouchDevice =
     window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
+    window.matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches ||
     navigator.maxTouchPoints > 0 ||
     ("ontouchstart" in window);
 
