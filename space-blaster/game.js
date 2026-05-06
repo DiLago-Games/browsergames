@@ -32,9 +32,9 @@
   canvas.width  = W;
   canvas.height = H;
 
-  const LIVES_MAX              = 3;
-  const BULLET_SPEED           = 9;
-  const SHIP_SPEED             = 5;
+  const LIVES_MAX              = 4;
+  const BULLET_SPEED           = 10;
+  const SHIP_SPEED             = 6;
   const STAR_COUNT             = 120;
 
   // Scoring
@@ -42,15 +42,18 @@
   const ASTEROID_SIZE_DIVISOR   = 15;
 
   // Spawn-rate / speed difficulty scaling
-  const MIN_SPAWN_RATE        = 8;
-  const BASE_SPAWN_RATE       = 55;
-  const LEVEL_SPAWN_MODIFIER  = 4;
-  const BASE_ASTEROID_SPEED   = 1.2;
-  const LEVEL_SPEED_INCREMENT = 0.35;
+  const MIN_SPAWN_RATE        = 16;
+  const BASE_SPAWN_RATE       = 80;
+  const LEVEL_SPAWN_MODIFIER  = 2;
+  const BASE_ASTEROID_SPEED   = 0.85;
+  const LEVEL_SPEED_INCREMENT = 0.18;
+
+  // Prevent rapid multi-hit life loss from clustered asteroids.
+  const LIFE_LOSS_COOLDOWN = 42;
 
   // Power-up durations (frames at 60 fps)
-  const RAPID_FIRE_DURATION = 300;   // ~5 s
-  const SHIELD_DURATION     = 360;   // ~6 s
+  const RAPID_FIRE_DURATION = 420;   // ~7 s
+  const SHIELD_DURATION     = 480;   // ~8 s
 
   /* ── Palette ────────────────────────────────────── */
   const COLOR = {
@@ -67,7 +70,8 @@
   let state, score, lives, level, clearedInLevel,
       ship, bullets, asteroids, powerups, particles,
       stars, keys, paused, highScore, raf,
-      rapidFireTimer, shieldTimer, rapidFireActive, shieldActive;
+      rapidFireTimer, shieldTimer, rapidFireActive, shieldActive,
+      lifeLossCooldown;
 
   let dragTouchX = null;
 
@@ -215,6 +219,7 @@
     shieldActive    = false;
     rapidFireTimer  = 0;
     shieldTimer     = 0;
+    lifeLossCooldown = 0;
     dragTouchX = null;
 
     ship = {
@@ -252,6 +257,8 @@
 
   /* ── Update ─────────────────────────────────────── */
   function update() {
+    if (lifeLossCooldown > 0) lifeLossCooldown--;
+
     // Ship movement
     if (dragTouchX !== null) {
       ship.x = dragTouchX;
@@ -292,12 +299,7 @@
       // Off bottom → lose a life
       if (a.y - a.r > H) {
         asteroids.splice(i, 1);
-        if (!shieldActive) {
-          lives--;
-          spawnExplosion(a.x, H - 20, "#f66", 12);
-          updateHUD();
-          if (lives <= 0) endGame();
-        }
+        loseLife(a.x, H - 20, "#f66", 12);
         continue;
       }
 
@@ -322,12 +324,9 @@
       if (hit) continue;
 
       // Ship collision
-      if (!shieldActive && dist({ x: ship.x, y: ship.y }, a) < a.r + 18) {
-        lives--;
-        spawnExplosion(a.x, a.y, "#ff8", 16);
+      if (dist({ x: ship.x, y: ship.y }, a) < a.r + 18) {
+        loseLife(a.x, a.y, "#ff8", 16);
         asteroids.splice(i, 1);
-        updateHUD();
-        if (lives <= 0) endGame();
       }
     }
 
@@ -523,7 +522,7 @@
 
   /* ── Helpers ────────────────────────────────────── */
   function spawnAsteroid() {
-    const r = 12 + Math.random() * 22;
+    const r = 10 + Math.random() * 18;
     const numVerts = 7 + Math.floor(Math.random() * 5);
     const verts = Array.from({ length: numVerts }, (_, i) => {
       const angle  = (i / numVerts) * Math.PI * 2;
@@ -584,6 +583,15 @@
     highScoreEl.textContent   = highScore;
     gameoverScreen.style.display = "flex";
     hud.style.display            = "none";
+  }
+
+  function loseLife(x, y, color, particleCount) {
+    if (shieldActive || lifeLossCooldown > 0) return;
+    lives--;
+    lifeLossCooldown = LIFE_LOSS_COOLDOWN;
+    spawnExplosion(x, y, color, particleCount);
+    updateHUD();
+    if (lives <= 0) endGame();
   }
 
   function updateHUD() {
