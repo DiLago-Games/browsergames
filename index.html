@@ -242,7 +242,7 @@
 
     </div>
 
-    <footer>Made with ♥ for the browser &nbsp;·&nbsp; DiLago Games</footer>
+    <footer aria-label="Made with love for the browser · DiLago Games">Made with ♥ for the browser &nbsp;·&nbsp; DiLago Games</footer>
   </div>
 
   <script>
@@ -251,17 +251,24 @@
       const canvas = document.getElementById("star-canvas");
       const ctx    = canvas.getContext("2d");
       let stars    = [];
+      let resizeTimer;
 
-      function resize() {
-        canvas.width  = window.innerWidth;
-        canvas.height = window.innerHeight;
-        stars = Array.from({ length: 180 }, () => ({
+      function buildStars() {
+        const isMobile = window.innerWidth < 600;
+        const count = isMobile ? 80 : 180;
+        stars = Array.from({ length: count }, () => ({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
           r: Math.random() * 1.2 + 0.2,
           a: Math.random(),
           da: (Math.random() * 0.004 + 0.001) * (Math.random() < 0.5 ? 1 : -1),
         }));
+      }
+
+      function resize() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+        buildStars();
       }
 
       function draw() {
@@ -271,13 +278,16 @@
           if (s.a <= 0 || s.a >= 1) s.da *= -1;
           ctx.beginPath();
           ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(200,220,255,${s.a.toFixed(3)})`;
+          ctx.fillStyle = `rgba(200,220,255,${s.a.toFixed(2)})`;
           ctx.fill();
         }
         requestAnimationFrame(draw);
       }
 
-      window.addEventListener("resize", resize);
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(resize, 150);
+      });
       resize();
       draw();
     })();
