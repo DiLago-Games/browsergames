@@ -849,31 +849,48 @@
       ctx.lineCap = 'round';
       const maxSpd = S.maxSpeed * dpr;
 
+      // Batch particles into N colour bins to reduce stroke() calls from
+      // 7 600 (2×per-particle with shadowBlur) down to N.
+      // ctx.shadowBlur is intentionally omitted — 'lighter' compositing
+      // already produces additive glow and shadowBlur is the single most
+      // expensive Canvas 2D operation (Gaussian blur per draw call).
+      const N = 20;
+      const binR  = new Float32Array(N), binG  = new Float32Array(N);
+      const binBl = new Float32Array(N), binA  = new Float32Array(N);
+      const binSz = new Float32Array(N), binCt = new Int32Array(N);
+      const segs  = [];
+      for (let i = 0; i < N; i++) segs.push([]);
+
       for (const p of particles) {
         const speed = Math.hypot(p.vx, p.vy);
-        const [r, g, b] = colorForParticle(p, speed);
-        const alpha = Math.min(0.9, 0.12 + (speed / maxSpd) * 0.60 + p.charged * 0.20);
+        const t  = (Math.sin(p.hueShift * 6.28 + time * 0.7 + speed * 0.004 + p.charged * 0.35) + 1) * 0.5;
+        const pi = Math.floor(t * (PALETTE.length - 1));
+        const pj = Math.min(pi + 1, PALETTE.length - 1);
+        const pf = t * (PALETTE.length - 1) - pi;
+        const pa = PALETTE[pi], pb = PALETTE[pj];
+        const bi = Math.min(N - 1, Math.floor(t * N));
+        binR[bi]  += pa[0] + (pb[0] - pa[0]) * pf;
+        binG[bi]  += pa[1] + (pb[1] - pa[1]) * pf;
+        binBl[bi] += pa[2] + (pb[2] - pa[2]) * pf;
+        binA[bi]  += Math.min(0.9, 0.12 + (speed / maxSpd) * 0.60 + p.charged * 0.20);
+        binSz[bi] += p.size * (1 + p.charged * 0.8);
+        binCt[bi]++;
+        segs[bi].push(p.px, p.py, p.x, p.y);
+      }
 
-        // Inner bright core.
-        ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
-        ctx.lineWidth   = p.size * (1 + p.charged * 0.8);
-        ctx.shadowColor = `rgba(${r},${g},${b},${alpha * 0.5})`;
-        ctx.shadowBlur  = 10 * dpr;
+      for (let bi = 0; bi < N; bi++) {
+        const cnt = binCt[bi];
+        if (!cnt) continue;
+        const inv = 1 / cnt;
+        ctx.strokeStyle = `rgba(${binR[bi] * inv | 0},${binG[bi] * inv | 0},${binBl[bi] * inv | 0},${(binA[bi] * inv).toFixed(2)})`;
+        ctx.lineWidth   = binSz[bi] * inv;
         ctx.beginPath();
-        ctx.moveTo(p.px, p.py);
-        ctx.lineTo(p.x,  p.y);
+        const s = segs[bi];
+        for (let i = 0, len = s.length; i < len; i += 4) {
+          ctx.moveTo(s[i], s[i + 1]);
+          ctx.lineTo(s[i + 2], s[i + 3]);
+        }
         ctx.stroke();
-
-        // Outer soft glow layer.
-        ctx.strokeStyle = `rgba(${r},${g},${b},${alpha * 0.25})`;
-        ctx.lineWidth   = p.size * (1 + p.charged * 1.4);
-        ctx.shadowBlur  = 20 * dpr;
-        ctx.beginPath();
-        ctx.moveTo(p.px, p.py);
-        ctx.lineTo(p.x,  p.y);
-        ctx.stroke();
-
-        ctx.shadowBlur = 0;
       }
     }
 
