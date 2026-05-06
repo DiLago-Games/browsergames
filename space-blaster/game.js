@@ -76,6 +76,7 @@
   let touchLeftPressed = false;
   let touchRightPressed = false;
   let touchFirePressed = false;
+  let dragTouchX = null;
 
   const isTouchDevice =
     window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
@@ -145,14 +146,13 @@
       setBtnState(button, false);
     };
 
-    button.addEventListener("pointerdown", start);
     button.addEventListener("touchstart", start, { passive: false });
-    ["pointerup", "pointercancel", "pointerleave", "touchend", "touchcancel"].forEach(type => {
-      if (type.startsWith("touch")) {
-        button.addEventListener(type, end, { passive: false });
-      } else {
-        button.addEventListener(type, end);
-      }
+    button.addEventListener("mousedown", start);
+    ["touchend", "touchcancel"].forEach(type => {
+      button.addEventListener(type, end, { passive: false });
+    });
+    ["mouseup", "mouseleave"].forEach(type => {
+      button.addEventListener(type, end);
     });
   }
 
@@ -167,43 +167,36 @@
     ship.x = clientToWorldX(clientX);
   }
 
-  canvas.addEventListener("pointerdown", e => {
-    if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
-    e.preventDefault();
-    moveShipToClientX(e.clientX);
-    touchFirePressed = true;
-  });
-  canvas.addEventListener("pointermove", e => {
-    if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
-    e.preventDefault();
-    moveShipToClientX(e.clientX);
-  });
-  ["pointerup", "pointercancel"].forEach(type => {
-    canvas.addEventListener(type, e => {
-      if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
-      e.preventDefault();
-      touchFirePressed = false;
-    });
-  });
-
   canvas.addEventListener("touchstart", e => {
     const touch = e.touches[0] || e.changedTouches[0];
     if (!touch) return;
     e.preventDefault();
-    moveShipToClientX(touch.clientX);
-    touchFirePressed = true;
+    dragTouchX = clientToWorldX(touch.clientX);
   }, { passive: false });
   canvas.addEventListener("touchmove", e => {
     const touch = e.touches[0] || e.changedTouches[0];
     if (!touch) return;
     e.preventDefault();
-    moveShipToClientX(touch.clientX);
+    dragTouchX = clientToWorldX(touch.clientX);
   }, { passive: false });
   ["touchend", "touchcancel"].forEach(type => {
     canvas.addEventListener(type, e => {
       e.preventDefault();
-      touchFirePressed = false;
+      dragTouchX = null;
     }, { passive: false });
+  });
+
+  canvas.addEventListener("mousedown", e => {
+    e.preventDefault();
+    dragTouchX = clientToWorldX(e.clientX);
+  });
+  canvas.addEventListener("mousemove", e => {
+    if ((e.buttons & 1) === 0) return;
+    e.preventDefault();
+    dragTouchX = clientToWorldX(e.clientX);
+  });
+  ["mouseup", "mouseleave"].forEach(type => {
+    canvas.addEventListener(type, () => { dragTouchX = null; });
   });
 
   if (btnLeft && btnRight && btnFire && btnPause) {
@@ -232,6 +225,7 @@
     touchLeftPressed = false;
     touchRightPressed = false;
     touchFirePressed = false;
+    dragTouchX = null;
 
     ship = {
       x: W / 2, y: H - 70,
@@ -269,10 +263,14 @@
   /* ── Update ─────────────────────────────────────── */
   function update() {
     // Ship movement
-    const movingLeft = keys["ArrowLeft"] || keys["KeyA"] || touchLeftPressed;
-    const movingRight = keys["ArrowRight"] || keys["KeyD"] || touchRightPressed;
-    if (movingLeft) ship.x = Math.max(ship.w / 2, ship.x - SHIP_SPEED);
-    if (movingRight) ship.x = Math.min(W - ship.w / 2, ship.x + SHIP_SPEED);
+    if (dragTouchX !== null) {
+      ship.x = dragTouchX;
+    } else {
+      const movingLeft = keys["ArrowLeft"] || keys["KeyA"] || touchLeftPressed;
+      const movingRight = keys["ArrowRight"] || keys["KeyD"] || touchRightPressed;
+      if (movingLeft) ship.x = Math.max(ship.w / 2, ship.x - SHIP_SPEED);
+      if (movingRight) ship.x = Math.min(W - ship.w / 2, ship.x + SHIP_SPEED);
+    }
 
     // Shooting
     ship.shootCooldown--;
