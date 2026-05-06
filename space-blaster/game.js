@@ -186,6 +186,33 @@
     }, { passive: false });
   });
 
+  function isControlElement(target) {
+    return !!(target && target.closest && target.closest("#mobile-controls"));
+  }
+
+  window.addEventListener("touchstart", e => {
+    if (state !== "playing") return;
+    if (isControlElement(e.target)) return;
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    e.preventDefault();
+    dragTouchX = clientToWorldX(touch.clientX);
+  }, { passive: false });
+  window.addEventListener("touchmove", e => {
+    if (state !== "playing") return;
+    if (isControlElement(e.target)) return;
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    e.preventDefault();
+    dragTouchX = clientToWorldX(touch.clientX);
+  }, { passive: false });
+  ["touchend", "touchcancel"].forEach(type => {
+    window.addEventListener(type, () => {
+      if (state !== "playing") return;
+      dragTouchX = null;
+    }, { passive: false });
+  });
+
   canvas.addEventListener("mousedown", e => {
     e.preventDefault();
     dragTouchX = clientToWorldX(e.clientX);
@@ -275,7 +302,8 @@
     // Shooting
     ship.shootCooldown--;
     const cooldown = rapidFireActive ? 8 : 18;
-    const isShooting = keys["Space"] || keys["KeyZ"] || touchFirePressed;
+    const isTouchDragShooting = isTouchDevice && dragTouchX !== null;
+    const isShooting = keys["Space"] || keys["KeyZ"] || touchFirePressed || isTouchDragShooting;
     if (isShooting && ship.shootCooldown <= 0) {
       bullets.push({ x: ship.x, y: ship.y - ship.h / 2 });
       ship.shootCooldown = cooldown;
