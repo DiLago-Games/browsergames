@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DiLago Games — Browser Games</title>
+  <style>
+    /* ── Reset & tokens ───────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #03040b;
+      --bg-card:     #0b0b20;
+      --border:      #1a1a3a;
+      --cyan:        #00c8e0;
+      --cyan-dim:    #007a8a;
+      --purple:      #6a20c8;
+      --gold:        #f0c040;
+      --text:        #eef6ff;
+      --muted:       #8ea0c7;
+      --radius:      12px;
+      --glow-cyan:   0 0 18px rgba(0,200,224,0.45);
+      --glow-purple: 0 0 18px rgba(106,32,200,0.45);
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      background:
+        radial-gradient(ellipse at 30% 0%,   rgba(106,32,200,0.22) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 80%,  rgba(0,140,200,0.18) 0%, transparent 50%),
+        var(--bg);
+    }
+
+    /* ── Star-field canvas ────────────────────────────── */
+    #star-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout wrapper ───────────────────────────────── */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+    }
+
+    /* ── Header ───────────────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .site-logo {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 900;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 0 24px var(--cyan), 0 0 50px rgba(0,200,224,0.4);
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    .site-tagline {
+      margin-top: 12px;
+      font-size: 0.95rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── Section heading ──────────────────────────────── */
+    .section-title {
+      font-size: 0.78rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--cyan-dim);
+      margin-bottom: 24px;
+      padding-left: 4px;
+    }
+
+    /* ── Game grid ────────────────────────────────────── */
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    /* ── Game card ────────────────────────────────────── */
+    .game-card {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 28px 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .game-card:hover,
+    .game-card:focus-visible {
+      transform: translateY(-4px);
+      border-color: var(--cyan-dim);
+      box-shadow: var(--glow-cyan);
+      outline: none;
+    }
+
+    .card-icon {
+      font-size: 2.6rem;
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+
+    .card-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .card-desc {
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: var(--muted);
+      flex: 1;
+    }
+
+    .card-cta {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 8px 22px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #0055cc, #0088ff);
+      color: #fff;
+      border-radius: 4px;
+      align-self: flex-start;
+      box-shadow: 0 0 14px rgba(0,136,255,0.35);
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+
+    .game-card:hover .card-cta,
+    .game-card:focus-visible .card-cta {
+      box-shadow: 0 0 24px rgba(0,180,255,0.65);
+      transform: scale(1.04);
+    }
+
+    /* ── Footer ───────────────────────────────────────── */
+    footer {
+      margin-top: 72px;
+      text-align: center;
+      font-size: 0.78rem;
+      letter-spacing: 1px;
+      color: var(--muted);
+      opacity: 0.6;
+    }
+
+    /* ── Pulse animation ──────────────────────────────── */
+    @keyframes pulse {
+      0%, 100% { text-shadow: 0 0 24px var(--cyan), 0 0 50px rgba(0,200,224,0.4); }
+      50%       { text-shadow: 0 0 40px #8ef, 0 0 80px rgba(0,200,224,0.7); }
+    }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 480px) {
+      .page { padding: 40px 16px 60px; }
+      .game-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="star-canvas" aria-hidden="true"></canvas>
+
+  <div class="page">
+    <header>
+      <div class="site-logo">DiLago Games</div>
+      <p class="site-tagline">A collection of casual browser games</p>
+    </header>
+
+    <p class="section-title">Choose a game</p>
+
+    <div class="game-grid">
+
+      <a class="game-card" href="space-blaster/">
+        <div class="card-icon">🚀</div>
+        <div class="card-name">Space Blaster</div>
+        <p class="card-desc">Shoot asteroids, collect power-ups, and survive as long as you can.</p>
+        <span class="card-cta">▶ Play</span>
+      </a>
+
+      <a class="game-card" href="futuristic-pong/">
+        <div class="card-icon">⚡</div>
+        <div class="card-name">Pong 3001</div>
+        <p class="card-desc">Neon cyber-pong with glow effects, particle hits, an AI opponent, power-ups, and level progression.</p>
+        <span class="card-cta">▶ Play</span>
+      </a>
+
+      <a class="game-card" href="gravity-painter/">
+        <div class="card-icon">🌌</div>
+        <div class="card-name">Gravity Painter</div>
+        <p class="card-desc">Cosmic physics sandbox — paint gravity wells, assimilate foreign fields, and expand your universe.</p>
+        <span class="card-cta">▶ Play</span>
+      </a>
+
+      <a class="game-card" href="one-sentence-life/">
+        <div class="card-icon">✍️</div>
+        <div class="card-name">One Sentence Life</div>
+        <p class="card-desc">Narrative choice game — journey through seven life stages and read your story in one sentence.</p>
+        <span class="card-cta">▶ Play</span>
+      </a>
+
+      <a class="game-card" href="galactic-gemini/">
+        <div class="card-icon">♊</div>
+        <div class="card-name">Galactic Gemini</div>
+        <p class="card-desc">Three-reel space slot with static reel strips, Cosmic Wild reels in free spins, and a starfield background.</p>
+        <span class="card-cta">▶ Play</span>
+      </a>
+
+      <a class="game-card" href="el-torero-slots/">
+        <div class="card-icon">🎰</div>
+        <div class="card-name">El Torero Slots</div>
+        <p class="card-desc">Five-reel slot machine with expanding wilds and big-win ring-ring bells.</p>
+        <span class="card-cta">▶ Play</span>
+      </a>
+
+    </div>
+
+    <footer aria-label="Made with love for the browser · DiLago Games">Made with ♥ for the browser &nbsp;·&nbsp; DiLago Games</footer>
+  </div>
+
+  <script>
+    /* ── Minimal star-field ───────────────────────────── */
+    (() => {
+      const canvas = document.getElementById("star-canvas");
+      const ctx    = canvas.getContext("2d");
+      let stars    = [];
+      let resizeTimer;
+
+      function buildStars() {
+        const isMobile = window.innerWidth < 600;
+        const count = isMobile ? 80 : 180;
+        stars = Array.from({ length: count }, () => ({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 1.2 + 0.2,
+          a: Math.random(),
+          da: (Math.random() * 0.004 + 0.001) * (Math.random() < 0.5 ? 1 : -1),
+        }));
+      }
+
+      function resize() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+        buildStars();
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const s of stars) {
+          s.a += s.da;
+          if (s.a <= 0 || s.a >= 1) s.da *= -1;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(200,220,255,${s.a.toFixed(2)})`;
+          ctx.fill();
+        }
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(resize, 150);
+      });
+      resize();
+      draw();
+    })();
+  </script>
+
+</body>
+</html>
