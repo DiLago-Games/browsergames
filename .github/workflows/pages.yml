@@ -15,7 +15,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ── Step 1: auto-update index.html and README.md for new game folders ──
+  update-menu:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Use a token so the commit can trigger the downstream deploy
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run menu updater
+        run: node .github/scripts/update-menu.js
+
+      - name: Commit changes if any
+        id: commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git add index.html README.md
+            git commit -m "chore: auto-update menu [skip ci]"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── Step 2: deploy (always runs after update-menu) ────────────────────
   deploy:
+    needs: update-menu
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -24,6 +57,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Pull the latest commit (may include the menu-update commit above)
+          ref: main
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
