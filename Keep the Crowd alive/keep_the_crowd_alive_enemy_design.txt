@@ -1,0 +1,1151 @@
+KEEP THE CROWD ALIVE - ENEMY DESIGN DOCUMENT
+
+==================================================
+CORE IDEA OF ENEMIES
+==================================================
+
+In "Keep the Crowd Alive", enemies are not just monsters walking toward a base.
+
+They attack the festival experience.
+
+They can threaten:
+- the crowd
+- the stage
+- the music
+- the towers
+- the rhythm
+- the hype meter
+- the visual clarity
+- the player's build strategy
+
+The best enemy types should feel like they are ruining the show.
+
+The player is not only defending territory.
+The player is defending the vibe.
+
+==================================================
+MAIN ENEMY DESIGN PRINCIPLES
+==================================================
+
+1. EVERY ENEMY SHOULD ATTACK THE SHOW IN A UNIQUE WAY
+
+Bad enemy design:
+- fast enemy
+- tank enemy
+- flying enemy
+
+Better enemy design:
+- enemy that silences towers
+- enemy that makes the crowd panic
+- enemy that corrupts the beat
+- enemy that steals hype
+- enemy that creates fake applause
+- enemy that forces a bad drop
+
+2. ENEMIES SHOULD BE READABLE
+
+The player must quickly understand:
+- what the enemy does
+- why it is dangerous
+- how to counter it
+
+Readable through:
+- shape language
+- color
+- animation
+- sound cue
+- movement pattern
+- crowd reaction
+
+3. ENEMIES SHOULD CREATE MUSICAL PROBLEMS
+
+Enemies can:
+- desync towers
+- add noise
+- mute stems
+- disrupt BPM
+- invert resonance
+- create silence zones
+- distort audio feedback
+
+4. COUNTERPLAY MUST BE CLEAR
+
+Every dangerous enemy needs a solution.
+
+Examples:
+- Bass counters swarms
+- Percussion reveals stealth
+- Melody burns down priority targets
+- Ambient stabilizes the crowd
+- Noise counters corrupted enemies
+
+==================================================
+ENEMY ROLE CATEGORIES
+==================================================
+
+Enemies can be grouped into major roles:
+
+1. Crowd Threats
+They attack audience morale and hype.
+
+2. Audio Threats
+They attack the music system directly.
+
+3. Tower Threats
+They attack or disable player structures.
+
+4. Pathing Threats
+They change how waves move through the map.
+
+5. Combo Breakers
+They disrupt synergies and resonance chains.
+
+6. Boss / Event Enemies
+They transform the rules of the current round.
+
+==================================================
+CORE ENEMY TYPES
+==================================================
+
+==================================================
+1. MOOD KILLER
+==================================================
+
+ROLE:
+Crowd Threat
+
+FANTASY:
+A dead-energy enemy that drains excitement from nearby audience members.
+
+VISUAL:
+Tall, slow, grey/blue, slouched silhouette.
+Could look like a faceless critic, ghost, or corporate anti-fun entity.
+
+BEHAVIOR:
+- Walks toward crowd zones
+- Emits a low-energy aura
+- Reduces hype in its radius
+- Makes nearby crowd members stop dancing
+- Can cause people to leave if ignored
+
+GAMEPLAY EFFECT:
+- Hype drain over time
+- Crowd density slowly decreases
+- Visual energy around the area fades
+
+AUDIO EFFECT:
+- Music becomes duller near its influence
+- High frequencies fade out
+- Crowd cheers get quieter
+
+COUNTERPLAY:
+- Melody towers burst it down
+- Ambient towers protect crowd morale
+- Bass towers push it away from audience zones
+
+WHY IT IS GOOD:
+It makes the player protect the emotional state of the crowd, not just a health bar.
+
+==================================================
+2. NOISE PARASITE
+==================================================
+
+ROLE:
+Audio Threat
+
+FANTASY:
+A parasite that feeds on clean sound and turns it into distortion.
+
+VISUAL:
+Small glitchy creature with static trails.
+Could flicker in and out of existence.
+
+BEHAVIOR:
+- Attaches to towers
+- Corrupts their sound output
+- Turns useful music layers into harmful noise
+- Spreads corruption if not removed quickly
+
+GAMEPLAY EFFECT:
+- Attached tower loses resonance contribution
+- Nearby towers suffer reduced synergy
+- Corruption can spread across connected towers
+
+AUDIO EFFECT:
+- Static, crackle, bitcrush
+- Beat becomes unstable
+- Distorted tower stem leaks into the mix
+
+COUNTERPLAY:
+- Percussion towers can shake them off
+- Noise towers can absorb/reverse corruption
+- Manual cleanse ability could remove them
+
+WHY IT IS GOOD:
+It creates urgency without simply dealing direct damage.
+
+==================================================
+3. SILENCE DRONE
+==================================================
+
+ROLE:
+Audio Threat / Zone Control
+
+FANTASY:
+A floating anti-music machine that creates pockets of silence.
+
+VISUAL:
+Smooth black drone with a pulsing mute symbol or waveform-canceling field.
+
+BEHAVIOR:
+- Floats above path or crowd
+- Creates a silence field
+- Towers inside the field stop producing audio
+- Resonance chains passing through the field break
+
+GAMEPLAY EFFECT:
+- Music layers temporarily drop out
+- Combos deactivate
+- Crowd in the silence zone loses energy faster
+
+AUDIO EFFECT:
+- Sudden removal of stems
+- Muffled filter effect
+- Empty dead zone in the mix
+
+COUNTERPLAY:
+- Melody towers with anti-air targeting
+- Bass shockwaves can destabilize the drone
+- Ambient towers can keep crowd calm during silence
+
+WHY IT IS GOOD:
+It creates dramatic moments where the player literally hears the show dying.
+
+==================================================
+4. RIOT SPARK
+==================================================
+
+ROLE:
+Crowd Threat / Panic Starter
+
+FANTASY:
+A chaotic enemy that triggers panic and movement disorder in the crowd.
+
+VISUAL:
+Fast, red/orange, aggressive, spark-like humanoid or creature.
+
+BEHAVIOR:
+- Rushes toward dense crowd clusters
+- On contact, starts panic waves
+- Panicked audience members push outward
+- Can create holes in the crowd
+
+GAMEPLAY EFFECT:
+- Crowd formation breaks
+- Hype drops sharply in affected area
+- Some people may leave the venue
+- Towers that scale with crowd density become weaker
+
+AUDIO EFFECT:
+- Crowd cheers become screams
+- Beat gets unstable
+- Alarm-like percussion enters briefly
+
+COUNTERPLAY:
+- Bass towers stop rushes
+- Ambient towers calm panic
+- Percussion towers mark and interrupt them
+
+WHY IT IS GOOD:
+It makes the crowd feel physically alive and fragile.
+
+==================================================
+5. COPYCAT
+==================================================
+
+ROLE:
+Combo Breaker
+
+FANTASY:
+An enemy that mimics the player's rhythm but weaponizes it.
+
+VISUAL:
+Mirror-like or holographic enemy with waveform reflections.
+
+BEHAVIOR:
+- Scans nearby towers
+- Copies their rhythm pattern
+- Generates a fake counter-beat
+- If left alive, it can invert resonance bonuses
+
+GAMEPLAY EFFECT:
+- Player combos become weaker
+- Some resonance effects may backfire
+- Copied tower type gets temporarily reduced efficiency
+
+AUDIO EFFECT:
+- Echoes of the player's own beat
+- Slightly delayed mirrored rhythm
+- Uncomfortable phase effect
+
+COUNTERPLAY:
+- Change tower priority
+- Use Noise towers to scramble it
+- Use Melody towers to kill it before it finishes copying
+
+WHY IT IS GOOD:
+It turns the player's own build into a tactical problem.
+
+==================================================
+6. FEEDBACK WRAITH
+==================================================
+
+ROLE:
+Audio Threat / Punisher
+
+FANTASY:
+A ghost-like enemy that becomes stronger when the mix is too overloaded.
+
+VISUAL:
+Translucent spirit made of waveform spikes and feedback rings.
+
+BEHAVIOR:
+- Gains strength when too many towers fire in the same frequency range
+- Moves faster during overcrowded audio moments
+- Releases feedback bursts when damaged
+
+GAMEPLAY EFFECT:
+- Punishes stacking too many similar tower types
+- Encourages varied builds
+- Can temporarily stun towers with feedback bursts
+
+AUDIO EFFECT:
+- High-pitched feedback tone
+- Screech pulses
+- Mix becomes painful if ignored
+
+COUNTERPLAY:
+- Diversify tower frequencies
+- Use Ambient towers to smooth the mix
+- Use Bass towers to absorb feedback
+
+WHY IT IS GOOD:
+It prevents one-note strategies and supports the music-system fantasy.
+
+==================================================
+7. BASS EATER
+==================================================
+
+ROLE:
+Specialized Tank
+
+FANTASY:
+A heavy creature that absorbs low frequencies and grows stronger.
+
+VISUAL:
+Large armored beast with pulsing subwoofer-like plates.
+
+BEHAVIOR:
+- Resists Bass towers
+- Gets armor when hit by bass damage
+- Stores absorbed bass energy
+- Releases a shockwave when full
+
+GAMEPLAY EFFECT:
+- Counters overreliance on crowd-control towers
+- Can knock back crowd members or disable nearby towers
+
+AUDIO EFFECT:
+- Bass becomes muffled when it absorbs hits
+- Deep rumble grows as it charges
+
+COUNTERPLAY:
+- Melody towers pierce its armor
+- Noise towers can overload its stored bass
+- Percussion towers can interrupt its charge
+
+WHY IT IS GOOD:
+It forces the player to think beyond "more bass equals more control."
+
+==================================================
+8. OFFBEAT RUNNER
+==================================================
+
+ROLE:
+Fast Enemy / Rhythm Disruptor
+
+FANTASY:
+A fast enemy that moves between beats and is hard to hit with synchronized attacks.
+
+VISUAL:
+Thin, sharp, jittery creature that moves in irregular bursts.
+
+BEHAVIOR:
+- Moves on offbeats
+- Dodges attacks that trigger only on the main beat
+- Quickly reaches crowd if ignored
+
+GAMEPLAY EFFECT:
+- Punishes builds that are too slow or too predictable
+- Requires syncopated or fast towers
+
+AUDIO EFFECT:
+- Skittering clicks
+- Offbeat glitch sounds
+- Nervous rhythm layer
+
+COUNTERPLAY:
+- Percussion towers with fast attack patterns
+- Noise towers with random timing
+- Melody towers with tracking beams
+
+WHY IT IS GOOD:
+It creates a natural reason for syncopation mechanics.
+
+==================================================
+9. MONOTONY LEECH
+==================================================
+
+ROLE:
+Hype Drain / Anti-Repetition
+
+FANTASY:
+A creature that feeds on repetitive loops.
+
+VISUAL:
+Slug-like audio vampire with looping waveform rings.
+
+BEHAVIOR:
+- Becomes stronger if the player keeps the same combo active too long
+- Drains hype from repeated patterns
+- Encourages the player to evolve the track
+
+GAMEPLAY EFFECT:
+- Reduces rewards from stale combos
+- Lowers crowd excitement if not countered
+- Forces build adaptation
+
+AUDIO EFFECT:
+- Loop becomes dull and flat
+- Repetition gets subtly filtered
+- Crowd reaction weakens
+
+COUNTERPLAY:
+- Trigger beat drops
+- Switch tower modes
+- Add new layers
+- Use Ambient towers to refresh the crowd
+
+WHY IT IS GOOD:
+It supports the fantasy of an evolving live performance.
+
+==================================================
+10. VIP HUNTER
+==================================================
+
+ROLE:
+Priority Crowd Threat
+
+FANTASY:
+An enemy that targets special high-value audience members.
+
+VISUAL:
+Predatory, spotlight-tracking enemy.
+Could look like a sleek shadow assassin.
+
+BEHAVIOR:
+- Ignores normal routes when possible
+- Targets VIP crowd members
+- If it reaches a VIP, hype drops heavily
+- May reduce end-of-round rewards
+
+GAMEPLAY EFFECT:
+- Creates priority targeting decisions
+- Makes crowd composition matter
+- Forces protection of special audience zones
+
+AUDIO EFFECT:
+- Sudden tension sting
+- Spotlight sound cue
+- Crowd gasp
+
+COUNTERPLAY:
+- Melody towers for single-target damage
+- Bass towers to redirect
+- Ambient shields around VIP zones
+
+WHY IT IS GOOD:
+It gives the crowd internal structure instead of being one anonymous mass.
+
+==================================================
+11. STAGE SABOTEUR
+==================================================
+
+ROLE:
+Tower / Objective Threat
+
+FANTASY:
+A technician-like enemy that tries to break stage systems.
+
+VISUAL:
+Small sneaky gremlin, rogue roadie, hacker drone, or cable-cutter.
+
+BEHAVIOR:
+- Avoids combat when possible
+- Moves toward power nodes, speakers, or stage modules
+- Disables upgrades or lighting systems
+- Can cut off stage bonuses
+
+GAMEPLAY EFFECT:
+- Stage effects temporarily disabled
+- Income reduced
+- Visual intensity drops
+- Certain tower categories may lose buffs
+
+AUDIO EFFECT:
+- Cable pop
+- Power-down hum
+- Lights and stems fade
+
+COUNTERPLAY:
+- Percussion towers reveal and mark
+- Melody towers eliminate quickly
+- Defensive utility towers near stage modules
+
+WHY IT IS GOOD:
+It makes stage infrastructure part of the defense.
+
+==================================================
+12. CROWD SURFER
+==================================================
+
+ROLE:
+Pathing Threat
+
+FANTASY:
+An enemy that uses the audience itself as a movement path.
+
+VISUAL:
+Humanoid surfing across the crowd on chaotic energy.
+
+BEHAVIOR:
+- Can bypass normal lanes once it reaches crowd edge
+- Moves over audience heads
+- Creates panic where it travels
+- Harder to target while inside dense crowd
+
+GAMEPLAY EFFECT:
+- Breaks predictable lane defense
+- Makes crowd density both a strength and risk
+- Forces area-control tools
+
+AUDIO EFFECT:
+- Crowd wave sound
+- Chaotic cheering turning into panic
+- Doppler-like movement cue
+
+COUNTERPLAY:
+- Ambient towers calm and slow crowd movement
+- Bass shockwaves knock it out of the crowd
+- Percussion towers track it through dense areas
+
+WHY IT IS GOOD:
+It turns the crowd into terrain.
+
+==================================================
+13. FAKE FAN
+==================================================
+
+ROLE:
+Hidden Threat / Infiltrator
+
+FANTASY:
+An enemy disguised as a normal audience member.
+
+VISUAL:
+Looks like crowd until revealed.
+Subtle wrong animation, no rhythm, or flickering outline.
+
+BEHAVIOR:
+- Enters with the crowd
+- Pretends to dance
+- Slowly drains hype
+- Can reveal itself and sabotage nearby fans
+
+GAMEPLAY EFFECT:
+- Creates paranoia
+- Encourages detection mechanics
+- Punishes ignoring audience health
+
+AUDIO EFFECT:
+- Slightly wrong clap
+- Off-key cheer
+- Hidden discord tone
+
+COUNTERPLAY:
+- Percussion scan pulse
+- Ambient morale check
+- Noise towers reveal anomalies
+
+WHY IT IS GOOD:
+It makes the crowd more than decoration.
+
+==================================================
+14. DROP CANCELER
+==================================================
+
+ROLE:
+Event Disruptor
+
+FANTASY:
+An enemy that tries to ruin the player's biggest moment.
+
+VISUAL:
+Tall ritual-like enemy carrying a waveform-nullifying device.
+
+BEHAVIOR:
+- Appears shortly before a beat drop or ultimate activation
+- If not killed, cancels or weakens the drop
+- May convert stored hype into enemy shields
+
+GAMEPLAY EFFECT:
+- Creates intense countdown moments
+- Makes special abilities require protection
+- Adds drama before peak moments
+
+AUDIO EFFECT:
+- Rising tension
+- Drop anticipation gets interrupted
+- If successful, the drop collapses into silence
+
+COUNTERPLAY:
+- Focus fire
+- Pre-place burst towers
+- Use crowd hype shield to protect the drop
+
+WHY IT IS GOOD:
+It creates trailer-worthy clutch moments.
+
+==================================================
+15. GENRE PHANTOM
+==================================================
+
+ROLE:
+Adaptive Enemy
+
+FANTASY:
+An enemy that changes resistance based on the current music style.
+
+VISUAL:
+Shapeshifting enemy made of different genre aesthetics:
+neon, metal, classical, glitch, techno, etc.
+
+BEHAVIOR:
+- Reads dominant tower category
+- Adapts resistance
+- Forces the player to diversify music layers
+
+GAMEPLAY EFFECT:
+- Reduces damage from overused tower families
+- Encourages hybrid builds
+- Can change form mid-wave
+
+AUDIO EFFECT:
+- Enemy theme shifts genre
+- Music briefly clashes with its form
+
+COUNTERPLAY:
+- Maintain balanced tower composition
+- Use resonance combos instead of raw spam
+- Use Noise towers to destabilize its adaptation
+
+WHY IT IS GOOD:
+It prevents stale meta builds.
+
+==================================================
+ADVANCED ELITE ENEMIES
+==================================================
+
+==================================================
+16. THE CRITIC
+==================================================
+
+ROLE:
+Elite Crowd Threat
+
+FANTASY:
+A powerful enemy that judges the show and spreads negativity.
+
+BEHAVIOR:
+- Stands at range
+- Sends negative review waves into the crowd
+- Reduces hype gain from nearby towers
+- Makes audience members less responsive
+
+SPECIAL MECHANIC:
+If the player activates a strong resonance near The Critic, it becomes stunned by the quality of the performance.
+
+COUNTERPLAY:
+- Create a high-quality combo near it
+- Burst it during stun window
+
+WHY IT IS GOOD:
+It turns "good music" into a direct weapon.
+
+==================================================
+17. THE BOOTLEGGER
+==================================================
+
+ROLE:
+Economy Threat
+
+FANTASY:
+An enemy that steals revenue, merch sales, or crowd rewards.
+
+BEHAVIOR:
+- Avoids main defenses
+- Moves toward income structures
+- Reduces post-round rewards
+- May sell fake tickets, causing unstable crowd members to enter
+
+COUNTERPLAY:
+- Detection
+- Fast single-target towers
+- Crowd security upgrades
+
+WHY IT IS GOOD:
+It attacks long-term progression instead of immediate survival.
+
+==================================================
+18. THE BPM BREAKER
+==================================================
+
+ROLE:
+System Threat
+
+FANTASY:
+An enemy that attacks the global tempo of the show.
+
+BEHAVIOR:
+- Emits tempo instability waves
+- Towers may temporarily fire late or early
+- Beat-synced abilities become less reliable
+
+AUDIO EFFECT:
+- Warped tempo
+- Tape-stop effects
+- Drifting beat grid
+
+COUNTERPLAY:
+- Stabilizer towers
+- Ambient anchors
+- Destroy before full tempo disruption
+
+WHY IT IS GOOD:
+It attacks the deepest system of the game.
+
+==================================================
+19. THE LIGHT EATER
+==================================================
+
+ROLE:
+Visual / Morale Threat
+
+FANTASY:
+An enemy that consumes stage lights and makes the festival feel dead.
+
+BEHAVIOR:
+- Darkens map areas
+- Reduces visibility
+- Crowd dances less in darkness
+- Hidden enemies become harder to detect
+
+COUNTERPLAY:
+- Re-light zones
+- Melody beams
+- Stage upgrade defenses
+
+WHY IT IS GOOD:
+It connects visuals directly to gameplay mood.
+
+==================================================
+20. THE HYPE THIEF
+==================================================
+
+ROLE:
+Resource Threat
+
+FANTASY:
+An enemy that steals accumulated hype and stores it.
+
+BEHAVIOR:
+- Drains hype on contact with crowd
+- Carries stolen hype as a glowing core
+- If killed quickly, stolen hype is recovered
+- If it escapes, hype is permanently lost
+
+COUNTERPLAY:
+- Priority targeting
+- Burst damage
+- Crowd barrier abilities
+
+WHY IT IS GOOD:
+It creates immediate risk/reward tension.
+
+==================================================
+BOSS DESIGN
+==================================================
+
+Bosses should not only have more health.
+They should change the rules of the show.
+
+==================================================
+BOSS 1: THE SILENCE ENGINE
+==================================================
+
+FANTASY:
+A massive machine built to shut down all music.
+
+PHASE 1:
+- Sends Silence Drones
+- Creates small mute zones
+
+PHASE 2:
+- Expands silence fields
+- Removes one music stem at a time
+
+PHASE 3:
+- Attempts a full-stage shutdown
+- Player must keep enough rhythm nodes active
+
+CORE EXPERIENCE:
+The player hears their music slowly disappear and fights to bring it back.
+
+COUNTERPLAY:
+- Protect rhythm nodes
+- Destroy silence generators
+- Use crowd claps as emergency rhythm source
+
+==================================================
+BOSS 2: THE RIOT CONDUCTOR
+==================================================
+
+FANTASY:
+A boss that conducts panic like an orchestra.
+
+PHASE 1:
+- Sends Riot Sparks into the crowd
+
+PHASE 2:
+- Creates crowd wave attacks
+- Turns dense crowd zones into danger zones
+
+PHASE 3:
+- Attempts to split the entire crowd apart
+
+CORE EXPERIENCE:
+The crowd becomes the battlefield.
+
+COUNTERPLAY:
+- Calm zones
+- Bass barriers
+- Stage-wide morale drop
+
+==================================================
+BOSS 3: THE FALSE DJ
+==================================================
+
+FANTASY:
+A rival performer who copies and corrupts the player's music.
+
+PHASE 1:
+- Copies tower loops
+
+PHASE 2:
+- Creates fake resonance chains
+
+PHASE 3:
+- Starts a musical duel
+- Player must outperform it with stronger combos
+
+CORE EXPERIENCE:
+Your own strategy is mirrored against you.
+
+COUNTERPLAY:
+- Change rhythm composition
+- Break fake towers
+- Build higher-quality resonance
+
+==================================================
+BOSS 4: THE FEEDBACK GOD
+==================================================
+
+FANTASY:
+A gigantic entity born from overloaded sound.
+
+PHASE 1:
+- Punishes frequency stacking
+
+PHASE 2:
+- Sends Feedback Wraiths
+
+PHASE 3:
+- Creates dangerous sound overload zones
+
+CORE EXPERIENCE:
+The player must balance power and clarity.
+
+COUNTERPLAY:
+- Diversify sound layers
+- Use smoothing towers
+- Avoid overstacking one damage type
+
+==================================================
+BOSS 5: THE NIGHT ENDER
+==================================================
+
+FANTASY:
+The final boss that tries to end the festival before sunrise.
+
+PHASE 1:
+- Attacks stage systems
+
+PHASE 2:
+- Sends all enemy categories in mixed patterns
+
+PHASE 3:
+- Begins countdown to total crowd collapse
+
+FINAL MOMENT:
+The player must trigger one final massive drop to revive the crowd and end the night.
+
+CORE EXPERIENCE:
+The ultimate "Keep the Crowd Alive" moment.
+
+==================================================
+ENEMY WAVE STRUCTURE
+==================================================
+
+EARLY WAVES:
+Introduce simple crowd threats.
+Examples:
+- Mood Killer
+- Offbeat Runner
+- Noise Parasite
+
+MID WAVES:
+Introduce disruption and mixed threats.
+Examples:
+- Silence Drone
+- Riot Spark
+- Bass Eater
+- Stage Saboteur
+
+LATE WAVES:
+Introduce enemies that attack systems.
+Examples:
+- BPM Breaker
+- Genre Phantom
+- Drop Canceler
+- Hype Thief
+
+BOSS WAVES:
+Change rules dramatically and test the player's understanding.
+
+==================================================
+ENEMY COUNTER MATRIX
+==================================================
+
+BASS TOWERS:
+Strong against:
+- Riot Spark
+- Crowd Surfer
+- Offbeat Runner
+- swarms
+
+Weak against:
+- Bass Eater
+- Feedback Wraith
+
+PERCUSSION TOWERS:
+Strong against:
+- Noise Parasite
+- Fake Fan
+- Offbeat Runner
+- Stage Saboteur
+
+Weak against:
+- heavily armored enemies
+
+MELODY TOWERS:
+Strong against:
+- Mood Killer
+- VIP Hunter
+- Silence Drone
+- Drop Canceler
+
+Weak against:
+- swarms
+- adaptive enemies
+
+AMBIENT TOWERS:
+Strong against:
+- panic
+- hype drain
+- silence damage
+- crowd collapse
+
+Weak against:
+- direct enemy rushes
+
+NOISE TOWERS:
+Strong against:
+- Copycat
+- Genre Phantom
+- Noise Parasite
+- Bass Eater overload
+
+Weak against:
+- crowd morale if overused
+
+==================================================
+CROWD INTERACTION IDEAS
+==================================================
+
+Enemies can affect the crowd in different ways:
+
+1. PANIC
+Crowd members run away from danger.
+
+2. APATHY
+Crowd stops dancing and hype gain falls.
+
+3. CORRUPTION
+Crowd claps offbeat and disrupts resonance.
+
+4. EXODUS
+Crowd members leave the venue.
+
+5. MOSH PIT CHAOS
+Crowd density becomes unstable.
+Can be good or bad depending on player tools.
+
+6. VIP LOSS
+Special audience members leave, reducing rewards.
+
+==================================================
+AUDIO FEEDBACK PER ENEMY
+==================================================
+
+Each enemy should have a clear sound identity.
+
+Examples:
+- Mood Killer: dull low-pass filter
+- Noise Parasite: crackle/static
+- Silence Drone: sudden stem removal
+- Riot Spark: alarm percussion
+- Copycat: delayed echo
+- Bass Eater: muffled sub rumble
+- Offbeat Runner: skittering clicks
+- Drop Canceler: failed riser
+- Hype Thief: reversed crowd cheer
+- BPM Breaker: warped tempo
+
+This lets skilled players identify threats by ear.
+
+==================================================
+VISUAL READABILITY
+==================================================
+
+Enemy silhouettes should communicate function:
+
+- Round/small = swarm or parasite
+- Tall/thin = morale threat
+- Floating = audio-zone threat
+- Heavy/wide = tank
+- Glitching = corruption
+- Mirror-like = copying/adapting
+- Bright red/orange = panic/rush
+- Black/void-like = silence
+
+==================================================
+SPAWN DESIGN
+==================================================
+
+Enemies should not always enter from normal lanes.
+
+Possible spawn methods:
+- backstage entrances
+- crowd infiltration
+- falling from drones
+- appearing through speaker feedback
+- emerging from corrupted light zones
+- entering as fake fans
+- spawning during beat drops
+
+This keeps waves surprising and thematic.
+
+==================================================
+DESIGN WARNING
+==================================================
+
+Do not overload early gameplay.
+
+The first playable prototype should use only 5 enemy types:
+
+1. Mood Killer
+2. Noise Parasite
+3. Silence Drone
+4. Riot Spark
+5. Bass Eater
+
+These five already test:
+- crowd morale
+- audio corruption
+- silence zones
+- panic
+- tower composition
+
+More enemies can come later.
+
+==================================================
+MVP ENEMY SET
+==================================================
+
+For the first prototype:
+
+1. MOOD KILLER
+Core crowd-hype drain enemy.
+
+2. NOISE PARASITE
+Core tower corruption enemy.
+
+3. SILENCE DRONE
+Core audio-zone enemy.
+
+4. RIOT SPARK
+Core fast panic enemy.
+
+5. BASS EATER
+Core tank enemy that counters bass spam.
+
+FIRST MVP BOSS:
+THE SILENCE ENGINE
+
+This boss directly sells the fantasy:
+"The music is dying. Bring it back."
+
+==================================================
+CORE ENEMY DESIGN SUMMARY
+==================================================
+
+Enemies in "Keep the Crowd Alive" should be designed around one question:
+
+"How does this enemy ruin the show?"
+
+If the answer is interesting, visual, audible, and counterable,
+then the enemy belongs in the game.
+
+The strongest enemies are not the ones with the most health.
+They are the ones that make the player feel the festival slipping away.
+
