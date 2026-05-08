@@ -1,0 +1,22 @@
+* {
+  box-sizing: border-box;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #020610;
+  color: #c8f8ff;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+body {
+  overflow: hidden;
+}
+canvas {
+  border: 3px solid #11b7ff;
+  background: #020610;
+  box-shadow: 0 0 30px rgba(17, 183, 255, 0.25);
+}

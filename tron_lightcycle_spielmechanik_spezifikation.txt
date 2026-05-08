@@ -1,0 +1,564 @@
+TRON LIGHTCYCLE DUELL – SPIELMECHANIK-SPEZIFIKATION
+====================================================
+
+Ziel
+----
+Ein schnelles Arena-Duell für zwei Spieler: Ein blaues und ein rotes Motorrad treten in einem futuristischen Raum gegeneinander an. Beide Motorräder hinterlassen permanente Lichtspuren. Wer gegen eine Wand, eine Lichtspur oder das gegnerische Motorrad fährt, verliert die Runde.
+
+Grundidee
+---------
+Das Spiel kombiniert 2D-Spielmechanik mit 3D-Optik:
+
+- Die eigentliche Bewegung findet auf einer flachen X/Z-Ebene statt.
+- Die Motorräder bewegen sich wie in einem klassischen Tron-/Lightcycle-Spiel nur vorwärts.
+- Richtungswechsel erfolgen in festen Winkeln, idealerweise 90 Grad.
+- Die Grafik wirkt 3D: Raum, Boden, leuchtende Wände, Motorräder, Lichtspuren und Kamera sind dreidimensional dargestellt.
+- Spielerisch bleibt alles simpel und präzise wie ein 2D-Arena-Spiel.
+
+Spielmodus
+----------
+Empfohlen: Lokales 1-gegen-1 auf einer Tastatur.
+
+Spieler Blau:
+- Vorwärtsbewegung automatisch
+- Linksdrehung: A
+- Rechtsdrehung: D
+
+Spieler Rot:
+- Vorwärtsbewegung automatisch
+- Linksdrehung: Pfeil links
+- Rechtsdrehung: Pfeil rechts
+
+Alternative:
+- Spieler Blau: W/A/S/D, aber nur A und D aktiv
+- Spieler Rot: Pfeiltasten
+
+Spielziel
+---------
+Eine Runde endet, sobald ein Spieler kollidiert.
+
+Punktevergabe:
+- Gegner kollidiert zuerst: +1 Punkt
+- Beide kollidieren im selben Frame: Unentschieden, kein Punkt oder beide +1, je nach gewünschtem Spielgefühl
+- Match endet z. B. bei 5 Punkten
+
+Kernmechanik
+------------
+1. Beide Motorräder starten an gegenüberliegenden Positionen.
+2. Jedes Motorrad bewegt sich konstant nach vorne.
+3. Die Spieler können nur nach links oder rechts abbiegen.
+4. Beim Abbiegen ändert sich die Fahrtrichtung sofort um 90 Grad.
+5. Während der Fahrt erzeugt jedes Motorrad eine Lichtspur.
+6. Die Lichtspur bleibt bestehen.
+7. Kollision mit Wand, Lichtspur oder Motorrad beendet die Runde.
+
+Bewegung
+--------
+Die Bewegung ist rasterbasiert oder halb-rasterbasiert.
+
+Empfohlene Variante für einfache Umsetzung:
+- Unsichtbares Grid auf der Arena
+- Grid-Zellengröße: 1 Einheit
+- Motorrad bewegt sich mit konstanter Geschwindigkeit von Zelle zu Zelle
+- Abbiegen ist nur erlaubt, wenn das Motorrad nahe genug am Mittelpunkt einer Grid-Zelle ist
+
+Beispielwerte:
+- Arena-Größe: 40 x 40 Grid-Zellen
+- Geschwindigkeit Start: 6 Zellen pro Sekunde
+- Motorradgröße: ca. 0.7 x 0.7 Zellen
+- Lichtspurbreite: 0.35 bis 0.5 Zellen
+- Kamera: leicht schräg von oben
+
+Richtungen:
+- Norden:  0,  1
+- Süden:   0, -1
+- Osten:   1,  0
+- Westen: -1,  0
+
+Richtungswechsel:
+- Links drehen:
+  Richtung (x, z) wird zu (-z, x)
+- Rechts drehen:
+  Richtung (x, z) wird zu (z, -x)
+
+Wichtig:
+- Kein sofortiges Umdrehen um 180 Grad
+- Nur 90-Grad-Kurven
+- Input kann gepuffert werden, damit sich die Steuerung flüssig anfühlt
+
+Input-Puffer
+------------
+Damit das Spiel fair und angenehm wirkt:
+
+- Wenn ein Spieler kurz vor einer Grid-Mitte drückt, wird die gewünschte Richtung gespeichert.
+- Sobald das Motorrad die nächste gültige Grid-Mitte erreicht, wird die Kurve ausgeführt.
+- Nur ein Input sollte gepuffert werden.
+- Der neueste Input überschreibt den vorherigen.
+
+Beispiel:
+Spieler Blau fährt nach Norden und drückt A.
+Das Spiel speichert: nächste Kurve = links.
+Beim nächsten Zellmittelpunkt wird Blau nach Westen gedreht.
+
+Arena
+-----
+Die Arena ist ein geschlossener Raum.
+
+Bestandteile:
+- Flacher Boden mit Raster oder Neonlinien
+- Vier Begrenzungswände
+- Optional: transparente oder leuchtende Wände
+- Dunkler Hintergrund mit Neonfarben
+
+Arena-Koordinaten:
+- Breite: 40
+- Tiefe: 40
+- Zentrum bei 0,0
+- Grenzen:
+  X zwischen -20 und +20
+  Z zwischen -20 und +20
+
+Kollision mit Wand:
+- Wenn Motorradposition außerhalb der Grenzen liegt, verliert der Spieler.
+
+Lichtspuren
+-----------
+Jedes Motorrad erzeugt dauerhaft eine Lichtspur.
+
+Technische Darstellung:
+- Jede gerade Fahrstrecke wird als Segment gespeichert.
+- Ein Segment hat:
+  - Startposition
+  - Endposition
+  - Farbe
+  - Breite
+  - Besitzer
+
+Segment-Erstellung:
+- Beim Rundenstart beginnt ein neues Segment hinter dem Motorrad.
+- Solange das Motorrad geradeaus fährt, wird das aktuelle Segment verlängert.
+- Beim Abbiegen wird das aktuelle Segment abgeschlossen und ein neues Segment gestartet.
+
+Wichtig für Kollisionen:
+- Das Motorrad darf nicht sofort mit dem eigenen frisch erzeugten Segment kollidieren.
+- Deshalb sollte der vorderste kleine Teil der eigenen aktuellen Spur ignoriert werden.
+- Beispiel: Ignoriere die letzten 0.5 bis 1.0 Einheiten hinter dem Motorrad für Eigenkollisionen.
+
+Kollisionen
+-----------
+Es gibt vier Kollisionsarten:
+
+1. Wandkollision
+   - Position außerhalb der Arena
+
+2. Spur-Kollision
+   - Motorrad-Hitbox schneidet eine bestehende Lichtspur
+
+3. Motorrad-gegen-Motorrad
+   - Beide Hitboxen überlappen sich
+
+4. Gleichzeitige Kollision
+   - Beide Spieler kollidieren im selben Update
+
+Empfohlene Hitbox:
+- Kreisradius 0.35 Einheiten
+- Alternativ: Quadrat 0.6 x 0.6 Einheiten
+
+Spur-Kollision vereinfachen:
+- Jede Spur ist ein Axis-Aligned-Segment, also nur horizontal oder vertikal.
+- Prüfe Kreis-gegen-Linie/Rechteck:
+  - Vertikale Spur: Prüfe Abstand in X und Bereich in Z
+  - Horizontale Spur: Prüfe Abstand in Z und Bereich in X
+
+Pseudo-Logik:
+-------------
+Update pro Frame:
+
+1. Eingaben lesen
+2. Input puffern
+3. Prüfen, ob Motorrad an Grid-Mitte ist
+4. Falls ja: gepufferte Kurve anwenden
+5. Motorradposition anhand Richtung und Geschwindigkeit bewegen
+6. Aktuelles Lichtspursegment verlängern
+7. Kollisionen prüfen
+8. Falls Kollision:
+   - Runde beenden
+   - Punkt vergeben
+   - kurze Explosion/Flash zeigen
+   - Runde nach kurzer Pause neu starten
+
+Rundenstart
+-----------
+Startpositionen:
+- Blau: X = -10, Z = 0, Richtung Osten
+- Rot:  X =  10, Z = 0, Richtung Westen
+
+Startverzögerung:
+- 3
+- 2
+- 1
+- GO
+
+Während Countdown:
+- Motorräder sichtbar
+- keine Bewegung
+- Steuerung noch nicht aktiv oder Input wird ignoriert
+
+Rundenreset:
+- Alle Lichtspuren löschen
+- Motorräder zurücksetzen
+- Geschwindigkeit zurücksetzen
+- Countdown starten
+
+Spielgeschwindigkeit
+--------------------
+Variante A: Konstant
+- Geschwindigkeit bleibt immer gleich
+- Gut für Einsteiger
+
+Variante B: Steigend
+- Alle 10 Sekunden steigt die Geschwindigkeit leicht
+- Beispiel: +0.4 Einheiten/Sekunde
+- Maximalgeschwindigkeit begrenzen
+
+Empfohlene erste Version:
+- Starte mit konstanter Geschwindigkeit
+- Füge Beschleunigung später hinzu
+
+Kamera
+------
+Das Spiel soll wie eine Mischung aus 2D und 3D wirken.
+
+Empfohlene Kamera:
+- Perspektivkamera
+- Position: X = 0, Y = 35, Z = -35
+- Blickpunkt: Arena-Zentrum
+- Field of View: 45 bis 60 Grad
+
+Alternative:
+- Orthografische Kamera schräg von oben
+- Sehr gut für klares, taktisches Gameplay
+- Trotzdem 3D-Objekte sichtbar
+
+Wichtig:
+- Beide Spieler müssen immer sichtbar sein
+- Die gesamte Arena sollte sichtbar bleiben
+- Keine Kamera, die einzelnen Spielern folgt, da sonst Fairness leidet
+
+Grafikstil
+----------
+Futuristischer Neonstil:
+
+Blaues Motorrad:
+- Körper: dunkles Metall
+- Licht: Cyan/Blau
+- Spur: leuchtendes Blau
+
+Rotes Motorrad:
+- Körper: dunkles Metall
+- Licht: Rot/Orange
+- Spur: leuchtendes Rot
+
+Arena:
+- Dunkler Boden
+- Leicht reflektierende Oberfläche
+- Neon-Rasterlinien
+- Leuchtende Raumkanten
+- Dezente Partikel möglich
+
+Motorrad-Modelle
+----------------
+Für eine schnelle Umsetzung reicht ein simples Modell:
+
+- Basis: länglicher Quader
+- Vorder-/Hinterrad: zwei dünne Zylinder oder Torus-Objekte
+- Leuchtstreifen: kleine Emissive-Flächen
+- Optional: Fahrer nur als Silhouette
+
+Noch einfacher:
+- Verwende zunächst nur einen leuchtenden Pfeil oder Keil pro Spieler.
+- Später durch Motorradmodell ersetzen.
+
+Lichtspur-Darstellung
+---------------------
+Jede Lichtspur kann als leuchtender Quader dargestellt werden.
+
+Beispiel:
+- Höhe: 1.0 bis 1.5
+- Breite: 0.35
+- Länge: abhängig vom Segment
+- Farbe: Blau oder Rot
+- Material: Emissive/Neon
+- Transparenz optional
+
+Eine Spur wirkt 3D, obwohl sie mechanisch nur eine 2D-Linie ist.
+
+Sound
+-----
+Empfohlene Sounds:
+- Motorloop pro Motorrad
+- Kurvensound beim Abbiegen
+- Kollisionssound
+- Countdown-Beep
+- Punkt-/Rundensieg-Sound
+
+Audio-Feedback:
+- Je höher die Geschwindigkeit, desto höher kann der Motorpitch werden.
+- Kollision sollte klar und kräftig klingen.
+
+UI
+--
+Minimaler UI-Aufbau:
+- Oben links: Blau Punkte
+- Oben rechts: Rot Punkte
+- Mitte: Countdown oder Rundenergebnis
+- Nach Matchende: Gewinner anzeigen
+
+Beispiele:
+- Blau: 3
+- Rot: 2
+- Runde startet in 2
+- Blau gewinnt!
+- Rot gewinnt das Match!
+
+Spielzustände
+-------------
+Das Spiel sollte klare States haben:
+
+1. MainMenu
+   - Start Game
+   - Controls
+   - Quit
+
+2. Countdown
+   - Zeigt 3, 2, 1, GO
+
+3. Playing
+   - Motorräder bewegen sich
+   - Kollisionen aktiv
+
+4. RoundOver
+   - Gewinner der Runde anzeigen
+   - kurze Pause
+   - dann neue Runde
+
+5. MatchOver
+   - Gewinner anzeigen
+   - Restart oder Menü
+
+Datenstruktur
+-------------
+Player:
+- id
+- color
+- position
+- direction
+- speed
+- turnInputBuffer
+- isAlive
+- score
+- currentTrailSegment
+
+TrailSegment:
+- ownerId
+- color
+- startPosition
+- endPosition
+- width
+- height
+
+Game:
+- state
+- arenaWidth
+- arenaDepth
+- players
+- trailSegments
+- scoreLimit
+- countdownTimer
+- roundOverTimer
+
+Empfohlene Projektstruktur
+--------------------------
+Für Unity:
+
+Assets/
+  Scripts/
+    GameManager.cs
+    PlayerCycle.cs
+    InputHandler.cs
+    TrailManager.cs
+    TrailSegment.cs
+    CollisionManager.cs
+    CameraController.cs
+    UIManager.cs
+  Prefabs/
+    LightCycle_Blue.prefab
+    LightCycle_Red.prefab
+    TrailSegment.prefab
+    Arena.prefab
+  Materials/
+    NeonBlue.mat
+    NeonRed.mat
+    DarkFloor.mat
+    WallGlow.mat
+  Audio/
+    turn.wav
+    crash.wav
+    countdown.wav
+    engine_loop.wav
+  Scenes/
+    Main.unity
+
+Für Godot:
+
+res://
+  scenes/
+    main.tscn
+    arena.tscn
+    light_cycle.tscn
+    trail_segment.tscn
+  scripts/
+    game_manager.gd
+    light_cycle.gd
+    trail_manager.gd
+    collision_manager.gd
+    ui_manager.gd
+  materials/
+  audio/
+
+Für Web/Three.js:
+
+src/
+  main.js
+  game/
+    Game.js
+    PlayerCycle.js
+    TrailSegment.js
+    TrailManager.js
+    CollisionManager.js
+    Input.js
+    Camera.js
+    UI.js
+  assets/
+    sounds/
+    textures/
+
+Empfohlene erste Umsetzung
+--------------------------
+Baue das Spiel in dieser Reihenfolge:
+
+Phase 1: Prototyp ohne 3D-Details
+- Arena als flache Ebene
+- Zwei einfache Würfel als Motorräder
+- Automatische Vorwärtsbewegung
+- Links-/Rechts-Drehung
+- Wandkollision
+
+Phase 2: Lichtspuren
+- Trail-Segmente erzeugen
+- Segmente verlängern
+- Kollision mit Spuren prüfen
+
+Phase 3: Rundenlogik
+- Punkte
+- Reset
+- Countdown
+- Matchende
+
+Phase 4: 3D-Look
+- Neonmaterialien
+- Kamera schräg von oben
+- Wände
+- Lichtquellen
+- Motorradmodelle
+
+Phase 5: Feinschliff
+- Sound
+- Partikel bei Crash
+- UI-Animationen
+- Geschwindigkeitserhöhung
+
+Minimaler Algorithmus für einen Spieler
+---------------------------------------
+Jeder Frame:
+
+- Lies Input
+- Speichere gewünschte Kurve
+- Wenn Spieler an Grid-Mitte:
+  - Wende Kurve an
+  - Starte neues Trail-Segment
+- Bewege Spieler:
+  position += direction * speed * deltaTime
+- Verlängere aktuelles Trail-Segment bis zur alten Position oder aktuellen Position
+- Prüfe Kollision
+- Wenn Kollision:
+  Spieler ist tot
+
+Grid-Mitten-Prüfung
+-------------------
+Damit 90-Grad-Kurven sauber aussehen:
+
+- Runde Position auf nächstgelegene Grid-Koordinate
+- Prüfe Distanz zur Grid-Mitte
+- Wenn Distanz < 0.1:
+  - Position exakt auf Grid-Mitte setzen
+  - Kurve erlauben
+
+Beispiel:
+- Spieler fährt nach Osten
+- X ändert sich, Z bleibt gleich
+- Wenn X nahe einer Ganzzahl ist, darf gedreht werden
+
+Balancing-Werte
+---------------
+Gute Startwerte:
+
+- Arena: 40 x 40
+- Geschwindigkeit: 6
+- Gridgröße: 1
+- Motorrad-Hitboxradius: 0.35
+- Trailbreite: 0.4
+- Trailhöhe: 1.2
+- Countdown: 3 Sekunden
+- Pause nach Crash: 1.5 Sekunden
+- Punkte bis Sieg: 5
+
+Optionale Features
+------------------
+Nach dem Grundspiel:
+
+1. Boost
+   - Kurzer Geschwindigkeitsschub
+   - Hat Cooldown
+   - Erhöht Risiko
+
+2. Schrumpfende Arena
+   - Nach Zeit X bewegen sich Wände langsam nach innen
+
+3. KI-Gegner
+   - Einfache KI sucht freien Weg
+   - Prüft links, rechts, geradeaus
+
+4. Power-ups
+   - Schild für 2 Sekunden
+   - Spur kurz deaktivieren
+   - Gegner kurz verlangsamen
+
+5. Online-Multiplayer
+   - Erst später
+   - Tron-Spiele benötigen genaue Synchronisierung
+
+Wichtige Designentscheidung
+---------------------------
+Die beste technische Basis ist:
+- 2D-Logik auf X/Z-Ebene
+- 3D-Rendering darüber
+- Segmentbasierte Trails
+- Gridbasierte 90-Grad-Kurven
+- Rundenbasierter Ablauf
+
+So bleibt das Spiel leicht programmierbar, sieht aber trotzdem nach 3D-Neon-Arena aus.
+
+Kurze Beschreibung für Kilo Code
+--------------------------------
+Erstelle ein lokales 2-Spieler-Tron-Lightcycle-Spiel mit 3D-Optik und 2D-Gameplay. Zwei Motorräder, blau und rot, fahren in einer geschlossenen Arena auf der X/Z-Ebene automatisch vorwärts. Spieler können nur links oder rechts um 90 Grad abbiegen. Beide Motorräder hinterlassen leuchtende, permanente Lichtspuren als 3D-Segmente. Eine Runde endet, wenn ein Motorrad mit Wand, Lichtspur oder Gegner kollidiert. Implementiere Punkte, Countdown, Rundenreset, Matchende bei 5 Punkten, eine schräge Top-Down-Kamera und Neonmaterialien. Nutze klare Klassen für GameManager, PlayerCycle, TrailManager, CollisionManager und UIManager.
