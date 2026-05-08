@@ -12,6 +12,8 @@ A collection of casual browser games built with HTML5 and JavaScript.
 | [`one-sentence-life/`](one-sentence-life/) | ✍ One Sentence Life | Narrative choice game — journey through seven life stages and read your story in one sentence |
 | [`futuristic-pong/`](futuristic-pong/) | ⚡ Pong 3001 | Neon cyber-pong: glow effects, particle hits, AI opponent, power-ups, and level progression |
 | [`gravity-painter/`](gravity-painter/) | 🌌 Gravity Painter | Cosmic physics sandbox — paint gravity wells, assimilate foreign fields, and expand your universe sector by sector |
+| [`Keep the Crowd alive/`](Keep the Crowd alive/) | 🎮 Keep The Crowd Alive |  |
+| [`feliz-aniversario-alda/`](feliz-aniversario-alda/) | 🎂 Feliz Aniversário Alda | A special birthday surprise. |
 
 ## Adding a new game
 
