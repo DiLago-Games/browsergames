@@ -1,0 +1,622 @@
+KEEP THE CROWD ALIVE - HTML5 VISUAL & TECH STACK PLAN
+
+==================================================
+CORE TECH DIRECTION
+==================================================
+
+The game should be built as a stylized HTML5 experience.
+
+The focus should NOT be:
+- realistic graphics
+- heavy 3D rendering
+- AAA visuals
+
+The focus SHOULD be:
+- audiovisual feedback
+- reactive visuals
+- performance
+- atmosphere
+- crowd energy
+- responsive gameplay feel
+
+The game lives through:
+- movement
+- lighting
+- rhythm
+- crowd reactions
+- audio-reactive effects
+
+==================================================
+MAIN DESIGN PHILOSOPHY
+==================================================
+
+The visuals should feel like:
+- a living concert
+- a collapsing rave
+- a giant audiovisual performance
+
+The player should constantly feel:
+- energy
+- escalation
+- synchronization
+- pressure
+- spectacle
+
+The strongest visuals are:
+- pulsing lights
+- moving crowds
+- synchronized flashes
+- reactive particles
+- evolving stage effects
+
+NOT:
+- high polygon counts
+- realistic textures
+- realistic environments
+
+==================================================
+RECOMMENDED TECH STACK
+==================================================
+
+==================================================
+1. PHASER 3
+==================================================
+
+PRIMARY GAME ENGINE
+
+Why Phaser:
+- excellent for HTML5 games
+- fast iteration
+- huge community
+- WebGL support
+- strong 2D performance
+- ideal for top-down games
+- browser friendly
+- Steam compatible later
+
+Phaser handles:
+- gameplay
+- towers
+- enemies
+- maps
+- pathfinding
+- UI
+- scene management
+
+==================================================
+2. WEBGL RENDERING
+==================================================
+
+Use GPU acceleration for:
+- particles
+- glow
+- shaders
+- lighting
+- crowd effects
+- screen distortion
+
+WebGL allows:
+- smooth visual effects
+- large crowds
+- audio-reactive visuals
+- strong performance in browsers
+
+==================================================
+3. PIXIJS EFFECTS / CUSTOM SHADERS
+==================================================
+
+Used for:
+- bloom
+- glow
+- bass pulses
+- chromatic distortion
+- reactive lighting
+- wave effects
+- stage distortion
+- visual synchronization
+
+Custom GLSL shaders can create:
+- bass shockwaves
+- beat pulses
+- crowd energy ripples
+- resonance flashes
+- corruption distortion
+
+==================================================
+4. AUDIO SYSTEM
+==================================================
+
+RECOMMENDED:
+- Web Audio API
+- Howler.js
+
+Why:
+- accurate timing
+- BPM synchronization
+- layered music control
+- dynamic volume mixing
+- beat quantization
+
+The audio system is one of the most important parts of the entire game.
+
+==================================================
+5. BUILD SYSTEM
+==================================================
+
+RECOMMENDED:
+- Vite
+
+Why:
+- extremely fast development
+- hot reload
+- lightweight setup
+- modern JavaScript workflow
+
+==================================================
+6. IDE
+==================================================
+
+RECOMMENDED:
+- Visual Studio Code
+
+Suggested Extensions:
+- ESLint
+- Prettier
+- Phaser Snippets
+- Shader Language Support
+- GitLens
+
+==================================================
+VISUAL STYLE DIRECTION
+==================================================
+
+==================================================
+MAIN STYLE
+==================================================
+
+Stylized Audio-Reactive Neon Festival
+
+The game should feel:
+- electronic
+- futuristic
+- energetic
+- reactive
+- visually loud
+- hypnotic
+
+==================================================
+VISUAL INSPIRATIONS
+==================================================
+
+Inspired by:
+- Geometry Wars
+- Tetris Effect
+- Rez
+- Just Shapes & Beats
+
+Combined with:
+- festival culture
+- EDM visuals
+- rave lighting
+- cyberpunk stage design
+
+==================================================
+COLOR DIRECTION
+==================================================
+
+Main colors:
+- neon pink
+- electric blue
+- violet
+- cyan
+- black backgrounds
+- reactive white flashes
+
+Optional accent colors:
+- acid green
+- warm orange
+- glitch red
+
+==================================================
+IMPORTANT GRAPHIC PRINCIPLE
+==================================================
+
+Simple geometry + strong effects > complex assets
+
+Example:
+A glowing animated circle with:
+- pulse
+- bloom
+- particles
+- rhythm synchronization
+
+can look far better than:
+- a complex static 3D model
+
+==================================================
+CAMERA PERSPECTIVE
+==================================================
+
+==================================================
+RECOMMENDED:
+TOP-DOWN
+==================================================
+
+Why top-down is best:
+- readable gameplay
+- ideal for tower defense
+- crowd visibility
+- easy pathing
+- performance friendly
+- easier balancing
+- mobile friendly later
+
+The player always understands:
+- where enemies are
+- where the crowd is
+- where the hype is collapsing
+
+==================================================
+OPTIONAL:
+SLIGHT 2.5D ANGLE
+==================================================
+
+Can create:
+- more cinematic depth
+- stage scale
+- stronger visual identity
+
+But should remain readable.
+
+==================================================
+WHY NOT FULL ISOMETRIC
+==================================================
+
+Isometric would:
+- increase complexity
+- reduce clarity
+- slow production
+- complicate effects
+
+Not worth it for the first version.
+
+==================================================
+CORE VISUAL ELEMENTS
+==================================================
+
+==================================================
+1. THE STAGE
+==================================================
+
+The stage is the visual heart of the map.
+
+Should include:
+- giant speakers
+- LED walls
+- lasers
+- light rigs
+- animated floor panels
+- reactive screens
+
+As hype rises:
+- the stage evolves
+- more effects unlock
+- visuals intensify
+
+==================================================
+2. THE CROWD
+==================================================
+
+MOST IMPORTANT VISUAL ELEMENT.
+
+The crowd is:
+- the emotional center
+- the health bar
+- the atmosphere meter
+
+The crowd must feel alive.
+
+==================================================
+CROWD BEHAVIOR
+==================================================
+
+HIGH HYPE:
+- synchronized jumping
+- waving
+- dancing
+- light sticks
+- phone lights
+- crowd waves
+
+LOW HYPE:
+- standing still
+- reduced movement
+- leaving arena
+- weaker lighting
+
+PANIC:
+- crowd splitting
+- chaotic movement
+- stampede behavior
+- shockwave reactions
+
+==================================================
+TECHNICAL CROWD SOLUTION
+==================================================
+
+Recommended:
+GPU instancing
+
+Each crowd member:
+- extremely simple
+- lightweight
+- heavily animated globally
+
+Result:
+- hundreds or thousands of people possible
+- high performance
+- strong visual density
+
+==================================================
+3. TOWERS
+==================================================
+
+Towers should feel:
+- musical
+- reactive
+- energetic
+
+NOT:
+- medieval
+- realistic
+- static
+
+==================================================
+TOWER VISUAL IDEAS
+==================================================
+
+Bass Towers:
+- large speakers
+- subwoofer cannons
+- pulse emitters
+
+Percussion Towers:
+- drum machines
+- rhythm turrets
+- beat emitters
+
+Melody Towers:
+- laser synthesizers
+- holographic emitters
+- waveform cannons
+
+Ambient Towers:
+- atmospheric generators
+- aura rings
+- light projectors
+
+Noise Towers:
+- glitch machines
+- distortion nodes
+- corrupted audio devices
+
+==================================================
+4. ENEMIES
+==================================================
+
+Enemies should visually represent:
+- disruption
+- silence
+- corruption
+- panic
+- anti-music energy
+
+Examples:
+- glitch entities
+- silence drones
+- feedback ghosts
+- riot creatures
+- waveform parasites
+
+==================================================
+AUDIO-REACTIVE VISUALS
+==================================================
+
+One of the game's strongest features.
+
+==================================================
+THINGS THAT SHOULD REACT TO MUSIC
+==================================================
+
+- crowd movement
+- lights
+- lasers
+- tower pulses
+- stage panels
+- particle intensity
+- enemy distortion
+- floor waves
+- camera shake
+- UI glow
+
+==================================================
+BASS REACTION
+==================================================
+
+Bass should:
+- slightly shake the screen
+- create arena pulses
+- trigger large light flashes
+- push particles outward
+
+==================================================
+DROP MOMENTS
+==================================================
+
+During drops:
+- lights explode
+- crowd jumps
+- visual intensity spikes
+- enemy hit effects intensify
+- stage transforms temporarily
+
+These moments should feel:
+massive and euphoric.
+
+==================================================
+RENDERING LAYERS
+==================================================
+
+Recommended visual stack:
+
+LAYER 1:
+Arena floor
+
+LAYER 2:
+Crowd
+
+LAYER 3:
+Towers
+
+LAYER 4:
+Enemies
+
+LAYER 5:
+Projectiles & particles
+
+LAYER 6:
+Lighting & post-processing
+
+LAYER 7:
+UI & hype overlay
+
+==================================================
+IMPORTANT POST-PROCESSING EFFECTS
+==================================================
+
+==================================================
+1. BLOOM
+==================================================
+
+VERY IMPORTANT.
+
+Creates:
+- glow
+- festival lighting feel
+- neon intensity
+
+==================================================
+2. ADDITIVE GLOW
+==================================================
+
+Used for:
+- lasers
+- resonance
+- towers
+- crowd lights
+
+==================================================
+3. BASS PULSE DISTORTION
+==================================================
+
+Subtle arena-wide pulse effect.
+
+==================================================
+4. CHROMATIC ABERRATION
+==================================================
+
+Use lightly during:
+- drops
+- panic
+- overload moments
+
+==================================================
+5. GLITCH EFFECTS
+==================================================
+
+Used for:
+- corruption
+- enemy attacks
+- noise towers
+- system instability
+
+==================================================
+PERFORMANCE PHILOSOPHY
+==================================================
+
+HTML5 performance matters heavily.
+
+Avoid:
+- complex 3D scenes
+- expensive shadows
+- heavy simulations
+- oversized textures
+
+Prefer:
+- shaders
+- particles
+- animation tricks
+- instancing
+- additive lighting
+
+==================================================
+THE MOST IMPORTANT DESIGN RULE
+==================================================
+
+The player should feel:
+"I am controlling a massive live audiovisual event."
+
+NOT:
+"I am managing a spreadsheet tower defense."
+
+==================================================
+MVP VISUAL TARGET
+==================================================
+
+FIRST PLAYABLE VERSION SHOULD INCLUDE:
+
+- one stage
+- one crowd area
+- three towers
+- three enemy types
+- reactive lights
+- crowd movement
+- hype bar
+- one drop moment
+- one boss
+
+Focus:
+feel and atmosphere first.
+
+==================================================
+LONG-TERM VISUAL EVOLUTION
+==================================================
+
+Possible future upgrades:
+- dynamic weather
+- giant holograms
+- evolving stages
+- genre-based visuals
+- multiple festival themes
+- procedural crowd events
+- giant synchronized effects
+- full-screen resonance moments
+
+==================================================
+FINAL CREATIVE GOAL
+==================================================
+
+The game should feel like:
+"A futuristic rave barely surviving complete collapse."
+
+The visuals should constantly communicate:
+- rhythm
+- danger
+- escalation
+- emotion
+- synchronization
+- spectacle
+
+The player should always want:
+"one more drop."
+

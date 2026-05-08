@@ -1,0 +1,349 @@
+SOUND DEFENSE / FESTIVAL DEFENSE - CORE GAME DESIGN
+
+==================================================
+CORE FANTASY
+==================================================
+
+The player is not just defending a base.
+The player is:
+- a DJ
+- a performer
+- a festival architect
+- a crowd controller
+
+The goal is to keep the concert alive, attract more people, and maintain hype while surviving enemy waves.
+
+The battlefield becomes a living music festival.
+
+==================================================
+HIGH CONCEPT
+==================================================
+
+A round-based Tower Defense game where:
+- towers create music loops
+- music affects gameplay
+- tower combinations create resonances
+- the crowd reacts to the quality of the performance
+- enemies try to destroy the atmosphere of the show
+
+The music itself becomes:
+- gameplay
+- visual feedback
+- progression
+- emotional reinforcement
+
+==================================================
+MAIN GAMEPLAY LOOP
+==================================================
+
+1. Build towers
+2. Towers generate music stems
+3. Music creates synergies and gameplay effects
+4. Crowd reacts to the performance
+5. Hype increases or decreases
+6. Enemy waves attack the festival
+7. Player adapts the soundscape
+8. Festival escalates visually and musically
+
+Over time:
+- more people arrive
+- visuals intensify
+- music becomes fuller
+- enemies become more aggressive
+- the stage evolves
+
+==================================================
+THE CROWD SYSTEM
+==================================================
+
+The crowd is effectively the player's HP bar.
+
+GOOD PERFORMANCE:
+- more people arrive
+- people dance
+- hype rises
+- stage upgrades unlock
+- effects intensify
+- rewards increase
+
+BAD PERFORMANCE:
+- people leave
+- atmosphere collapses
+- panic spreads
+- visuals weaken
+- income drops
+- eventual defeat
+
+Crowd reactions are immediate visual feedback.
+
+==================================================
+THE HYPE SYSTEM
+==================================================
+
+Hype is the core resource.
+
+Hype increases through:
+- harmonic tower combinations
+- combo chains
+- synchronized beats
+- successful defense
+- beat drops
+- long resonance streaks
+
+Hype decreases through:
+- enemies reaching the crowd
+- audio corruption
+- broken harmonies
+- repetitive gameplay
+- destroyed towers
+
+High hype unlocks:
+- special abilities
+- stage transformations
+- crowd bonuses
+- stronger resonance effects
+
+==================================================
+TOWER CATEGORIES
+==================================================
+
+1. BASS TOWERS
+- crowd control
+- knockback
+- heavy AoE
+- deep bass/kick sounds
+
+2. PERCUSSION TOWERS
+- fast attacks
+- combo setup
+- rhythm stacks
+- snare/hat/glitch sounds
+
+3. MELODY TOWERS
+- high damage
+- precision attacks
+- beams/chains
+- synth leads/arpeggios
+
+4. AMBIENT TOWERS
+- buffs/debuffs
+- aura control
+- healing/support
+- pads/atmospheres
+
+5. NOISE TOWERS
+- chaos mechanics
+- distortion
+- risky random effects
+- glitch/static audio
+
+==================================================
+THE RESONANCE SYSTEM
+==================================================
+
+The resonance system is the game's main innovation.
+
+Towers have:
+- BPM
+- rhythm patterns
+- sound categories
+- tonal identities
+
+When compatible towers interact:
+- special gameplay effects activate
+- music evolves dynamically
+- visuals intensify
+
+Examples:
+- synchronized BPM -> faster attack speed
+- harmonic combinations -> chain explosions
+- layered percussion -> overdrive mode
+- bass + melody sync -> amplified lasers
+
+The player is effectively composing combat systems through sound.
+
+==================================================
+AUDIO DESIGN PRINCIPLES
+==================================================
+
+IMPORTANT:
+The game must NEVER feel like music production software.
+
+The player should:
+- feel powerful
+- feel creative
+- sound good automatically
+
+The game assists harmony behind the scenes.
+
+==================================================
+GUIDED HARMONY SYSTEM
+==================================================
+
+The game automatically prevents:
+- terrible sounding combinations
+- extreme dissonance
+- rhythm collapse
+
+The game subtly guides:
+- compatible BPMs
+- harmonic layering
+- smooth transitions
+
+Result:
+Every player can create satisfying music.
+
+==================================================
+ADAPTIVE MUSIC SYSTEM
+==================================================
+
+Every tower adds a separate music layer ("stem").
+
+Examples:
+- bass layer
+- drum layer
+- melody layer
+- ambient layer
+- FX layer
+
+As the match progresses:
+- the soundtrack grows
+- intensity rises
+- crowd energy increases
+
+The soundtrack is generated dynamically from gameplay.
+
+==================================================
+QUANTIZATION SYSTEM
+==================================================
+
+All audio actions snap to rhythm timing.
+
+Example:
+If the player places a tower:
+- it waits for the next beat
+- then joins the music perfectly
+
+Result:
+The entire game feels synchronized and professional.
+
+==================================================
+ENEMY DESIGN
+==================================================
+
+Enemies attack:
+- towers
+- crowd morale
+- musical harmony
+
+Enemy examples:
+
+1. NOISE PARASITES
+- corrupt audio zones
+
+2. MOOD KILLERS
+- reduce crowd hype
+
+3. RIOT UNITS
+- create panic in the audience
+
+4. SILENCE FIELDS
+- disable music areas
+
+5. COPYCATS
+- steal tower rhythms
+
+==================================================
+VISUAL DESIGN PHILOSOPHY
+==================================================
+
+The visuals react heavily to music.
+
+Examples:
+- lights pulse with BPM
+- lasers synchronize
+- crowd jumps during drops
+- stage transforms with hype
+- environment reacts to resonance
+
+The battlefield should feel alive.
+
+==================================================
+MATCH PROGRESSION
+==================================================
+
+EARLY GAME:
+- small underground stage
+- few people
+- simple beat
+
+MID GAME:
+- larger crowd
+- more layers
+- visual escalation
+
+LATE GAME:
+- giant festival
+- massive light shows
+- chaotic musical warfare
+- overwhelming enemy pressure
+
+==================================================
+WIN / LOSE CONDITIONS
+==================================================
+
+WIN:
+- survive all waves
+- maintain enough crowd energy
+
+LOSE:
+- crowd completely leaves
+- hype collapses
+- festival shuts down
+
+==================================================
+LONG-TERM PROGRESSION
+==================================================
+
+Possible roguelite systems:
+- unlock new tower archetypes
+- unlock music genres
+- unlock stage effects
+- unlock visual styles
+- permanent resonance upgrades
+
+==================================================
+POSSIBLE ART DIRECTION
+==================================================
+
+- neon synthwave
+- abstract music visualizer
+- cyberpunk festival
+- futuristic rave
+- sci-fi concert apocalypse
+
+==================================================
+CORE DESIGN GOAL
+==================================================
+
+The game should feel like:
+"A massive live performance that is barely under control."
+
+NOT:
+- a rhythm game
+- music software
+- traditional static tower defense
+
+The player should constantly feel:
+- escalation
+- energy
+- pressure
+- flow
+- audiovisual satisfaction
+
+==================================================
+POTENTIAL UNIQUE SELLING POINT
+==================================================
+
+"Defend a music festival by building a living soundtrack."
+

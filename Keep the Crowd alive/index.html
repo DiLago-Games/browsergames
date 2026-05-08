@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keep the Crowd Alive - Prototype</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #05040d;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+    }
+    #game {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    canvas { box-shadow: 0 0 40px rgba(0,255,255,0.3); }
+    #start-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(5,4,13,0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #0ff;
+      z-index: 1000;
+      cursor: pointer;
+    }
+    #start-overlay h1 { font-size: 48px; color: #ff4fd8; text-shadow: 0 0 20px #ff4fd8; margin-bottom: 20px; }
+    #start-overlay p { font-size: 18px; color: #88aaff; max-width: 600px; text-align: center; line-height: 1.6; }
+    #start-overlay .key { color: #00ffe0; font-weight: bold; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+</head>
+<body>
+<div id="start-overlay">
+  <h1>KEEP THE CROWD ALIVE</h1>
+  <p>
+    Klicke zum Starten<br><br>
+    <span class="key">LINKS/RECHTS</span> — Tower deck klicken (grünes Rechteck)<br>
+    <span class="key">H / L</span> — Hype erhöhen / verringern<br>
+    <span class="key">P</span> — Panik auslösen (Nord)<br>
+    <span class="key">SPACE</span> — Nächste Wave starten<br>
+    <span class="key">R</span> — Wave zurücksetzen<br><br>
+    Verteidige die Menge! Baue Türme! Halte den Beat!
+  </p>
+</div>
+
+<script>
+// =========================================
+// KEEP THE CROWD ALIVE - PROTOTYPE v1.1
+// Single-file Phaser 3 build with fixes
+// =========================================
+
+const OFFSET_X = 640, OFFSET_Y = 360;
+
+const ARENA_ZONES = [
+  { id: 'STAGE', cx: 0, cy: 0, r: 80, buildable: false },
+  { id: 'DANCE', cx: 0, cy: 0, innerR: 120, outerR: 240, buildable: false },
+  { id: 'RING_A', cx: 0, cy: 0, innerR: 260, outerR: 380, buildable: false },
+  { id: 'RING_B', cx: 0, cy: 0, innerR: 400, outerR: 520, buildable: false },
+  { id: 'RING_C', cx: 0, cy: 0, innerR: 540, outerR: 660, buildable: false },
+  { id: 'VIP', cx: 0, cy: 0, innerR: 680, outerR: 740, buildable: false },
+  { id: 'CONCOURSE', cx: 0, cy: 0, innerR: 760, outerR: 880, buildable: false },
+  { id: 'GATE_N', cx: 0, cy: -920, w: 180, h: 100, buildable: false },
+  { id: 'GATE_E', cx: 920, cy: 0, w: 180, h: 100, buildable: false },
+  { id: 'GATE_S', cx: 0, cy: 920, w: 180, h: 100, buildable: false },
+  { id: 'GATE_W', cx: -920, cy: 0, w: 180, h: 100, buildable: false },
+  { id: 'EXIT_N', cx: 0, cy: -1100, w: 220, h: 120, buildable: false },
+  { id: 'EXIT_E', cx: 1100, cy: 0, w: 220, h: 120, buildable: false },
+  { id: 'EXIT_S', cx: 0, cy: 1100, w: 220, h: 120, buildable: false },
+  { id: 'EXIT_W', cx: -1100, cy: 0, w: 220, h: 120, buildable: false },
+  { id: 'TOWER_N', cx: 0, cy: -480, w: 280, h: 80, buildable: true },
+  { id: 'TOWER_E', cx: 480, cy: 0, w: 280, h: 80, buildable: true },
+  { id: 'TOWER_S', cx: 0, cy: 480, w: 280, h: 80, buildable: true },
+  { id: 'TOWER_W', cx: -480, cy: 0, w: 280, h: 80, buildable: true }
+];
+
+const CROWD_COLORS = {
+  idle: 0x88aaff,
+  dancing: 0x00ffe0,
+  highHype: 0xff4fd8,
+  panic: 0xff2a2a,
+  entering: 0x99ddff
+};
+
+class GameScene extends Phaser.Scene {
+  private graphics!: Phaser.GameObjects.Graphics;
+  private uiText!: Phaser.GameObjects.Text;
+  private hypeLabel!: Phaser.GameObjects.Text;
+  private crowds: Array<{x:number,y:number,state:string,pathIdx:number,spd:number,phase:number,panicDir?:string}> = [];
+  private enemies: Array<{x:number,y:number,pathIdx:number,spd:number,hp:number}> = [];
+  private towers: Array<{x:number,y:number,cd:number,id:number}> = [];
+  private projectiles: Array<{x:number,y:number,target:any,spd:number,dmg:number}> = [];
+  private hype = 0.45;
+  private wave = 1;
+  private waveActive = false;
+  private enemiesToSpawn = 0;
+  private spawnedCount = 0;
+  private spawnTimer = 0;
+  private nextTowerId = 1;
+
+  constructor() { super('GameScene'); }
+
+  create() {
+    this.graphics = this.add.graphics();
+    this.hypeLabel = this.add.text(0, 0, 'HYPE', { fontSize: '12px', color: '#fff' }).setDepth(10);
+    this.uiText = this.add.text(16, 16, '', { fontSize: '16px', color: '#0ff', backgroundColor: '#0008' });
+
+    this.setupInput();
+    this.startWave(1);
+
+    // Hide start overlay
+    const overlay = document.getElementById('start-overlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  setupInput() {
+    this.input.on('pointerdown', ptr => {
+      const world = this.cameras.main.getWorldPoint(ptr.x, ptr.y);
+      this.tryBuildTower(world.x, world.y);
+    });
+
+    this.input.keyboard.on('keydown-H', () => this.hype = Phaser.Math.Clamp(this.hype + 0.1, 0, 1));
+    this.input.keyboard.on('keydown-L', () => this.hype = Phaser.Math.Clamp(this.hype - 0.1, 0, 1));
+    this.input.keyboard.on('keydown-P', () => this.triggerPanic('north'));
+    this.input.keyboard.on('keydown-SPACE', () => this.startWave(this.wave + 1));
+    this.input.keyboard.on('keydown-R', () => {
+      this.wave = 1;
+      this.hype = 0.45;
+      this.enemies = [];
+      this.crowds = [];
+      this.towers = [];
+      this.projectiles = [];
+      this.startWave(1);
+    });
+  }
+
+  tryBuildTower(wx, wy) {
+    const ax = wx - OFFSET_X, ay = wy - OFFSET_Y;
+    for (const z of ARENA_ZONES) {
+      if (!z.buildable) continue;
+      if (z.w) {
+        if (Math.abs(ax - z.cx) < z.w/2 && Math.abs(ay - z.cy) < z.h/2) {
+          // Check if tower already exists at this spot
+          const exists = this.towers.some(t => t.x === z.cx && t.y === z.cy);
+          if (!exists) {
+            this.towers.push({ x: z.cx, y: z.cy, cd: 0, id: this.nextTowerId++ });
+            const t = this.add.text(wx, wy, 'B', { fontSize: '20px', color: '#0f0', fontWeight: 'bold' }).setOrigin(0.5);
+            t.setDepth(100);
+          }
+        }
+      }
+    }
+  }
+
+  startWave(n) {
+    this.wave = n;
+    this.waveActive = true;
+    this.enemiesToSpawn = 3 + n * 2;
+    this.spawnedCount = 0;
+    this.spawnTimer = 0;
+  }
+
+  spawnEnemy() {
+    const spawns = [
+      { x: 0, y: -920 }, { x: 920, y: 0 }, { x: 0, y: 920 }, { x: -920, y: 0 }
+    ];
+    const s = Phaser.Utils.Array.GetRandom(spawns);
+    this.enemies.push({ x: s.x, y: s.y, pathIdx: 0, spd: 60 + this.wave * 5, hp: 20 + this.wave * 10 });
+  }
+
+  triggerPanic(dir) {
+    let count = 0;
+    for (const c of this.crowds) {
+      if (Math.random() > 0.6) continue;
+      c.state = 'panic';
+      c.panicDir = dir;
+      count++;
+    }
+  }
+
+  update(time, delta) {
+    const beatVal = this.getBeatValue(time);
+    this.beatLogic(delta);
+    this.crowdLogic(delta, beatVal);
+    this.enemyLogic(delta);
+    this.towerLogic(delta);
+    this.projLogic(delta);
+    this.checkWaveEnd();
+    this.render(beatVal);
+    this.updateUI();
+  }
+
+  beatLogic(delta) {
+    if (this.waveActive && this.spawnedCount < this.enemiesToSpawn) {
+      this.spawnTimer += delta;
+      const interval = Phaser.Math.Linear(1500, 600, this.hype);
+      if (this.spawnTimer > interval) {
+        this.spawnEnemy();
+        this.spawnedCount++;
+        this.spawnTimer = 0;
+      }
+    }
+  }
+
+  crowdLogic(delta, beatVal) {
+    const spawnRate = Phaser.Math.Linear(200, 60, this.hype);
+    if (this.crowds.length < 1200 && Math.random() < (delta / spawnRate)) {
+      const spawns = [
+        { x: 0, y: -920 }, { x: 920, y: 0 }, { x: 0, y: 920 }, { x: -920, y: 0 }
+      ];
+      const s = Phaser.Utils.Array.GetRandom(spawns);
+      this.crowds.push({
+        x: s.x + Phaser.Math.Between(-15,15),
+        y: s.y + Phaser.Math.Between(-15,15),
+        state: 'entering',
+        pathIdx: 0,
+        spd: 40,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    for (let i = this.crowds.length - 1; i >= 0; i--) {
+      const c = this.crowds[i];
+      if (c.state !== 'panic') {
+        if (this.hype > 0.7) c.state = 'highHype';
+        else if (this.hype > 0.35) c.state = 'dancing';
+        else c.state = 'idle';
+      }
+
+      let tx, ty;
+      if (c.state === 'panic') {
+        const dirMap = { north: [0,1100], east: [-1100,0], south: [0,-1100], west: [1100,0] };
+        [tx, ty] = dirMap[c.panicDir] || [0, -1100];
+      } else if (c.pathIdx < this.getPathNodes().length) {
+        const node = this.getPathNodes()[c.pathIdx];
+        tx = node.x; ty = node.y;
+      } else {
+        tx = 0; ty = 0;
+      }
+
+      const dx = tx - c.x, dy = ty - c.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 8) {
+        const spd = (c.state==='panic'?90:40) * (delta/1000);
+        c.x += (dx/dist) * spd;
+        c.y += (dy/dist) * spd;
+      } else if (c.state !== 'panic') {
+        c.pathIdx++;
+      }
+
+      if (c.state === 'panic' && dist < 30) {
+        this.crowds.splice(i, 1);
+        continue;
+      }
+    }
+  }
+
+  getPathNodes() {
+    return [
+      {x:0,y:-920},{x:0,y:-820},{x:0,y:-640},{x:0,y:-460},{x:0,y:-300},{x:0,y:-180},{x:0,y:0},
+      {x:920,y:0},{x:820,y:0},{x:640,y:0},{x:460,y:0},{x:300,y:0},{x:180,y:0},{x:0,y:0},
+      {x:0,y:920},{x:0,y:820},{x:0,y:640},{x:0,y:460},{x:0,y:300},{x:0,y:180},{x:0,y:0},
+      {x:-920,y:0},{x:-820,y:0},{x:-640,y:0},{x:-460,y:0},{x:-300,y:0},{x:-180,y:0},{x:0,y:0}
+    ];
+  }
+
+  enemyLogic(delta) {
+    for (let i = this.enemies.length - 1; i >= 0; i--) {
+      const e = this.enemies[i];
+      const dx = -e.x, dy = -e.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 5) {
+        const mv = e.spd * (delta/1000);
+        e.x += (dx/dist) * mv; e.y += (dy/dist) * mv;
+      }
+      if (dist < 200) {
+        this.hype = Math.max(0, this.hype - 0.1);
+        this.enemies.splice(i, 1);
+      }
+    }
+  }
+
+  towerLogic(delta) {
+    for (const t of this.towers) {
+      t.cd -= delta;
+      if (t.cd <= 0) {
+        let nearest = null, minD = 300;
+        for (const e of this.enemies) {
+          const d = Math.hypot(e.x - t.x, e.y - t.y);
+          if (d < minD) { minD = d; nearest = e; }
+        }
+        if (nearest) {
+          this.projectiles.push({ x: t.x, y: t.y, target: nearest, spd: 250, dmg: 12 });
+          t.cd = 700;
+        }
+      }
+    }
+  }
+
+  projLogic(delta) {
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const p = this.projectiles[i];
+      if (!p.target || !p.target.hp) { this.projectiles.splice(i, 1); continue; }
+      const dx = p.target.x - p.x, dy = p.target.y - p.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 15) {
+        p.target.hp -= p.dmg;
+        this.projectiles.splice(i, 1);
+        if (p.target.hp <= 0) {
+          const idx = this.enemies.indexOf(p.target);
+          if (idx > -1) this.enemies.splice(idx, 1);
+        }
+      } else {
+        p.x += (dx/dist) * p.spd * (delta/1000);
+        p.y += (dy/dist) * p.spd * (delta/1000);
+      }
+    }
+  }
+
+  checkWaveEnd() {
+    if (this.waveActive && this.enemies.length === 0 && this.spawnedCount >= this.enemiesToSpawn) {
+      this.waveActive = false;
+      this.wave++;
+      this.hype = Math.min(1, this.hype + 0.25);
+      this.time.delayedCall(2000, () => this.startWave(this.wave));
+    }
+  }
+
+  getBeatValue(now) {
+    const beatDur = 60000 / 128;
+    const phase = ((now % beatDur) / beatDur);
+    return Math.max(0, 1 - phase * 3);
+  }
+
+  render(beatVal) {
+    this.graphics.clear();
+
+    // Zone rendering
+    this.graphics.lineStyle(2, 0x334455, 0.6);
+    this.graphics.fillStyle(0x112233, 0.12);
+    for (const z of ARENA_ZONES) {
+      const cx = z.cx + OFFSET_X, cy = z.cy + OFFSET_Y;
+      if (z.r) {
+        this.graphics.strokeCircle(cx, cy, z.r);
+        this.graphics.fillCircle(cx, cy, z.r * 0.95);
+      } else if (z.innerR) {
+        this.graphics.strokeCircle(cx, cy, z.outerR);
+        this.graphics.strokeCircle(cx, cy, z.innerR);
+      } else if (z.w) {
+        this.graphics.strokeRect(cx - z.w/2, cy - z.h/2, z.w, z.h);
+        this.graphics.fillRect(cx - z.w/2, cy - z.h/2, z.w, z.h);
+      }
+      if (z.buildable) {
+        this.graphics.lineStyle(3, 0x00ff00, 0.8);
+        this.graphics.strokeRect(cx - 30, cy - 30, 60, 60);
+      }
+    }
+
+    // Crowd lightpoints
+    for (const c of this.crowds) {
+      let color = CROWD_COLORS[c.state] || CROWD_COLORS.idle;
+      let radius = c.state==='highHype'?2.5:c.state==='panic'?2:1.5;
+      let glowRadius = c.state==='highHype'?14:c.state==='panic'?9:6;
+      const pulse = 1 + beatVal * (c.state==='highHype'?0.5:0.2) * (0.5 + this.hype);
+      const cx = c.x + OFFSET_X, cy = c.y + OFFSET_Y;
+      this.graphics.fillStyle(0x000000, 0.3);
+      this.graphics.fillCircle(cx, cy, glowRadius * pulse);
+      this.graphics.fillStyle(color, 0.9);
+      this.graphics.fillCircle(cx, cy, radius * pulse);
+    }
+
+    // Enemies
+    this.graphics.fillStyle(0xff0000, 1);
+    for (const e of this.enemies) {
+      this.graphics.fillCircle(e.x + OFFSET_X, e.y + OFFSET_Y, 10);
+      this.graphics.fillStyle(0xff0000, 0.5);
+      this.graphics.fillRect(e.x + OFFSET_X - 8, e.y + OFFSET_Y - 18, 16, 4);
+      this.graphics.fillStyle(0x00ff00, 1);
+      this.graphics.fillRect(e.x + OFFSET_X - 8, e.y + OFFSET_Y - 18, 16 * (e.hp / (20 + this.wave*10)), 4);
+    }
+
+    // Towers
+    this.graphics.fillStyle(0x00ff00, 1);
+    for (const t of this.towers) {
+      this.graphics.fillRect(t.x + OFFSET_X - 12, t.y + OFFSET_Y - 12, 24, 24);
+      this.graphics.lineStyle(1, 0x00ff00, 0.3);
+      this.graphics.strokeCircle(t.x + OFFSET_X, t.y + OFFSET_Y, 300);
+    }
+
+    // Projectiles
+    this.graphics.fillStyle(0xffff00, 1);
+    for (const p of this.projectiles) {
+      this.graphics.fillCircle(p.x + OFFSET_X, p.y + OFFSET_Y, 4);
+    }
+
+    // Hype bar
+    const bx = OFFSET_X - 150, by = 20, bw = 300, bh = 20;
+    this.graphics.fillStyle(0x333, 0.8);
+    this.graphics.fillRect(bx, by, bw, bh);
+    this.graphics.fillStyle(this.hype > 0.5 ? 0x00ff00 : this.hype > 0.2 ? 0xffff00 : 0xff0000, 1);
+    this.graphics.fillRect(bx, by, bw * this.hype, bh);
+    this.graphics.lineStyle(2, 0xffffff, 1);
+    this.graphics.strokeRect(bx, by, bw, bh);
+
+    // HYPE label - using separate text object
+    this.hypeLabel.setPosition(bx, by + bh + 2);
+  }
+
+  updateUI() {
+    this.uiText.setText([
+      `Wave: ${this.wave}`,
+      `Hype: ${(this.hype*100).toFixed(0)}%`,
+      `Crowd: ${this.crowds.length}`,
+      `Towers: ${this.towers.length}`,
+      `Enemies: ${this.enemies.length}`,
+      '',
+      'Controls:',
+      'Click tower decks to build',
+      'H/L: hype up/down',
+      'P: panic north',
+      'SPACE: next wave',
+      'R: reset'
+    ]);
+  }
+}
+
+// Phaser config
+const config = {
+  type: Phaser.WEBGL,
+  width: 1280,
+  height: 720,
+  parent: 'game',
+  backgroundColor: '#05040d',
+  scene: GameScene,
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  render: { antialias: true, pixelArt: false }
+};
+
+new Phaser.Game(config);
+</script>
+</body>
+</html>
