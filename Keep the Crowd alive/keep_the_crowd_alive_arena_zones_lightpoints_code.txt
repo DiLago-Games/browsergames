@@ -1,0 +1,1531 @@
+KEEP THE CROWD ALIVE - ARENA ZONE & CROWD LIGHTPOINT CODE PLAN
+Target: HTML5 / Phaser 3 / TypeScript / Visual Studio Code
+
+==================================================
+WHAT THIS FILE CONTAINS
+==================================================
+
+This file defines a first technical arena model for the festival map.
+
+It includes:
+- named arena zones
+- entrance and exit gates
+- stairs / ramps / radial corridors
+- crowd rings
+- tower placement zones
+- enemy lanes
+- lightpoint visitor simulation
+- path definitions for moving crowd lights
+- code-ready TypeScript structures
+
+The visual assumption:
+Because the camera is far above the festival, visitors do not need detailed bodies.
+Visitors are represented as glowing lightpoints.
+
+These lightpoints:
+- enter through gates
+- move along defined paths
+- fill crowd zones
+- react to hype
+- flee through exits during panic
+- pulse with the music beat
+
+==================================================
+CORE MAP IDEA
+==================================================
+
+Arena shape:
+- circular amphitheater / futuristic festival bowl
+- central stage core
+- multiple concentric crowd rings
+- radial stairs and corridors
+- outer access ring
+- entrance gates around the arena
+
+Main gameplay:
+- visitors flow into the arena as lightpoints
+- enemies infiltrate through gates and corridors
+- the crowd becomes the emotional health system
+- tower placements happen around strategic ring/corridor zones
+- panic causes crowd lightpoints to move toward exits
+
+==================================================
+COORDINATE SYSTEM
+==================================================
+
+Recommended coordinate system:
+- arena center = { x: 0, y: 0 }
+- positive x = right
+- positive y = down
+- all positions are local world coordinates
+- Phaser can later offset this by camera/world center
+
+Suggested first map size:
+- width: 2400
+- height: 1600
+- center in Phaser screen/world: { x: 1200, y: 800 }
+
+In the code below, coordinates are relative to arena center.
+When rendering, add ARENA_WORLD_OFFSET.
+
+==================================================
+TYPE DEFINITIONS
+==================================================
+
+Save as:
+src/game/data/arenaConfig.ts
+
+--------------------------------------------------
+CODE START
+--------------------------------------------------
+
+export type Vec2 = {
+  x: number;
+  y: number;
+};
+
+export type ZoneType =
+  | "stage"
+  | "crowd"
+  | "corridor"
+  | "stairs"
+  | "gate"
+  | "tower"
+  | "enemyLane"
+  | "safeExit"
+  | "service";
+
+export type CrowdState =
+  | "idle"
+  | "entering"
+  | "dancing"
+  | "highHype"
+  | "panic"
+  | "leaving"
+  | "corrupted";
+
+export type ZoneId =
+  | "STAGE_CORE"
+  | "STAGE_PLATFORM"
+  | "INNER_DANCE_FLOOR"
+  | "CROWD_RING_A"
+  | "CROWD_RING_B"
+  | "CROWD_RING_C"
+  | "VIP_RING"
+  | "OUTER_CONCOURSE"
+  | "NORTH_GATE"
+  | "EAST_GATE"
+  | "SOUTH_GATE"
+  | "WEST_GATE"
+  | "NORTH_EAST_GATE"
+  | "SOUTH_EAST_GATE"
+  | "SOUTH_WEST_GATE"
+  | "NORTH_WEST_GATE"
+  | "STAIRS_NORTH"
+  | "STAIRS_EAST"
+  | "STAIRS_SOUTH"
+  | "STAIRS_WEST"
+  | "STAIRS_NE"
+  | "STAIRS_SE"
+  | "STAIRS_SW"
+  | "STAIRS_NW"
+  | "TOWER_DECK_NORTH"
+  | "TOWER_DECK_EAST"
+  | "TOWER_DECK_SOUTH"
+  | "TOWER_DECK_WEST"
+  | "SERVICE_BACKSTAGE"
+  | "SAFE_EXIT_NORTH"
+  | "SAFE_EXIT_EAST"
+  | "SAFE_EXIT_SOUTH"
+  | "SAFE_EXIT_WEST";
+
+export type ArenaZone = {
+  id: ZoneId;
+  type: ZoneType;
+  label: string;
+
+  // Center position relative to arena center.
+  center: Vec2;
+
+  // For circular / oval zones.
+  radius?: number;
+  innerRadius?: number;
+  outerRadius?: number;
+
+  // For angled ring segments.
+  angleStartDeg?: number;
+  angleEndDeg?: number;
+
+  // For rectangular zones.
+  width?: number;
+  height?: number;
+  rotationDeg?: number;
+
+  // Gameplay values.
+  capacity?: number;
+  currentCrowd?: number;
+  hypeMultiplier?: number;
+  panicRisk?: number;
+  corruptionRisk?: number;
+
+  // Use this to mark whether towers can be placed here.
+  buildable?: boolean;
+
+  // Use this to mark whether enemies can pass through.
+  enemyAccessible?: boolean;
+
+  // Use this to mark whether crowd can move through.
+  crowdAccessible?: boolean;
+};
+
+export type PathNode = {
+  id: string;
+  position: Vec2;
+  zoneId: ZoneId;
+};
+
+export type PathDefinition = {
+  id: string;
+  label: string;
+  nodeIds: string[];
+  allowedFor: Array<"crowd" | "enemy" | "panic" | "service">;
+  speedMultiplier: number;
+  width: number;
+};
+
+export type LightPointVisitor = {
+  id: number;
+  position: Vec2;
+  targetNodeIndex: number;
+  pathId: string;
+  state: CrowdState;
+
+  // Visual settings.
+  baseRadius: number;
+  glowRadius: number;
+  alpha: number;
+
+  // Gameplay / animation.
+  speed: number;
+  hypeResponsiveness: number;
+  panicSensitivity: number;
+  beatPhaseOffset: number;
+
+  // Optional zone tracking.
+  currentZoneId?: ZoneId;
+  targetZoneId?: ZoneId;
+};
+
+==================================================
+ARENA ZONES
+==================================================
+
+export const ARENA_WORLD_OFFSET: Vec2 = {
+  x: 1200,
+  y: 800,
+};
+
+export const ARENA_ZONES: ArenaZone[] = [
+  {
+    id: "STAGE_CORE",
+    type: "stage",
+    label: "Main DJ Resonance Core",
+    center: { x: 0, y: 0 },
+    radius: 90,
+    hypeMultiplier: 2.0,
+    panicRisk: 0.1,
+    corruptionRisk: 0.2,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: false,
+  },
+  {
+    id: "STAGE_PLATFORM",
+    type: "stage",
+    label: "Central Stage Platform",
+    center: { x: 0, y: 0 },
+    radius: 220,
+    hypeMultiplier: 1.5,
+    panicRisk: 0.15,
+    corruptionRisk: 0.25,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: false,
+  },
+  {
+    id: "INNER_DANCE_FLOOR",
+    type: "crowd",
+    label: "Inner Dance Floor",
+    center: { x: 0, y: 0 },
+    innerRadius: 250,
+    outerRadius: 420,
+    capacity: 300,
+    currentCrowd: 0,
+    hypeMultiplier: 1.4,
+    panicRisk: 0.35,
+    corruptionRisk: 0.2,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "CROWD_RING_A",
+    type: "crowd",
+    label: "Lower Crowd Ring",
+    center: { x: 0, y: 0 },
+    innerRadius: 430,
+    outerRadius: 590,
+    capacity: 450,
+    currentCrowd: 0,
+    hypeMultiplier: 1.2,
+    panicRisk: 0.25,
+    corruptionRisk: 0.15,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "CROWD_RING_B",
+    type: "crowd",
+    label: "Middle Crowd Ring",
+    center: { x: 0, y: 0 },
+    innerRadius: 600,
+    outerRadius: 760,
+    capacity: 650,
+    currentCrowd: 0,
+    hypeMultiplier: 1.0,
+    panicRisk: 0.2,
+    corruptionRisk: 0.12,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "CROWD_RING_C",
+    type: "crowd",
+    label: "Upper Crowd Ring",
+    center: { x: 0, y: 0 },
+    innerRadius: 770,
+    outerRadius: 930,
+    capacity: 900,
+    currentCrowd: 0,
+    hypeMultiplier: 0.85,
+    panicRisk: 0.16,
+    corruptionRisk: 0.1,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "VIP_RING",
+    type: "crowd",
+    label: "VIP Balcony Ring",
+    center: { x: 0, y: 0 },
+    innerRadius: 940,
+    outerRadius: 1040,
+    capacity: 250,
+    currentCrowd: 0,
+    hypeMultiplier: 1.8,
+    panicRisk: 0.12,
+    corruptionRisk: 0.08,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "OUTER_CONCOURSE",
+    type: "corridor",
+    label: "Outer Concourse",
+    center: { x: 0, y: 0 },
+    innerRadius: 1060,
+    outerRadius: 1220,
+    capacity: 600,
+    hypeMultiplier: 0.6,
+    panicRisk: 0.1,
+    corruptionRisk: 0.08,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+
+  // Gates
+  {
+    id: "NORTH_GATE",
+    type: "gate",
+    label: "North Main Gate",
+    center: { x: 0, y: -1240 },
+    width: 220,
+    height: 120,
+    rotationDeg: 0,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "EAST_GATE",
+    type: "gate",
+    label: "East Main Gate",
+    center: { x: 1240, y: 0 },
+    width: 220,
+    height: 120,
+    rotationDeg: 90,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "SOUTH_GATE",
+    type: "gate",
+    label: "South Main Gate",
+    center: { x: 0, y: 1240 },
+    width: 220,
+    height: 120,
+    rotationDeg: 180,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "WEST_GATE",
+    type: "gate",
+    label: "West Main Gate",
+    center: { x: -1240, y: 0 },
+    width: 220,
+    height: 120,
+    rotationDeg: 270,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "NORTH_EAST_GATE",
+    type: "gate",
+    label: "North-East Side Gate",
+    center: { x: 870, y: -870 },
+    width: 180,
+    height: 100,
+    rotationDeg: 45,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "SOUTH_EAST_GATE",
+    type: "gate",
+    label: "South-East Side Gate",
+    center: { x: 870, y: 870 },
+    width: 180,
+    height: 100,
+    rotationDeg: 135,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "SOUTH_WEST_GATE",
+    type: "gate",
+    label: "South-West Side Gate",
+    center: { x: -870, y: 870 },
+    width: 180,
+    height: 100,
+    rotationDeg: 225,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "NORTH_WEST_GATE",
+    type: "gate",
+    label: "North-West Side Gate",
+    center: { x: -870, y: -870 },
+    width: 180,
+    height: 100,
+    rotationDeg: 315,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+
+  // Radial stairs / access corridors
+  {
+    id: "STAIRS_NORTH",
+    type: "stairs",
+    label: "North Radial Stairs",
+    center: { x: 0, y: -650 },
+    width: 110,
+    height: 900,
+    rotationDeg: 0,
+    panicRisk: 0.4,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "STAIRS_EAST",
+    type: "stairs",
+    label: "East Radial Stairs",
+    center: { x: 650, y: 0 },
+    width: 110,
+    height: 900,
+    rotationDeg: 90,
+    panicRisk: 0.4,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "STAIRS_SOUTH",
+    type: "stairs",
+    label: "South Radial Stairs",
+    center: { x: 0, y: 650 },
+    width: 110,
+    height: 900,
+    rotationDeg: 180,
+    panicRisk: 0.4,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "STAIRS_WEST",
+    type: "stairs",
+    label: "West Radial Stairs",
+    center: { x: -650, y: 0 },
+    width: 110,
+    height: 900,
+    rotationDeg: 270,
+    panicRisk: 0.4,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "STAIRS_NE",
+    type: "stairs",
+    label: "North-East Diagonal Stairs",
+    center: { x: 460, y: -460 },
+    width: 95,
+    height: 750,
+    rotationDeg: 45,
+    panicRisk: 0.35,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "STAIRS_SE",
+    type: "stairs",
+    label: "South-East Diagonal Stairs",
+    center: { x: 460, y: 460 },
+    width: 95,
+    height: 750,
+    rotationDeg: 135,
+    panicRisk: 0.35,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "STAIRS_SW",
+    type: "stairs",
+    label: "South-West Diagonal Stairs",
+    center: { x: -460, y: 460 },
+    width: 95,
+    height: 750,
+    rotationDeg: 225,
+    panicRisk: 0.35,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+  {
+    id: "STAIRS_NW",
+    type: "stairs",
+    label: "North-West Diagonal Stairs",
+    center: { x: -460, y: -460 },
+    width: 95,
+    height: 750,
+    rotationDeg: 315,
+    panicRisk: 0.35,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: true,
+  },
+
+  // Tower decks
+  {
+    id: "TOWER_DECK_NORTH",
+    type: "tower",
+    label: "North Tower Deck",
+    center: { x: 0, y: -500 },
+    width: 360,
+    height: 90,
+    rotationDeg: 0,
+    buildable: true,
+    enemyAccessible: false,
+    crowdAccessible: false,
+  },
+  {
+    id: "TOWER_DECK_EAST",
+    type: "tower",
+    label: "East Tower Deck",
+    center: { x: 500, y: 0 },
+    width: 360,
+    height: 90,
+    rotationDeg: 90,
+    buildable: true,
+    enemyAccessible: false,
+    crowdAccessible: false,
+  },
+  {
+    id: "TOWER_DECK_SOUTH",
+    type: "tower",
+    label: "South Tower Deck",
+    center: { x: 0, y: 500 },
+    width: 360,
+    height: 90,
+    rotationDeg: 180,
+    buildable: true,
+    enemyAccessible: false,
+    crowdAccessible: false,
+  },
+  {
+    id: "TOWER_DECK_WEST",
+    type: "tower",
+    label: "West Tower Deck",
+    center: { x: -500, y: 0 },
+    width: 360,
+    height: 90,
+    rotationDeg: 270,
+    buildable: true,
+    enemyAccessible: false,
+    crowdAccessible: false,
+  },
+
+  // Service / backstage
+  {
+    id: "SERVICE_BACKSTAGE",
+    type: "service",
+    label: "Backstage Service Zone",
+    center: { x: -260, y: -180 },
+    width: 280,
+    height: 180,
+    rotationDeg: -25,
+    buildable: false,
+    enemyAccessible: true,
+    crowdAccessible: false,
+  },
+
+  // Safe exits
+  {
+    id: "SAFE_EXIT_NORTH",
+    type: "safeExit",
+    label: "North Safe Exit",
+    center: { x: 0, y: -1420 },
+    width: 260,
+    height: 120,
+    buildable: false,
+    enemyAccessible: false,
+    crowdAccessible: true,
+  },
+  {
+    id: "SAFE_EXIT_EAST",
+    type: "safeExit",
+    label: "East Safe Exit",
+    center: { x: 1420, y: 0 },
+    width: 260,
+    height: 120,
+    rotationDeg: 90,
+    buildable: false,
+    enemyAccessible: false,
+    crowdAccessible: true,
+  },
+  {
+    id: "SAFE_EXIT_SOUTH",
+    type: "safeExit",
+    label: "South Safe Exit",
+    center: { x: 0, y: 1420 },
+    width: 260,
+    height: 120,
+    rotationDeg: 180,
+    buildable: false,
+    enemyAccessible: false,
+    crowdAccessible: true,
+  },
+  {
+    id: "SAFE_EXIT_WEST",
+    type: "safeExit",
+    label: "West Safe Exit",
+    center: { x: -1420, y: 0 },
+    width: 260,
+    height: 120,
+    rotationDeg: 270,
+    buildable: false,
+    enemyAccessible: false,
+    crowdAccessible: true,
+  },
+];
+
+==================================================
+PATH NODES
+==================================================
+
+These nodes form a logical graph for visitors and enemies.
+
+Visitors:
+- spawn at gate nodes
+- move to concourse nodes
+- move down stairs
+- spread into crowd rings
+- during panic, reverse toward safe exits
+
+Enemies:
+- spawn at corrupted gates
+- use stairs/corridors
+- attempt to reach crowd rings or stage core
+
+export const PATH_NODES: PathNode[] = [
+  // Gates and exits
+  { id: "NODE_NORTH_EXIT", position: { x: 0, y: -1420 }, zoneId: "SAFE_EXIT_NORTH" },
+  { id: "NODE_EAST_EXIT", position: { x: 1420, y: 0 }, zoneId: "SAFE_EXIT_EAST" },
+  { id: "NODE_SOUTH_EXIT", position: { x: 0, y: 1420 }, zoneId: "SAFE_EXIT_SOUTH" },
+  { id: "NODE_WEST_EXIT", position: { x: -1420, y: 0 }, zoneId: "SAFE_EXIT_WEST" },
+
+  { id: "NODE_NORTH_GATE", position: { x: 0, y: -1240 }, zoneId: "NORTH_GATE" },
+  { id: "NODE_EAST_GATE", position: { x: 1240, y: 0 }, zoneId: "EAST_GATE" },
+  { id: "NODE_SOUTH_GATE", position: { x: 0, y: 1240 }, zoneId: "SOUTH_GATE" },
+  { id: "NODE_WEST_GATE", position: { x: -1240, y: 0 }, zoneId: "WEST_GATE" },
+
+  { id: "NODE_NE_GATE", position: { x: 870, y: -870 }, zoneId: "NORTH_EAST_GATE" },
+  { id: "NODE_SE_GATE", position: { x: 870, y: 870 }, zoneId: "SOUTH_EAST_GATE" },
+  { id: "NODE_SW_GATE", position: { x: -870, y: 870 }, zoneId: "SOUTH_WEST_GATE" },
+  { id: "NODE_NW_GATE", position: { x: -870, y: -870 }, zoneId: "NORTH_WEST_GATE" },
+
+  // Outer concourse ring nodes
+  { id: "NODE_CONCOURSE_N", position: { x: 0, y: -1080 }, zoneId: "OUTER_CONCOURSE" },
+  { id: "NODE_CONCOURSE_E", position: { x: 1080, y: 0 }, zoneId: "OUTER_CONCOURSE" },
+  { id: "NODE_CONCOURSE_S", position: { x: 0, y: 1080 }, zoneId: "OUTER_CONCOURSE" },
+  { id: "NODE_CONCOURSE_W", position: { x: -1080, y: 0 }, zoneId: "OUTER_CONCOURSE" },
+  { id: "NODE_CONCOURSE_NE", position: { x: 760, y: -760 }, zoneId: "OUTER_CONCOURSE" },
+  { id: "NODE_CONCOURSE_SE", position: { x: 760, y: 760 }, zoneId: "OUTER_CONCOURSE" },
+  { id: "NODE_CONCOURSE_SW", position: { x: -760, y: 760 }, zoneId: "OUTER_CONCOURSE" },
+  { id: "NODE_CONCOURSE_NW", position: { x: -760, y: -760 }, zoneId: "OUTER_CONCOURSE" },
+
+  // Upper ring access
+  { id: "NODE_RING_C_N", position: { x: 0, y: -880 }, zoneId: "CROWD_RING_C" },
+  { id: "NODE_RING_C_E", position: { x: 880, y: 0 }, zoneId: "CROWD_RING_C" },
+  { id: "NODE_RING_C_S", position: { x: 0, y: 880 }, zoneId: "CROWD_RING_C" },
+  { id: "NODE_RING_C_W", position: { x: -880, y: 0 }, zoneId: "CROWD_RING_C" },
+  { id: "NODE_RING_C_NE", position: { x: 620, y: -620 }, zoneId: "CROWD_RING_C" },
+  { id: "NODE_RING_C_SE", position: { x: 620, y: 620 }, zoneId: "CROWD_RING_C" },
+  { id: "NODE_RING_C_SW", position: { x: -620, y: 620 }, zoneId: "CROWD_RING_C" },
+  { id: "NODE_RING_C_NW", position: { x: -620, y: -620 }, zoneId: "CROWD_RING_C" },
+
+  // Middle ring access
+  { id: "NODE_RING_B_N", position: { x: 0, y: -690 }, zoneId: "CROWD_RING_B" },
+  { id: "NODE_RING_B_E", position: { x: 690, y: 0 }, zoneId: "CROWD_RING_B" },
+  { id: "NODE_RING_B_S", position: { x: 0, y: 690 }, zoneId: "CROWD_RING_B" },
+  { id: "NODE_RING_B_W", position: { x: -690, y: 0 }, zoneId: "CROWD_RING_B" },
+
+  // Lower ring access
+  { id: "NODE_RING_A_N", position: { x: 0, y: -520 }, zoneId: "CROWD_RING_A" },
+  { id: "NODE_RING_A_E", position: { x: 520, y: 0 }, zoneId: "CROWD_RING_A" },
+  { id: "NODE_RING_A_S", position: { x: 0, y: 520 }, zoneId: "CROWD_RING_A" },
+  { id: "NODE_RING_A_W", position: { x: -520, y: 0 }, zoneId: "CROWD_RING_A" },
+
+  // Inner dance floor
+  { id: "NODE_DANCE_N", position: { x: 0, y: -340 }, zoneId: "INNER_DANCE_FLOOR" },
+  { id: "NODE_DANCE_E", position: { x: 340, y: 0 }, zoneId: "INNER_DANCE_FLOOR" },
+  { id: "NODE_DANCE_S", position: { x: 0, y: 340 }, zoneId: "INNER_DANCE_FLOOR" },
+  { id: "NODE_DANCE_W", position: { x: -340, y: 0 }, zoneId: "INNER_DANCE_FLOOR" },
+
+  // Stage target nodes for enemies
+  { id: "NODE_STAGE_CORE", position: { x: 0, y: 0 }, zoneId: "STAGE_CORE" },
+  { id: "NODE_BACKSTAGE", position: { x: -260, y: -180 }, zoneId: "SERVICE_BACKSTAGE" },
+];
+
+==================================================
+PATH DEFINITIONS
+==================================================
+
+export const PATHS: PathDefinition[] = [
+  // Main visitor entry paths
+  {
+    id: "CROWD_ENTRY_NORTH_TO_RING_A",
+    label: "Visitors enter from North Gate toward lower ring",
+    nodeIds: [
+      "NODE_NORTH_GATE",
+      "NODE_CONCOURSE_N",
+      "NODE_RING_C_N",
+      "NODE_RING_B_N",
+      "NODE_RING_A_N",
+    ],
+    allowedFor: ["crowd"],
+    speedMultiplier: 1.0,
+    width: 120,
+  },
+  {
+    id: "CROWD_ENTRY_EAST_TO_RING_A",
+    label: "Visitors enter from East Gate toward lower ring",
+    nodeIds: [
+      "NODE_EAST_GATE",
+      "NODE_CONCOURSE_E",
+      "NODE_RING_C_E",
+      "NODE_RING_B_E",
+      "NODE_RING_A_E",
+    ],
+    allowedFor: ["crowd"],
+    speedMultiplier: 1.0,
+    width: 120,
+  },
+  {
+    id: "CROWD_ENTRY_SOUTH_TO_RING_A",
+    label: "Visitors enter from South Gate toward lower ring",
+    nodeIds: [
+      "NODE_SOUTH_GATE",
+      "NODE_CONCOURSE_S",
+      "NODE_RING_C_S",
+      "NODE_RING_B_S",
+      "NODE_RING_A_S",
+    ],
+    allowedFor: ["crowd"],
+    speedMultiplier: 1.0,
+    width: 120,
+  },
+  {
+    id: "CROWD_ENTRY_WEST_TO_RING_A",
+    label: "Visitors enter from West Gate toward lower ring",
+    nodeIds: [
+      "NODE_WEST_GATE",
+      "NODE_CONCOURSE_W",
+      "NODE_RING_C_W",
+      "NODE_RING_B_W",
+      "NODE_RING_A_W",
+    ],
+    allowedFor: ["crowd"],
+    speedMultiplier: 1.0,
+    width: 120,
+  },
+
+  // Diagonal entry paths
+  {
+    id: "CROWD_ENTRY_NE_TO_RING_C",
+    label: "Visitors enter from North-East Gate toward upper ring",
+    nodeIds: ["NODE_NE_GATE", "NODE_CONCOURSE_NE", "NODE_RING_C_NE"],
+    allowedFor: ["crowd"],
+    speedMultiplier: 1.1,
+    width: 90,
+  },
+  {
+    id: "CROWD_ENTRY_SE_TO_RING_C",
+    label: "Visitors enter from South-East Gate toward upper ring",
+    nodeIds: ["NODE_SE_GATE", "NODE_CONCOURSE_SE", "NODE_RING_C_SE"],
+    allowedFor: ["crowd"],
+    speedMultiplier: 1.1,
+    width: 90,
+  },
+  {
+    id: "CROWD_ENTRY_SW_TO_RING_C",
+    label: "Visitors enter from South-West Gate toward upper ring",
+    nodeIds: ["NODE_SW_GATE", "NODE_CONCOURSE_SW", "NODE_RING_C_SW"],
+    allowedFor: ["crowd"],
+    speedMultiplier: 1.1,
+    width: 90,
+  },
+  {
+    id: "CROWD_ENTRY_NW_TO_RING_C",
+    label: "Visitors enter from North-West Gate toward upper ring",
+    nodeIds: ["NODE_NW_GATE", "NODE_CONCOURSE_NW", "NODE_RING_C_NW"],
+    allowedFor: ["crowd"],
+    speedMultiplier: 1.1,
+    width: 90,
+  },
+
+  // Panic exit paths
+  {
+    id: "PANIC_RING_A_TO_NORTH_EXIT",
+    label: "Crowd panic route from lower north ring to North Exit",
+    nodeIds: [
+      "NODE_RING_A_N",
+      "NODE_RING_B_N",
+      "NODE_RING_C_N",
+      "NODE_CONCOURSE_N",
+      "NODE_NORTH_GATE",
+      "NODE_NORTH_EXIT",
+    ],
+    allowedFor: ["panic"],
+    speedMultiplier: 1.45,
+    width: 140,
+  },
+  {
+    id: "PANIC_RING_A_TO_EAST_EXIT",
+    label: "Crowd panic route from lower east ring to East Exit",
+    nodeIds: [
+      "NODE_RING_A_E",
+      "NODE_RING_B_E",
+      "NODE_RING_C_E",
+      "NODE_CONCOURSE_E",
+      "NODE_EAST_GATE",
+      "NODE_EAST_EXIT",
+    ],
+    allowedFor: ["panic"],
+    speedMultiplier: 1.45,
+    width: 140,
+  },
+  {
+    id: "PANIC_RING_A_TO_SOUTH_EXIT",
+    label: "Crowd panic route from lower south ring to South Exit",
+    nodeIds: [
+      "NODE_RING_A_S",
+      "NODE_RING_B_S",
+      "NODE_RING_C_S",
+      "NODE_CONCOURSE_S",
+      "NODE_SOUTH_GATE",
+      "NODE_SOUTH_EXIT",
+    ],
+    allowedFor: ["panic"],
+    speedMultiplier: 1.45,
+    width: 140,
+  },
+  {
+    id: "PANIC_RING_A_TO_WEST_EXIT",
+    label: "Crowd panic route from lower west ring to West Exit",
+    nodeIds: [
+      "NODE_RING_A_W",
+      "NODE_RING_B_W",
+      "NODE_RING_C_W",
+      "NODE_CONCOURSE_W",
+      "NODE_WEST_GATE",
+      "NODE_WEST_EXIT",
+    ],
+    allowedFor: ["panic"],
+    speedMultiplier: 1.45,
+    width: 140,
+  },
+
+  // Enemy infiltration paths
+  {
+    id: "ENEMY_NORTH_TO_STAGE",
+    label: "Enemy path from North Gate to Stage Core",
+    nodeIds: [
+      "NODE_NORTH_GATE",
+      "NODE_CONCOURSE_N",
+      "NODE_RING_C_N",
+      "NODE_RING_B_N",
+      "NODE_RING_A_N",
+      "NODE_DANCE_N",
+      "NODE_STAGE_CORE",
+    ],
+    allowedFor: ["enemy"],
+    speedMultiplier: 1.0,
+    width: 100,
+  },
+  {
+    id: "ENEMY_EAST_TO_STAGE",
+    label: "Enemy path from East Gate to Stage Core",
+    nodeIds: [
+      "NODE_EAST_GATE",
+      "NODE_CONCOURSE_E",
+      "NODE_RING_C_E",
+      "NODE_RING_B_E",
+      "NODE_RING_A_E",
+      "NODE_DANCE_E",
+      "NODE_STAGE_CORE",
+    ],
+    allowedFor: ["enemy"],
+    speedMultiplier: 1.0,
+    width: 100,
+  },
+  {
+    id: "ENEMY_SOUTH_TO_STAGE",
+    label: "Enemy path from South Gate to Stage Core",
+    nodeIds: [
+      "NODE_SOUTH_GATE",
+      "NODE_CONCOURSE_S",
+      "NODE_RING_C_S",
+      "NODE_RING_B_S",
+      "NODE_RING_A_S",
+      "NODE_DANCE_S",
+      "NODE_STAGE_CORE",
+    ],
+    allowedFor: ["enemy"],
+    speedMultiplier: 1.0,
+    width: 100,
+  },
+  {
+    id: "ENEMY_WEST_TO_STAGE",
+    label: "Enemy path from West Gate to Stage Core",
+    nodeIds: [
+      "NODE_WEST_GATE",
+      "NODE_CONCOURSE_W",
+      "NODE_RING_C_W",
+      "NODE_RING_B_W",
+      "NODE_RING_A_W",
+      "NODE_DANCE_W",
+      "NODE_STAGE_CORE",
+    ],
+    allowedFor: ["enemy"],
+    speedMultiplier: 1.0,
+    width: 100,
+  },
+
+  // Backstage sabotage route
+  {
+    id: "ENEMY_NW_TO_BACKSTAGE",
+    label: "Enemy side route from North-West Gate to Backstage",
+    nodeIds: [
+      "NODE_NW_GATE",
+      "NODE_CONCOURSE_NW",
+      "NODE_RING_C_NW",
+      "NODE_BACKSTAGE",
+    ],
+    allowedFor: ["enemy", "service"],
+    speedMultiplier: 1.15,
+    width: 80,
+  },
+];
+
+==================================================
+CROWD LIGHTPOINT SETTINGS
+==================================================
+
+Save as:
+src/game/data/crowdLightConfig.ts
+
+export const CROWD_LIGHT_CONFIG = {
+  maxVisitors: 2000,
+
+  // Far camera view:
+  // visitors are glowing dots, not characters.
+  baseRadius: 1.8,
+  highHypeRadius: 2.6,
+  panicRadius: 2.1,
+
+  baseGlowRadius: 8,
+  highHypeGlowRadius: 16,
+  panicGlowRadius: 10,
+
+  baseSpeed: 45,
+  panicSpeed: 95,
+  enteringSpeed: 55,
+  dancingDriftSpeed: 10,
+
+  // Colors as hex values.
+  colors: {
+    idle: 0x88aaff,
+    entering: 0x99ddff,
+    dancing: 0x00ffe0,
+    highHype: 0xff4fd8,
+    panic: 0xff2a2a,
+    leaving: 0xffaa55,
+    corrupted: 0x7a00ff,
+  },
+
+  // How much visitors pulse with BPM.
+  beatPulseScale: {
+    idle: 0.08,
+    entering: 0.12,
+    dancing: 0.22,
+    highHype: 0.45,
+    panic: 0.15,
+    leaving: 0.1,
+    corrupted: 0.32,
+  },
+
+  // Random position spread around path.
+  pathJitter: {
+    normal: 18,
+    panic: 38,
+    highHype: 12,
+  },
+};
+
+==================================================
+LIGHTPOINT VISITOR CLASS
+==================================================
+
+Save as:
+src/game/entities/crowd/LightPointVisitor.ts
+
+import Phaser from "phaser";
+import {
+  Vec2,
+  LightPointVisitor as LightPointVisitorData,
+  PathDefinition,
+  PathNode,
+  ARENA_WORLD_OFFSET,
+} from "../../data/arenaConfig";
+import { CROWD_LIGHT_CONFIG } from "../../data/crowdLightConfig";
+
+export class LightPointVisitor {
+  public data: LightPointVisitorData;
+  private graphics: Phaser.GameObjects.Arc;
+  private glow: Phaser.GameObjects.Arc;
+
+  constructor(
+    scene: Phaser.Scene,
+    id: number,
+    start: Vec2,
+    pathId: string,
+    state: LightPointVisitorData["state"] = "entering"
+  ) {
+    const worldX = start.x + ARENA_WORLD_OFFSET.x;
+    const worldY = start.y + ARENA_WORLD_OFFSET.y;
+
+    this.data = {
+      id,
+      position: { ...start },
+      targetNodeIndex: 0,
+      pathId,
+      state,
+      baseRadius: CROWD_LIGHT_CONFIG.baseRadius,
+      glowRadius: CROWD_LIGHT_CONFIG.baseGlowRadius,
+      alpha: 0.85,
+      speed: CROWD_LIGHT_CONFIG.enteringSpeed,
+      hypeResponsiveness: Math.random() * 0.5 + 0.5,
+      panicSensitivity: Math.random() * 0.8 + 0.2,
+      beatPhaseOffset: Math.random() * Math.PI * 2,
+    };
+
+    this.glow = scene.add.circle(
+      worldX,
+      worldY,
+      CROWD_LIGHT_CONFIG.baseGlowRadius,
+      CROWD_LIGHT_CONFIG.colors.entering,
+      0.18
+    );
+
+    this.graphics = scene.add.circle(
+      worldX,
+      worldY,
+      CROWD_LIGHT_CONFIG.baseRadius,
+      CROWD_LIGHT_CONFIG.colors.entering,
+      0.9
+    );
+
+    this.glow.setBlendMode(Phaser.BlendModes.ADD);
+    this.graphics.setBlendMode(Phaser.BlendModes.ADD);
+  }
+
+  update(
+    deltaMs: number,
+    path: PathDefinition,
+    nodesById: Map<string, PathNode>,
+    globalHype: number,
+    beatValue: number
+  ) {
+    const deltaSeconds = deltaMs / 1000;
+    const targetNodeId = path.nodeIds[this.data.targetNodeIndex];
+
+    if (!targetNodeId) {
+      this.applyDancingMotion(deltaSeconds, globalHype, beatValue);
+      this.updateVisuals(globalHype, beatValue);
+      return;
+    }
+
+    const targetNode = nodesById.get(targetNodeId);
+    if (!targetNode) return;
+
+    const target = targetNode.position;
+    const dx = target.x - this.data.position.x;
+    const dy = target.y - this.data.position.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < 8) {
+      this.data.currentZoneId = targetNode.zoneId;
+      this.data.targetNodeIndex++;
+    } else {
+      const dirX = dx / distance;
+      const dirY = dy / distance;
+
+      const speed = this.getCurrentSpeed() * path.speedMultiplier;
+
+      this.data.position.x += dirX * speed * deltaSeconds;
+      this.data.position.y += dirY * speed * deltaSeconds;
+    }
+
+    this.updateVisuals(globalHype, beatValue);
+  }
+
+  setState(state: LightPointVisitorData["state"]) {
+    this.data.state = state;
+  }
+
+  setPath(pathId: string) {
+    this.data.pathId = pathId;
+    this.data.targetNodeIndex = 0;
+  }
+
+  destroy() {
+    this.graphics.destroy();
+    this.glow.destroy();
+  }
+
+  private getCurrentSpeed(): number {
+    switch (this.data.state) {
+      case "panic":
+        return CROWD_LIGHT_CONFIG.panicSpeed;
+      case "leaving":
+        return CROWD_LIGHT_CONFIG.panicSpeed * 0.9;
+      case "entering":
+        return CROWD_LIGHT_CONFIG.enteringSpeed;
+      case "dancing":
+      case "highHype":
+      default:
+        return CROWD_LIGHT_CONFIG.baseSpeed;
+    }
+  }
+
+  private applyDancingMotion(deltaSeconds: number, globalHype: number, beatValue: number) {
+    const drift = CROWD_LIGHT_CONFIG.dancingDriftSpeed;
+    const intensity = 0.4 + globalHype * 0.8;
+
+    this.data.position.x +=
+      Math.cos(performance.now() * 0.002 + this.data.beatPhaseOffset) *
+      drift *
+      intensity *
+      deltaSeconds;
+
+    this.data.position.y +=
+      Math.sin(performance.now() * 0.002 + this.data.beatPhaseOffset) *
+      drift *
+      intensity *
+      deltaSeconds;
+
+    if (beatValue > 0.85 && this.data.state !== "panic") {
+      this.data.position.y -= 0.8 * intensity;
+    }
+  }
+
+  private updateVisuals(globalHype: number, beatValue: number) {
+    const state = this.data.state;
+    const color = CROWD_LIGHT_CONFIG.colors[state];
+
+    let radius = CROWD_LIGHT_CONFIG.baseRadius;
+    let glowRadius = CROWD_LIGHT_CONFIG.baseGlowRadius;
+    let alpha = 0.75;
+
+    if (state === "highHype") {
+      radius = CROWD_LIGHT_CONFIG.highHypeRadius;
+      glowRadius = CROWD_LIGHT_CONFIG.highHypeGlowRadius;
+      alpha = 0.95;
+    }
+
+    if (state === "panic") {
+      radius = CROWD_LIGHT_CONFIG.panicRadius;
+      glowRadius = CROWD_LIGHT_CONFIG.panicGlowRadius;
+      alpha = 0.9;
+    }
+
+    const pulseAmount = CROWD_LIGHT_CONFIG.beatPulseScale[state];
+    const pulse = 1 + beatValue * pulseAmount * (0.5 + globalHype);
+
+    const worldX = this.data.position.x + ARENA_WORLD_OFFSET.x;
+    const worldY = this.data.position.y + ARENA_WORLD_OFFSET.y;
+
+    this.graphics.setPosition(worldX, worldY);
+    this.glow.setPosition(worldX, worldY);
+
+    this.graphics.setFillStyle(color, alpha);
+    this.glow.setFillStyle(color, 0.12 + globalHype * 0.18);
+
+    this.graphics.setRadius(radius * pulse);
+    this.glow.setRadius(glowRadius * pulse);
+  }
+}
+
+==================================================
+CROWD FLOW SYSTEM
+==================================================
+
+Save as:
+src/game/systems/CrowdFlowSystem.ts
+
+import Phaser from "phaser";
+import {
+  PATHS,
+  PATH_NODES,
+  PathDefinition,
+  PathNode,
+} from "../data/arenaConfig";
+import { LightPointVisitor } from "../entities/crowd/LightPointVisitor";
+import { CROWD_LIGHT_CONFIG } from "../data/crowdLightConfig";
+
+export class CrowdFlowSystem {
+  private scene: Phaser.Scene;
+  private visitors: LightPointVisitor[] = [];
+  private nodesById: Map<string, PathNode> = new Map();
+  private pathsById: Map<string, PathDefinition> = new Map();
+
+  private nextVisitorId = 1;
+  private spawnTimerMs = 0;
+
+  constructor(scene: Phaser.Scene) {
+    this.scene = scene;
+
+    for (const node of PATH_NODES) {
+      this.nodesById.set(node.id, node);
+    }
+
+    for (const path of PATHS) {
+      this.pathsById.set(path.id, path);
+    }
+  }
+
+  update(deltaMs: number, globalHype: number, beatValue: number) {
+    this.spawnTimerMs += deltaMs;
+
+    // More hype means more visitors entering.
+    const spawnInterval = Phaser.Math.Linear(900, 180, globalHype);
+
+    if (
+      this.spawnTimerMs >= spawnInterval &&
+      this.visitors.length < CROWD_LIGHT_CONFIG.maxVisitors
+    ) {
+      this.spawnTimerMs = 0;
+      this.spawnVisitor(globalHype);
+    }
+
+    for (const visitor of this.visitors) {
+      const path = this.pathsById.get(visitor.data.pathId);
+      if (!path) continue;
+
+      visitor.update(deltaMs, path, this.nodesById, globalHype, beatValue);
+
+      if (globalHype > 0.75 && visitor.data.state !== "panic") {
+        visitor.setState("highHype");
+      } else if (globalHype > 0.35 && visitor.data.state !== "panic") {
+        visitor.setState("dancing");
+      } else if (visitor.data.state !== "panic") {
+        visitor.setState("idle");
+      }
+    }
+  }
+
+  triggerPanic(sourceDirection: "north" | "east" | "south" | "west") {
+    for (const visitor of this.visitors) {
+      if (Math.random() > visitor.data.panicSensitivity) continue;
+
+      visitor.setState("panic");
+
+      switch (sourceDirection) {
+        case "north":
+          visitor.setPath("PANIC_RING_A_TO_SOUTH_EXIT");
+          break;
+        case "east":
+          visitor.setPath("PANIC_RING_A_TO_WEST_EXIT");
+          break;
+        case "south":
+          visitor.setPath("PANIC_RING_A_TO_NORTH_EXIT");
+          break;
+        case "west":
+          visitor.setPath("PANIC_RING_A_TO_EAST_EXIT");
+          break;
+      }
+    }
+  }
+
+  triggerCorruption(amount: number) {
+    const count = Math.floor(this.visitors.length * amount);
+
+    for (let i = 0; i < count; i++) {
+      const visitor = Phaser.Utils.Array.GetRandom(this.visitors);
+      if (visitor) {
+        visitor.setState("corrupted");
+      }
+    }
+  }
+
+  getCrowdCount(): number {
+    return this.visitors.length;
+  }
+
+  private spawnVisitor(globalHype: number) {
+    const entryPaths = [
+      "CROWD_ENTRY_NORTH_TO_RING_A",
+      "CROWD_ENTRY_EAST_TO_RING_A",
+      "CROWD_ENTRY_SOUTH_TO_RING_A",
+      "CROWD_ENTRY_WEST_TO_RING_A",
+      "CROWD_ENTRY_NE_TO_RING_C",
+      "CROWD_ENTRY_SE_TO_RING_C",
+      "CROWD_ENTRY_SW_TO_RING_C",
+      "CROWD_ENTRY_NW_TO_RING_C",
+    ];
+
+    const pathId = Phaser.Utils.Array.GetRandom(entryPaths);
+    const path = this.pathsById.get(pathId);
+    if (!path) return;
+
+    const firstNode = this.nodesById.get(path.nodeIds[0]);
+    if (!firstNode) return;
+
+    const jitter = CROWD_LIGHT_CONFIG.pathJitter.normal;
+
+    const start = {
+      x: firstNode.position.x + Phaser.Math.Between(-jitter, jitter),
+      y: firstNode.position.y + Phaser.Math.Between(-jitter, jitter),
+    };
+
+    const visitor = new LightPointVisitor(
+      this.scene,
+      this.nextVisitorId++,
+      start,
+      pathId,
+      globalHype > 0.7 ? "highHype" : "entering"
+    );
+
+    this.visitors.push(visitor);
+  }
+}
+
+==================================================
+BEAT VALUE HELPER
+==================================================
+
+Save as:
+src/game/systems/BeatClock.ts
+
+export class BeatClock {
+  private bpm: number;
+  private elapsedMs = 0;
+
+  constructor(bpm: number = 128) {
+    this.bpm = bpm;
+  }
+
+  update(deltaMs: number) {
+    this.elapsedMs += deltaMs;
+  }
+
+  getBeatValue(): number {
+    const beatDurationMs = 60000 / this.bpm;
+    const phase = (this.elapsedMs % beatDurationMs) / beatDurationMs;
+
+    // Sharp pulse at the start of the beat.
+    return Math.max(0, 1 - phase * 3);
+  }
+
+  getBarProgress(beatsPerBar: number = 4): number {
+    const beatDurationMs = 60000 / this.bpm;
+    const barDurationMs = beatDurationMs * beatsPerBar;
+    return (this.elapsedMs % barDurationMs) / barDurationMs;
+  }
+}
+
+==================================================
+GAME SCENE USAGE EXAMPLE
+==================================================
+
+Save as:
+src/game/scenes/GameScene.ts
+
+import Phaser from "phaser";
+import { CrowdFlowSystem } from "../systems/CrowdFlowSystem";
+import { BeatClock } from "../systems/BeatClock";
+
+export class GameScene extends Phaser.Scene {
+  private crowdFlow!: CrowdFlowSystem;
+  private beatClock!: BeatClock;
+
+  // MVP value. Later this comes from the real HypeSystem.
+  private globalHype = 0.45;
+
+  constructor() {
+    super("GameScene");
+  }
+
+  create() {
+    this.cameras.main.setBackgroundColor("#05040d");
+
+    this.beatClock = new BeatClock(128);
+    this.crowdFlow = new CrowdFlowSystem(this);
+
+    // Debug controls:
+    this.input.keyboard?.on("keydown-H", () => {
+      this.globalHype = Phaser.Math.Clamp(this.globalHype + 0.1, 0, 1);
+    });
+
+    this.input.keyboard?.on("keydown-L", () => {
+      this.globalHype = Phaser.Math.Clamp(this.globalHype - 0.1, 0, 1);
+    });
+
+    this.input.keyboard?.on("keydown-P", () => {
+      this.crowdFlow.triggerPanic("north");
+    });
+
+    this.input.keyboard?.on("keydown-C", () => {
+      this.crowdFlow.triggerCorruption(0.2);
+    });
+  }
+
+  update(_time: number, delta: number) {
+    this.beatClock.update(delta);
+
+    const beatValue = this.beatClock.getBeatValue();
+
+    this.crowdFlow.update(delta, this.globalHype, beatValue);
+  }
+}
+
+==================================================
+HOW THIS DEFINES THE ARENA
+==================================================
+
+Zones:
+- STAGE_CORE is the center target and emotional heart.
+- STAGE_PLATFORM surrounds the core.
+- INNER_DANCE_FLOOR is the closest high-energy crowd zone.
+- CROWD_RING_A/B/C are main visitor zones.
+- VIP_RING is high-value crowd.
+- OUTER_CONCOURSE is the circulation ring.
+- Gates are entry points.
+- Stairs are radial movement corridors.
+- Tower decks are buildable platforms.
+- Safe exits are panic destinations.
+- Service backstage is a sabotage target.
+
+Crowd:
+- represented by glowing dots
+- enters through gates
+- moves through paths
+- fills rings
+- pulses to beat
+- changes color/state with hype and panic
+
+Enemies:
+- use the same logical nodes
+- can be routed through gates and stairs
+- target crowd, backstage, or stage core
+
+==================================================
+NEXT IMPLEMENTATION STEP
+==================================================
+
+After this file, the next useful step is:
+
+1. Draw the arena zones as debug shapes in Phaser.
+2. Render all PATH_NODES as small markers.
+3. Render PATHS as thin neon lines.
+4. Spawn lightpoint visitors.
+5. Tune positions until the movement visually matches the concept art.
+6. Add enemies using the same path graph.
+7. Add tower placement only on TOWER_DECK_* zones.
+8. Connect HypeSystem to crowd spawn rate, color, and pulse intensity.
+
+==================================================
+IMPORTANT DESIGN NOTE
+==================================================
+
+Because the camera is far away, the visitors should NOT be detailed sprites.
+
+Use:
+- tiny circles
+- additive glow
+- simple pulse animation
+- color states
+- path movement
+
+This is cheaper, cleaner, more readable, and more stylish.
+
+The crowd should look like living light.
+

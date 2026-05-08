@@ -1,0 +1,926 @@
+KEEP THE CROWD ALIVE - MUSIC & AUDIO DESIGN PLAN FOR HTML5 / VS CODE
+
+==================================================
+PROJECT CONTEXT
+==================================================
+
+Game Title:
+Keep the Crowd Alive
+
+Platform:
+HTML5 Browser Game
+
+Development Environment:
+Visual Studio Code
+
+Suggested Tech Stack:
+- JavaScript or TypeScript
+- Phaser 3
+- Web Audio API
+- Howler.js
+- Vite
+
+Core Fantasy:
+The player builds a living festival soundtrack through tower placement.
+The music is not only background atmosphere.
+The music is gameplay feedback, crowd control, hype generation, and emotional escalation.
+
+==================================================
+MAIN AUDIO VISION
+==================================================
+
+The game should sound like:
+
+"An illegal cyberpunk rave at the end of the world."
+
+The music should feel:
+- powerful
+- physical
+- futuristic
+- dark
+- euphoric
+- energetic
+- slightly dangerous
+
+The player should immediately feel:
+- bass pressure
+- festival energy
+- crowd hype
+- tension
+- escalation
+
+The music must pull people into the game within seconds.
+
+==================================================
+CORE MUSIC DIRECTION
+==================================================
+
+The soundtrack should combine elements from:
+
+1. Bass House
+Purpose:
+- groove
+- accessibility
+- strong dance energy
+
+2. Drum & Bass
+Purpose:
+- speed
+- intensity
+- movement
+- chaos
+
+3. Industrial Techno
+Purpose:
+- pressure
+- darkness
+- dystopian atmosphere
+
+4. Synthwave
+Purpose:
+- neon identity
+- emotion
+- futuristic atmosphere
+
+5. Dubstep / Bass Drops
+Purpose:
+- peak moments
+- impact
+- dramatic combat bursts
+
+6. Glitch / IDM Elements
+Purpose:
+- enemy corruption
+- audio disruption
+- noise mechanics
+
+==================================================
+WHAT THE MUSIC SHOULD NOT BE
+==================================================
+
+Avoid:
+- generic stock EDM
+- cheesy happy dance music
+- licensed pop-style tracks
+- orchestral fantasy music
+- chiptune as main identity
+- overly complex melodies
+- music that sounds like a DAW tutorial
+- loops that become annoying quickly
+
+The music should prioritize:
+- rhythm
+- bass
+- groove
+- contrast
+- impact
+- escalation
+
+==================================================
+IMPORTANT PRINCIPLE
+==================================================
+
+The game should NOT use finished static songs as the main system.
+
+Instead:
+The game should use modular dynamic music layers.
+
+Every tower, wave, crowd state, and enemy state can add, remove, filter, or corrupt music layers.
+
+The run itself becomes the song.
+
+==================================================
+MODULAR MUSIC STRUCTURE
+==================================================
+
+Each music track should be split into stems.
+
+Recommended stems:
+
+1. KICK
+Main pulse of the track.
+
+2. SUB BASS
+Deep low-end energy.
+
+3. BASSLINE
+Main groove and movement.
+
+4. PERCUSSION
+Snares, claps, hats, toms, glitch hits.
+
+5. SYNTH ARP
+Rhythmic melodic motion.
+
+6. LEAD SYNTH
+Strong melodic identity or combat energy.
+
+7. PAD / ATMOSPHERE
+Emotional background layer.
+
+8. FX
+Risers, impacts, sweeps, transitions.
+
+9. CROWD
+Cheers, chants, stomps, claps.
+
+10. CORRUPTION
+Noise, glitches, distortion, broken rhythms.
+
+==================================================
+SUGGESTED BPM RANGES
+==================================================
+
+DEFAULT COMBAT BPM:
+120 - 140 BPM
+
+Use for:
+- normal waves
+- readable gameplay
+- festival groove
+- early and mid-game
+
+HIGH HYPE BPM:
+150 - 170 BPM
+
+Use for:
+- late-game pressure
+- intense waves
+- boss phases
+- panic states
+- high-energy drops
+
+TENSION BPM:
+90 - 110 BPM
+
+Use for:
+- boss intros
+- near-loss states
+- build-up sections
+- dramatic silence before drops
+
+MVP Recommendation:
+Start with 128 BPM.
+
+Why:
+- classic dance tempo
+- easy to loop
+- works well for house, techno, synthwave, and tower timing
+
+==================================================
+AUDIO STATES
+==================================================
+
+The audio system should support several global states.
+
+==================================================
+1. IDLE / PRE-WAVE
+==================================================
+
+Purpose:
+The show is preparing.
+
+Music:
+- low ambience
+- crowd murmur
+- distant sub pulse
+- light synth pad
+
+Visual Feeling:
+- lights warming up
+- crowd waiting
+- stage breathing
+
+==================================================
+2. ACTIVE WAVE
+==================================================
+
+Purpose:
+Core gameplay.
+
+Music:
+- kick starts
+- bassline active
+- percussion layers enter
+- towers add stems
+
+Visual Feeling:
+- stage active
+- crowd dancing
+- towers pulsing
+
+==================================================
+3. HIGH HYPE
+==================================================
+
+Purpose:
+Player is doing well.
+
+Music:
+- more percussion
+- bigger bass
+- crowd chants
+- stronger synths
+- brighter mix
+
+Visual Feeling:
+- crowd jumps
+- stage expands
+- lights intensify
+
+==================================================
+4. PANIC / LOW HYPE
+==================================================
+
+Purpose:
+Player is close to losing control.
+
+Music:
+- layers drop out
+- low-pass filtering
+- unstable rhythm
+- crowd sounds become nervous
+- corruption elements increase
+
+Visual Feeling:
+- lights flicker
+- crowd splits
+- enemies feel more dangerous
+
+==================================================
+5. BUILD-UP
+==================================================
+
+Purpose:
+Prepare a drop or major resonance moment.
+
+Music:
+- kick may reduce
+- riser starts
+- snare build
+- crowd chant grows
+- synth tension increases
+
+Visual Feeling:
+- lights dim
+- camera tightens
+- crowd anticipation
+
+==================================================
+6. DROP
+==================================================
+
+Purpose:
+Massive release moment.
+
+Music:
+- full bass
+- strong kick
+- heavy synths
+- crowd explosion
+- impact FX
+
+Gameplay:
+- enemies can be pushed back
+- hype spikes
+- resonance effects trigger
+- towers overdrive briefly
+
+Visual Feeling:
+- full-screen pulse
+- lasers fire
+- crowd jumps together
+- particles explode
+
+==================================================
+7. BOSS CORRUPTION
+==================================================
+
+Purpose:
+Boss attacks the music system.
+
+Music:
+- stems become distorted
+- beat desync effects
+- corrupted bass
+- glitch interruptions
+- silence moments
+
+Visual Feeling:
+- arena becomes unstable
+- stage flickers
+- crowd panics
+
+==================================================
+AUDIO AS GAMEPLAY FEEDBACK
+==================================================
+
+The player should hear whether they are doing well.
+
+Examples:
+
+GOOD BUILD:
+- fuller mix
+- stronger bass
+- crowd cheers louder
+- clean resonance sounds
+- harmonized tower layers
+
+BAD BUILD:
+- thin mix
+- weak beat
+- muted crowd
+- broken rhythm
+- distortion increases
+
+HIGH HYPE:
+- crowd chants
+- brighter synths
+- more layers
+- stronger drops
+
+LOW HYPE:
+- music loses energy
+- crowd fades out
+- percussion becomes sparse
+- low-pass filters activate
+
+ENEMY CORRUPTION:
+- static
+- bitcrush
+- tape-stop effects
+- random glitch hits
+- silence pockets
+
+==================================================
+TOWER AUDIO DESIGN
+==================================================
+
+Each tower type should contribute musically and mechanically.
+
+==================================================
+1. BASS TOWER
+==================================================
+
+Gameplay Role:
+- slow
+- knockback
+- area control
+- heavy impact
+
+Audio Identity:
+- kick
+- sub bass
+- low synth pulse
+- impact booms
+
+Visual Sync:
+- large pulse rings
+- screen shake
+- floor shockwaves
+
+Implementation Idea:
+Bass tower attacks should trigger on strong beats.
+
+==================================================
+2. PERCUSSION TOWER
+==================================================
+
+Gameplay Role:
+- fast attacks
+- marking enemies
+- combo setup
+- rhythm control
+
+Audio Identity:
+- hi-hats
+- claps
+- snares
+- glitch clicks
+- metallic hits
+
+Visual Sync:
+- small sharp flashes
+- rhythmic strobe
+- beat markers
+
+Implementation Idea:
+Percussion tower attacks can trigger on 8th or 16th notes.
+
+==================================================
+3. MELODY TOWER
+==================================================
+
+Gameplay Role:
+- high damage
+- chain attacks
+- single-target burst
+- beam effects
+
+Audio Identity:
+- arpeggios
+- synth leads
+- plucks
+- melodic laser tones
+
+Visual Sync:
+- laser beams
+- color trails
+- waveform lines
+
+Implementation Idea:
+Melody towers should add musical identity to the player's build.
+
+==================================================
+4. AMBIENT TOWER
+==================================================
+
+Gameplay Role:
+- buffs
+- morale protection
+- crowd stabilization
+- aura effects
+
+Audio Identity:
+- pads
+- atmospheric textures
+- reverb swells
+- soft chords
+
+Visual Sync:
+- glowing aura rings
+- smooth light waves
+- calm crowd effects
+
+Implementation Idea:
+Ambient towers should make the mix feel wider and more stable.
+
+==================================================
+5. NOISE TOWER
+==================================================
+
+Gameplay Role:
+- corruption control
+- chaos effects
+- risky damage
+- enemy disruption
+
+Audio Identity:
+- distortion
+- static
+- glitch
+- bitcrush
+- broken rhythms
+
+Visual Sync:
+- glitch shader
+- fragmented particles
+- screen tearing effects
+
+Implementation Idea:
+Noise towers should be powerful but dangerous if overused.
+
+==================================================
+RESONANCE AUDIO SYSTEM
+==================================================
+
+Resonance happens when compatible towers work together.
+
+Examples:
+
+BASS + PERCUSSION:
+Creates a stronger groove.
+Effects:
+- higher attack speed
+- stronger crowd dancing
+- bigger kick impact
+
+BASS + MELODY:
+Creates a powerful drop line.
+Effects:
+- laser amplification
+- area burst
+- hype spike
+
+PERCUSSION + MELODY:
+Creates rhythmic precision.
+Effects:
+- crit chance
+- chain hits
+- marked enemies take more damage
+
+AMBIENT + ANY:
+Stabilizes and improves musical clarity.
+Effects:
+- longer resonance duration
+- slower hype decay
+- panic resistance
+
+NOISE + MELODY:
+Creates aggressive glitch lead.
+Effects:
+- corruption damage
+- armor break
+- risk of crowd discomfort
+
+==================================================
+QUANTIZATION RULES
+==================================================
+
+All major audio events should snap to the beat grid.
+
+Examples:
+- tower loop starts on next bar
+- drop triggers on bar start
+- resonance activates on beat
+- new stem fades in at phrase boundary
+
+Recommended timing:
+- 1 beat for small attacks
+- 1 bar for tower loop activation
+- 4 bars for major transitions
+- 8 or 16 bars for drops and boss sections
+
+Why:
+This keeps the game sounding musical even when the player acts randomly.
+
+==================================================
+FIRST MVP MUSIC SYSTEM
+==================================================
+
+For the first playable prototype, keep it simple.
+
+Use:
+- one BPM: 128 BPM
+- one key: A minor or F minor
+- one main loop set
+- 3 tower audio layers
+- 1 crowd layer
+- 1 corruption layer
+- 1 drop event
+
+MVP Layers:
+1. base ambience
+2. kick loop
+3. bass loop
+4. percussion loop
+5. synth arp loop
+6. crowd cheer loop
+7. corruption noise loop
+8. drop impact
+
+MVP Tower Audio:
+- Bass Tower adds bass loop
+- Percussion Tower adds percussion loop
+- Melody Tower adds synth arp loop
+
+MVP Crowd Audio:
+- crowd volume increases with hype
+- crowd volume decreases with panic
+
+MVP Enemy Audio:
+- Noise Parasite increases corruption layer
+- Silence Drone mutes tower layers nearby
+- Mood Killer lowers crowd layer
+
+==================================================
+SUGGESTED FILE STRUCTURE FOR VS CODE
+==================================================
+
+project-root/
+  src/
+    main.ts
+    game/
+      scenes/
+        BootScene.ts
+        PreloadScene.ts
+        GameScene.ts
+      systems/
+        AudioSystem.ts
+        BeatClock.ts
+        MusicStateMachine.ts
+        HypeSystem.ts
+        ResonanceSystem.ts
+      entities/
+        towers/
+          BassTower.ts
+          PercussionTower.ts
+          MelodyTower.ts
+        enemies/
+          MoodKiller.ts
+          NoiseParasite.ts
+          SilenceDrone.ts
+      data/
+        audioConfig.ts
+        towerConfig.ts
+        enemyConfig.ts
+  public/
+    audio/
+      music/
+        ambience_loop.ogg
+        kick_loop_128.ogg
+        bass_loop_128.ogg
+        percussion_loop_128.ogg
+        synth_arp_loop_128.ogg
+        pad_loop_128.ogg
+        crowd_loop.ogg
+        corruption_loop.ogg
+      fx/
+        drop_impact.ogg
+        tower_place.ogg
+        resonance_start.ogg
+        enemy_corrupt.ogg
+        crowd_cheer.ogg
+        crowd_panic.ogg
+  package.json
+  vite.config.ts
+
+==================================================
+AUDIO CONFIG EXAMPLE
+==================================================
+
+The audioConfig file could define layers like this:
+
+musicLayers:
+- id: ambience
+  file: ambience_loop.ogg
+  type: background
+  defaultVolume: 0.4
+
+- id: kick
+  file: kick_loop_128.ogg
+  type: rhythm
+  defaultVolume: 0.8
+
+- id: bass
+  file: bass_loop_128.ogg
+  type: tower
+  towerType: bass
+  defaultVolume: 0.0
+
+- id: percussion
+  file: percussion_loop_128.ogg
+  type: tower
+  towerType: percussion
+  defaultVolume: 0.0
+
+- id: synthArp
+  file: synth_arp_loop_128.ogg
+  type: tower
+  towerType: melody
+  defaultVolume: 0.0
+
+- id: crowd
+  file: crowd_loop.ogg
+  type: crowd
+  defaultVolume: 0.2
+
+- id: corruption
+  file: corruption_loop.ogg
+  type: enemy
+  defaultVolume: 0.0
+
+==================================================
+IMPLEMENTATION PRIORITY
+==================================================
+
+PHASE 1:
+Create basic loop playback.
+
+PHASE 2:
+Add global BPM clock.
+
+PHASE 3:
+Add quantized tower layer activation.
+
+PHASE 4:
+Connect hype value to crowd volume.
+
+PHASE 5:
+Connect enemy corruption to distortion/noise layer.
+
+PHASE 6:
+Add build-up and drop event.
+
+PHASE 7:
+Add resonance-specific sound effects.
+
+PHASE 8:
+Add filters:
+- low-pass for low hype
+- distortion for corruption
+- volume ducking for drop impact
+
+==================================================
+DROP DESIGN
+==================================================
+
+A drop should be a major reward moment.
+
+Trigger Conditions:
+- high resonance
+- full hype bar
+- boss phase transition
+- player ultimate ability
+
+Drop Sequence:
+1. Build-up starts
+2. layers reduce
+3. riser begins
+4. crowd chant grows
+5. brief silence
+6. impact hits
+7. full mix returns stronger
+8. gameplay effect activates
+
+Gameplay Effects:
+- enemies knocked back
+- tower damage boosted
+- hype increases
+- crowd size grows
+- stage visuals intensify
+
+==================================================
+CROWD AUDIO
+==================================================
+
+Crowd audio is extremely important.
+
+Crowd should have:
+- idle murmur
+- cheering
+- chanting
+- clapping
+- panic
+- gasp
+- massive drop reaction
+
+Crowd should respond to:
+- hype
+- panic
+- enemy attacks
+- boss appearance
+- successful drops
+- near-loss moments
+
+The crowd is the emotional audio mirror of the game.
+
+==================================================
+ENEMY AUDIO
+==================================================
+
+Enemies should be identifiable by sound.
+
+Mood Killer:
+- low-pass dullness
+- energy drain
+- weak crowd response
+
+Noise Parasite:
+- static
+- crackle
+- glitch
+
+Silence Drone:
+- sudden muting
+- dead zone sound
+- missing stems
+
+Riot Spark:
+- alarm percussion
+- chaotic crowd panic
+
+Bass Eater:
+- muffled bass absorption
+- deep charging rumble
+
+Boss:
+The Silence Engine:
+- music slowly disappears
+- stems mute one by one
+- emergency crowd claps become rhythm source
+
+==================================================
+MIXING RULES
+==================================================
+
+The mix must stay clear.
+
+Rules:
+- Kick and bass must not fight too much
+- Crowd should not overpower music
+- Corruption should be noticeable but not painful
+- Drop should feel huge without clipping
+- Important gameplay sounds must cut through
+- Avoid too many constant high-frequency elements
+
+Use volume automation:
+- fade in layers
+- fade out layers
+- duck ambience during drops
+- reduce music slightly for important enemy warnings
+
+==================================================
+AUDIO FILE FORMAT
+==================================================
+
+Recommended:
+- OGG for browser performance and size
+- MP3 as fallback only if needed
+
+Loop files should:
+- be perfectly looped
+- share exact BPM
+- share exact length
+- start at bar 1
+- have no silence at the start
+- be normalized consistently
+
+Recommended loop length:
+- 4 bars for simple loops
+- 8 bars for musical loops
+- 16 bars for longer evolving layers
+
+==================================================
+FIRST AUDIO ASSET LIST
+==================================================
+
+For first prototype:
+
+Music Loops:
+1. ambience_loop.ogg
+2. kick_loop_128.ogg
+3. bass_loop_128.ogg
+4. percussion_loop_128.ogg
+5. synth_arp_loop_128.ogg
+6. crowd_loop.ogg
+7. corruption_loop.ogg
+
+FX:
+1. tower_place.ogg
+2. enemy_hit.ogg
+3. enemy_die.ogg
+4. resonance_start.ogg
+5. resonance_loop.ogg
+6. drop_riser.ogg
+7. drop_impact.ogg
+8. crowd_cheer.ogg
+9. crowd_panic.ogg
+10. silence_zone.ogg
+
+==================================================
+FINAL MUSIC GOAL
+==================================================
+
+The player should not feel like they are listening to background music.
+
+The player should feel like they are building the music.
+
+Every strong play should sound better.
+Every mistake should make the show feel weaker.
+Every drop should feel like saving the entire festival.
+
+Core sentence:
+
+"Build the beat. Control the chaos. Keep the Crowd Alive."
+
