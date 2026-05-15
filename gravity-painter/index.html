@@ -75,10 +75,47 @@
       text-shadow: 0 0 18px rgba(41,243,255,.62), 0 0 28px rgba(255,43,214,.26);
     }
 
+    .hudTop {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .hudToggle {
+      display: none;
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 11px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
     .subtitle {
       margin: 0 0 14px;
       color: var(--muted);
       font-size: 13px;
+    }
+
+    .coachBox {
+      margin: 0 0 12px;
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(120,220,255,.16);
+      background: rgba(4,10,22,.55);
+      color: rgba(226,236,255,.9);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .coachTitle {
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(120,255,190,.9);
+      margin-bottom: 4px;
     }
 
     .stats {
@@ -118,6 +155,17 @@
 
     .goalBox b { color: var(--green); }
 
+    .metricLabel {
+      margin-top: 8px;
+      font-size: 11px;
+      color: rgba(238,246,255,.74);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
     .bar {
       height: 8px;
       border-radius: 999px;
@@ -127,7 +175,8 @@
       box-shadow: inset 0 0 10px rgba(0,0,0,.35);
     }
 
-    .fill {
+    .fill,
+    .fillSecondary {
       width: 0%;
       height: 100%;
       background: linear-gradient(90deg, var(--cyan), var(--pink), var(--orange));
@@ -135,9 +184,38 @@
       transition: width .18s ease;
     }
 
-    .controls {
+    .fillSecondary {
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+      box-shadow: 0 0 18px rgba(120,255,190,.45);
+    }
+
+    .quickControls {
       display: grid;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .quickGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .controls {
+      display: none;
       gap: 12px;
+    }
+
+    .settingsCard .controls {
+      display: grid;
+    }
+
+    .controlsTitle {
+      margin: 0 0 6px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: rgba(238,246,255,.78);
     }
 
     label {
@@ -165,9 +243,22 @@
       accent-color: var(--pink);
     }
 
-    .buttons {
+    .mobileActions {
       display: grid;
       grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .modeActive {
+      border-color: rgba(255,88,64,.6);
+      background: linear-gradient(135deg, rgba(255,88,64,.24), rgba(255,155,47,.18));
+      box-shadow: inset 0 0 20px rgba(255,255,255,.05), 0 0 32px rgba(255,88,64,.24);
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 10px;
       margin-top: 14px;
     }
@@ -225,10 +316,182 @@
       box-shadow: 0 0 16px var(--cyan), 0 0 32px var(--pink);
     }
 
+      .completionModal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        background: rgba(1,2,8,0.75);
+        backdrop-filter: blur(2px);
+      }
+
+      .completionModal.show {
+        display: flex;
+      }
+
+      .completionCard {
+        background: linear-gradient(135deg, rgba(41,243,255,0.08), rgba(120,255,190,0.06));
+        border: 2px solid rgba(41,243,255,0.3);
+        border-radius: 20px;
+        padding: 40px;
+        max-width: 520px;
+        text-align: center;
+        box-shadow: 0 0 40px rgba(41,243,255,0.2);
+        animation: slideUp 0.5s ease-out;
+      }
+
+      @keyframes slideUp {
+        from { transform: translateY(60px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+
+      .completionCard h2 {
+        font-size: 28px;
+        color: rgba(120,255,190,0.95);
+        margin: 0 0 16px;
+        letter-spacing: 0.05em;
+      }
+
+      .completionCard p {
+        font-size: 15px;
+        color: rgba(226,236,255,0.82);
+        line-height: 1.6;
+        margin: 0 0 28px;
+      }
+
+      #advanceSectorBtn {
+        padding: 12px 28px;
+        border: 1px solid rgba(41,243,255,0.4);
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(41,243,255,0.15), rgba(120,255,190,0.1));
+        color: rgba(41,243,255,0.95);
+        font-size: 14px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.25s ease;
+      }
+
+      #advanceSectorBtn:hover {
+        background: linear-gradient(135deg, rgba(41,243,255,0.25), rgba(120,255,190,0.18));
+        border-color: rgba(41,243,255,0.7);
+        box-shadow: 0 0 20px rgba(41,243,255,0.3);
+      }
+
+    .settingsModal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      background: rgba(1,2,8,.66);
+      backdrop-filter: blur(10px);
+      padding: 16px;
+    }
+
+    .settingsCard {
+      width: min(520px, calc(100vw - 24px));
+      max-height: min(80vh, 760px);
+      overflow-y: auto;
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid rgba(120,220,255,0.24);
+      background: linear-gradient(180deg, rgba(13,18,43,0.94), rgba(4,6,17,0.9));
+      box-shadow: 0 20px 80px rgba(0,0,0,.45), 0 0 44px rgba(41,243,255,.12);
+    }
+
+    .settingsHeader {
+      margin: 0 0 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: rgba(238,246,255,.9);
+    }
+
+    body.settingsOpen .settingsModal {
+      display: flex;
+    }
+
     @media (max-width: 640px) {
-      .hud { top: 12px; left: 12px; padding: 14px; }
-      .title { font-size: 20px; }
+      .hud {
+        top: 10px;
+        left: 10px;
+        width: calc(100vw - 20px);
+        max-height: min(54vh, 430px);
+        padding: 12px;
+        overflow-y: auto;
+        z-index: 10;
+      }
+      .title { font-size: 20px; margin: 0; }
+      .subtitle { margin-bottom: 10px; font-size: 12px; }
+      .quickGrid {
+        grid-template-columns: 1fr;
+      }
+      .controls,
+      .badge {
+        display: none;
+      }
       .hint { bottom: 14px; max-width: calc(100vw - 24px); white-space: normal; text-align: center; }
+      .buttons {
+        grid-template-columns: 1fr;
+      }
+
+      body.settingsOpen .hud {
+        max-height: calc(100vh - 20px);
+      }
+
+    }
+
+    @media (max-width: 640px), (max-height: 760px) {
+      .hudToggle {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .hud.compact {
+        width: min(360px, calc(100vw - 20px));
+        max-height: min(36vh, 230px);
+        padding: 10px;
+      }
+
+      .hud.compact .subtitle,
+      .hud.compact .coachBox,
+      .hud.compact .goalBox,
+      .hud.compact .quickControls,
+      .hud.compact .buttons,
+      .hud.compact .badge {
+        display: none;
+      }
+
+      .hud.compact .stats {
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .hud.compact .stat {
+        padding: 8px;
+        font-size: 11px;
+      }
+
+      .hud.compact .stat strong {
+        font-size: 15px;
+      }
+
+      .hud.compact .mobileActions {
+        margin-bottom: 0;
+      }
+
+      .hud.compact .mobileActions button {
+        padding: 9px 10px;
+        font-size: 11px;
+      }
     }
   </style>
 </head>
@@ -236,9 +499,27 @@
   <canvas id="fx"></canvas>
   <div class="vignette"></div>
 
-  <section class="hud">
-    <h1 class="title">Gravity Painter</h1>
+  <section class="hud" id="hudPanel">
+    <div class="hudTop">
+      <h1 class="title">Gravity Painter</h1>
+      <button class="hudToggle" id="hudToggleBtn">Expand Panel</button>
+    </div>
     <p class="subtitle">Bend space and time. Assimilate foreign fields. Expand your universe.</p>
+
+    <div class="coachBox">
+      <div class="coachTitle">How To Capture</div>
+      <div id="coachText">1) Keep particles flowing into the highlighted field. 2) Reach the shown particle threshold. 3) Hold flow until takeover reaches 100%.</div>
+      <div style="margin: 14px 0 0; padding: 10px; border-radius: 10px; background: rgba(41,243,255,0.08); border: 1px solid rgba(41,243,255,0.18);">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(120,255,190,.9); margin-bottom: 4px;">Field Density</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+          <span id="densityLabel" style="font-size: 14px; color: rgba(238,246,255,0.92); font-family: monospace;">0 / 0</span>
+          <span id="densityPercent" style="font-size: 16px; font-weight: bold; color: rgba(41,243,255,0.95); font-family: monospace;">0%</span>
+        </div>
+        <div style="margin-top: 6px; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+          <div id="densityBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, rgba(41,243,255,0.6), rgba(120,255,190,0.7)); transition: width 0.15s ease;"></div>
+        </div>
+      </div>
+    </div>
 
     <div class="stats">
       <div class="stat">Universe<strong id="universeStat">0%</strong></div>
@@ -249,20 +530,43 @@
 
     <div class="goalBox">
       <b id="goalTitle">Goal:</b> <span id="goalText">Assimilate fields, expand your universe, unlock the next sector.</span>
-      <div class="bar"><div class="fill" id="goalFill"></div></div>
+      <div class="metricLabel"><span>Field Takeover</span><span id="takeoverText">0/0</span></div>
+      <div class="bar"><div class="fill" id="takeoverFill"></div></div>
+      <div class="metricLabel"><span>Frontier Expansion</span><span id="frontierText">0%</span></div>
+      <div class="bar"><div class="fillSecondary" id="frontierFill"></div></div>
     </div>
 
-    <div class="controls">
-      <label>
-        <span class="row">Gravity Strength <span class="value" id="gravityValue"></span></span>
-        <input id="gravity" type="range" min="-2200" max="4200" step="50" value="1800" />
-      </label>
+    <div class="quickControls">
+      <div class="quickGrid">
+        <label>
+          <span class="row">Gravity Strength <span class="value" id="gravityValue"></span></span>
+          <input id="gravity" type="range" min="-2200" max="4200" step="50" value="1800" />
+        </label>
 
-      <label>
-        <span class="row">Gravity Radius <span class="value" id="radiusValue"></span></span>
-        <input id="radius" type="range" min="50" max="700" step="10" value="200" />
-      </label>
+        <label>
+          <span class="row">Gravity Radius <span class="value" id="radiusValue"></span></span>
+          <input id="radius" type="range" min="50" max="700" step="10" value="200" />
+        </label>
 
+        <label>
+          <span class="row">Time Scale <span class="value" id="timeValue"></span></span>
+          <input id="timeScale" type="range" min="0.2" max="2.4" step="0.05" value="1.0" />
+        </label>
+
+        <label>
+          <span class="row">Manual Zoom <span class="value" id="zoomValue"></span></span>
+          <input id="zoom" type="range" min="0.5" max="2.0" step="0.1" value="1.0" />
+        </label>
+      </div>
+    </div>
+
+    <div class="mobileActions">
+      <button id="modeBtn">Tool: Attractor</button>
+      <button id="settingsBtn">Advanced</button>
+    </div>
+
+    <div class="controls" id="advancedControls">
+      <h3 class="controlsTitle">Advanced Controls</h3>
       <label>
         <span class="row">Vortex / Swirl <span class="value" id="swirlValue"></span></span>
         <input id="swirl" type="range" min="-1800" max="1800" step="25" value="625" />
@@ -279,33 +583,43 @@
       </label>
 
       <label>
-        <span class="row">Time Scale <span class="value" id="timeValue"></span></span>
-        <input id="timeScale" type="range" min="0.2" max="2.4" step="0.05" value="1.0" />
-      </label>
-
-      <label>
         <span class="row">Trail Fade <span class="value" id="trailValue"></span></span>
         <input id="trail" type="range" min="0.02" max="0.22" step="0.01" value="0.07" />
-      </label>
-
-      <label>
-        <span class="row">Zoom <span class="value" id="zoomValue"></span></span>
-        <input id="zoom" type="range" min="0.5" max="2.0" step="0.1" value="1.0" />
       </label>
     </div>
 
     <div class="buttons">
       <button id="seedBtn">Nebula Seed</button>
       <button id="clearBtn">Reset</button>
+      <button id="calmBtn">Calm: On</button>
     </div>
 
     <div class="badge">
       <span class="dot"></span>
-      Left-click / drag = Gravity Well &nbsp;·&nbsp; Right-click = Repulsor &nbsp;·&nbsp; Space = Pause &nbsp;·&nbsp; R = Reset
+      Left-click / drag = Gravity Well &nbsp;·&nbsp; Right-click = Repulsor &nbsp;·&nbsp; Space = Pause &nbsp;·&nbsp; N = Next Sector &nbsp;·&nbsp; R = Reset
     </div>
   </section>
 
   <div class="hint">Pull particles into foreign fields — assimilation expands your universe.</div>
+
+  <div class="settingsModal" id="settingsModal" role="dialog" aria-modal="true" aria-label="Advanced controls">
+    <div class="settingsCard">
+      <div class="settingsHeader">
+        <span>Advanced Controls</span>
+        <button id="closeSettingsBtn">Close</button>
+      </div>
+      <p class="subtitle">Tune the simulation once your takeover loop is stable.</p>
+      <div id="settingsMount"></div>
+    </div>
+  </div>
+
+    <div class="completionModal" id="completionModal" role="dialog" aria-modal="true" aria-label="Sector complete">
+      <div class="completionCard">
+        <h2 id="completionTitle">Sector Stabilised</h2>
+        <p id="completionMessage">The universe has been reorganised. All identified fields have been assimilated into your domain.</p>
+        <button id="advanceSectorBtn">Continue to Next Sector</button>
+      </div>
+    </div>
 
   <script>
     const canvas = document.getElementById('fx');
@@ -331,13 +645,33 @@
       zoomValue:    $('zoomValue'),
       clearBtn:     $('clearBtn'),
       seedBtn:      $('seedBtn'),
+      calmBtn:      $('calmBtn'),
       universeStat: $('universeStat'),
       fieldStat:    $('fieldStat'),
       goalTitle:    $('goalTitle'),
       goalText:     $('goalText'),
+      coachText:    $('coachText'),
+      densityLabel: $('densityLabel'),
+      densityPercent: $('densityPercent'),
+      densityBar: $('densityBar'),
       energyStat:   $('energyStat'),
       sectorStat:   $('sectorStat'),
-      goalFill:     $('goalFill'),
+      takeoverFill: $('takeoverFill'),
+      frontierFill: $('frontierFill'),
+      takeoverText: $('takeoverText'),
+      frontierText: $('frontierText'),
+      completionModal: $('completionModal'),
+      advanceSectorBtn: $('advanceSectorBtn'),
+      completionTitle: $('completionTitle'),
+      completionMessage: $('completionMessage'),
+      modeBtn:      $('modeBtn'),
+      settingsBtn:  $('settingsBtn'),
+      closeSettingsBtn: $('closeSettingsBtn'),
+      settingsModal: $('settingsModal'),
+      settingsMount: $('settingsMount'),
+      advancedControls: $('advancedControls'),
+      hudPanel: $('hudPanel'),
+      hudToggleBtn: $('hudToggleBtn'),
     };
 
     // ─── State ────────────────────────────────────────────────────────────────
@@ -345,7 +679,7 @@
     let particles = [], nodes = [], fields = [], stars = [];
     let time = 0, last = performance.now(), shake = 0;
     let paused = false, pauseSnapshot = null;
-    const pointer = { x: 0, y: 0, down: false, right: false, lastSpawn: 0 };
+    const pointer = { x: 0, y: 0, down: false, right: false, touchRepulsor: false, lastSpawn: 0, activeNode: null };
 
     const world = {
       centerX: 0, centerY: 0,
@@ -354,7 +688,20 @@
       levelComplete: false, sectorCompleteTimer: 0,
       sectorGoalFields: 5,
       message: '',
+      eventText: '',
+      eventTimer: 0,
+      activeField: null,
+      activeTargetDensity: 0,
+      activeFieldThreshold: 0,
+      activeDensityPercent: 0,
+      autoZoom: 1,
+      cameraZoom: 1,
+      cameraZoomCap: 1,
+      visibleRadius: 0,
+      calmMode: true,
     };
+
+    let hudPinnedExpanded = false;
 
     const S = {
       particleCount:        3800,
@@ -368,8 +715,8 @@
       maxSpeed:             920,
       starCount:            220,
       fieldCount:           7,
-      assimilationRate:     0.018,
-      drainRate:            0.006,
+      assimilationRate:     0.024,
+      drainRate:            0.004,
       sectorTransitionDelay: 2.2, // seconds before auto-advancing to the next sector
       fieldRespawnEvery:    3,
       maxSector:            99,   // soft cap — prevents unbounded progression scaling
@@ -387,9 +734,102 @@
     // ─── Helpers ──────────────────────────────────────────────────────────────
     const rand = (a, b) => a + Math.random() * (b - a);
 
+    const VISUALS = {
+      calm: {
+        particleAlpha: 0.12,
+        fieldGlow: 0.08,
+        nodeGlow: 0.06,
+        trail: 0.04,
+        shake: 0.10,
+        turbulence: 0.05,
+      },
+      vivid: {
+        particleAlpha: 0.55,
+        fieldGlow: 0.60,
+        nodeGlow: 0.55,
+        trail: 0.08,
+        shake: 0.45,
+        turbulence: 0.40,
+      },
+    };
+
     function smoothstep(edge0, edge1, x) {
       const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
       return t * t * (3 - 2 * t);
+    }
+
+    function fieldCaptureThreshold() {
+      return Math.max(12, Math.round(22 + world.sector * 1.5));
+    }
+
+    function setEvent(text, seconds = 2.2) {
+      world.eventText = text;
+      world.eventTimer = seconds;
+    }
+
+    function visualProfile() {
+      return world.calmMode ? VISUALS.calm : VISUALS.vivid;
+    }
+
+    function applyVisualPreset() {
+      const preset = visualProfile();
+      ui.trail.value = String(preset.trail);
+      ui.calmBtn.textContent = world.calmMode ? 'Calm: On' : 'Calm: Off';
+    }
+
+    function pickActiveField() {
+      const available = fields.filter(f => !f.captured);
+      if (!available.length) {
+        world.activeField = null;
+        return;
+      }
+      const reachable = available.filter(f => Math.hypot(f.x - world.centerX, f.y - world.centerY) < world.unlockedRadius + f.r * 1.25);
+      const pool = reachable.length ? reachable : available;
+      pool.sort((a, b) => Math.hypot(a.x - world.centerX, a.y - world.centerY) - Math.hypot(b.x - world.centerX, b.y - world.centerY));
+      if (world.activeField !== pool[0]) {
+        world.activeField = pool[0];
+        setEvent('New target selected. Feed this highlighted field.', 2.2);
+      }
+    }
+
+    function hasConstrainedViewport() {
+      return window.innerWidth <= 640 || window.innerHeight <= 760;
+    }
+
+    function applyHudCompactState(compact) {
+      ui.hudPanel.classList.toggle('compact', compact);
+      ui.hudToggleBtn.textContent = compact ? 'Expand Panel' : 'Minimize Panel';
+    }
+
+    function syncHudForViewport() {
+      const constrained = hasConstrainedViewport();
+      if (!constrained) {
+        hudPinnedExpanded = false;
+        applyHudCompactState(false);
+        return;
+      }
+      applyHudCompactState(!hudPinnedExpanded);
+    }
+
+    function clampPointToPlayableRadius(x, y, pad = 0) {
+      const maxR = Math.max(90 * dpr, world.visibleRadius - pad);
+      const dx = x - world.centerX;
+      const dy = y - world.centerY;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= maxR || dist === 0) return { x, y };
+      const s = maxR / dist;
+      return {
+        x: world.centerX + dx * s,
+        y: world.centerY + dy * s,
+      };
+    }
+
+    function updateCameraConstraints(desiredZoom = Number(ui.zoom.value)) {
+      const minDim = Math.min(w, h);
+      const frontier = Math.max(140 * dpr, world.unlockedRadius + 56 * dpr);
+      world.cameraZoomCap = Math.max(0.72, Math.min(1.08, (minDim * 0.43) / frontier));
+      world.cameraZoom = Math.max(0.65, Math.min(desiredZoom, world.cameraZoomCap));
+      world.visibleRadius = Math.max(120 * dpr, (minDim / (2 * world.cameraZoom)) - 52 * dpr);
     }
 
     // ─── Resize ───────────────────────────────────────────────────────────────
@@ -399,6 +839,8 @@
       h = canvas.height = Math.floor(innerHeight * dpr);
       canvas.style.width  = innerWidth  + 'px';
       canvas.style.height = innerHeight + 'px';
+      updateCameraConstraints(world.cameraZoom || Number(ui.zoom.value));
+      syncHudForViewport();
       buildStars();
       if (!particles.length) seedNebula();
     }
@@ -445,6 +887,16 @@
       world.sectorCompleteTimer = 0;
       world.sectorGoalFields = 5;
       world.message          = 'Sector 1: Find and assimilate 5 active fields.';
+      world.activeField      = null;
+      world.activeTargetDensity = 0;
+      world.autoZoom         = 1;
+      world.cameraZoom       = Number(ui.zoom.value) || 1;
+      world.activeTargetDensity = 0;
+      world.activeFieldThreshold = 0;
+      world.activeDensityPercent = 0;
+      setEvent('Guide particle streams into highlighted fields to begin takeover.', 4);
+      applyVisualPreset();
+      updateCameraConstraints(world.cameraZoom);
 
       particles = [];
       for (let i = 0; i < S.particleCount; i++) {
@@ -477,12 +929,18 @@
     function spawnField(i = 0, count = S.fieldCount) {
       const ring    = rand(Math.min(0.88, 0.31 + world.sector * 0.025), Math.min(0.96, 0.72 + world.sector * 0.018));
       const angle   = (i / count) * Math.PI * 2 + rand(-0.48, 0.48) + world.sector * 0.41;
-      const radius  = world.maxRadius * ring;
+      const radiusLimit = Math.min(world.maxRadius, Math.max(140 * dpr, world.visibleRadius - 66 * dpr));
+      const radius  = radiusLimit * ring;
       const typeRoll = Math.random();
       const type    = typeRoll < 0.34 ? 'repulsor' : typeRoll < 0.70 ? 'vortex' : 'well';
+      const pos = clampPointToPlayableRadius(
+        world.centerX + Math.cos(angle) * radius,
+        world.centerY + Math.sin(angle) * radius,
+        54 * dpr,
+      );
       fields.push({
-        x: world.centerX + Math.cos(angle) * radius,
-        y: world.centerY + Math.sin(angle) * radius,
+        x: pos.x,
+        y: pos.y,
         r: rand(44, 80) * dpr,
         pull:  type === 'repulsor' ? -rand(700, 1400) : rand(650, 1550),
         swirl: type === 'vortex'   ?  rand(-1600, 1600) : rand(-420, 420),
@@ -491,6 +949,10 @@
         captured: false,
         phase: rand(0, Math.PI * 2),
         particlesInside: 0,
+        threshold: 0,
+        density: 0,
+        reachable: false,
+        halfwayNotified: false,
         bornSector: world.sector,
       });
     }
@@ -501,18 +963,14 @@
     }
 
     function addNode(x, y, polarity = 1) {
-      // Clamp to just beyond the frontier.
-      const dx = x - world.centerX, dy = y - world.centerY;
-      const dist = Math.hypot(dx, dy);
-      if (dist > world.unlockedRadius + 80 * dpr) {
-        const nx = dx / dist, ny = dy / dist;
-        x = world.centerX + nx * (world.unlockedRadius + 80 * dpr);
-        y = world.centerY + ny * (world.unlockedRadius + 80 * dpr);
-      }
+      const clampR = Math.min(world.unlockedRadius + 80 * dpr, world.visibleRadius - 26 * dpr);
+      const clamped = clampPointToPlayableRadius(x, y, Math.max(16 * dpr, world.visibleRadius - clampR));
+      x = clamped.x;
+      y = clamped.y;
       nodes.push(createNode(x, y, polarity));
       while (nodes.length > S.nodeLimit) nodes.shift();
       shockwave(x, y, polarity);
-      shake = 8 * dpr;
+      shake = 8 * dpr * visualProfile().shake;
     }
 
     function addCapturedNode(f) {
@@ -620,8 +1078,9 @@
         }
 
         // Subtle ambient turbulence.
-        ax += Math.sin(p.y * 0.003 + time * 1.7) * 18 * dpr;
-        ay += Math.cos(p.x * 0.003 - time * 1.2) * 18 * dpr;
+        const turbulence = visualProfile().turbulence;
+        ax += Math.sin(p.y * 0.003 + time * 1.7) * 18 * dpr * turbulence;
+        ay += Math.cos(p.x * 0.003 - time * 1.2) * 18 * dpr * turbulence;
 
         p.vx += ax * dt;
         p.vy += ay * dt;
@@ -642,7 +1101,7 @@
         // Bounce off the frontier boundary.
         const dxw = p.x - world.centerX, dyw = p.y - world.centerY;
         const distw = Math.hypot(dxw, dyw);
-        const edge  = world.unlockedRadius + 34 * dpr;
+        const edge  = Math.max(80 * dpr, Math.min(world.unlockedRadius + 34 * dpr, world.visibleRadius - 18 * dpr));
         if (distw > edge) {
           const nx = dxw / distw, ny = dyw / distw;
           p.x = world.centerX + nx * edge;
@@ -665,26 +1124,52 @@
     function captureField(f) {
       if (f.captured) return;
       f.captured = true;
-      world.energy       += 140 + world.sector * 22;
+      const gain = 140 + world.sector * 22;
+      world.energy       += gain;
       world.unlockedRadius = Math.min(world.targetRadius, world.unlockedRadius + f.r * (1.02 + world.sector * 0.025));
       addCapturedNode(f);
       burst(f.x, f.y, 76);
-      shake = 15 * dpr;
+      shake = 15 * dpr * visualProfile().shake;
+      setEvent(`Field captured: +${Math.floor(gain)} energy`, 2.4);
+      pickActiveField();
     }
 
     function updateFields(dt) {
+      const threshold = fieldCaptureThreshold();
+      if (!world.activeField || world.activeField.captured) pickActiveField();
+
       for (const f of fields) {
         if (f.captured) continue;
-        const threshold = Math.max(18, 30 + world.sector * 2);
+        const safe = clampPointToPlayableRadius(f.x, f.y, f.r * 1.4 + 14 * dpr);
+        f.x = safe.x;
+        f.y = safe.y;
+        f.threshold = threshold;
         const density   = Math.min(1, f.particlesInside / threshold);
         const reachable = Math.hypot(f.x - world.centerX, f.y - world.centerY) < world.unlockedRadius + f.r * 1.25;
+        f.density = density;
+        f.reachable = reachable;
+        const focused = f === world.activeField;
 
-        if (reachable && density > 0.2) {
-          f.progress += density * S.assimilationRate * dt * 60;
+        if (!focused) {
+          f.progress = Math.max(0, f.progress - S.drainRate * 1.8 * dt * 60);
+          continue;
+        }
+
+        if (reachable && density > 0.12) {
+          const gainRate = S.assimilationRate * (0.65 + density * 0.9);
+          f.progress += gainRate * dt * 60;
+          world.energy += Math.min(3.8, f.particlesInside * 0.012) * dt;
+        } else if (reachable && density > 0.04) {
+          f.progress += density * S.assimilationRate * 0.24 * dt * 60;
+          world.energy += Math.min(1.4, f.particlesInside * 0.005) * dt;
         } else {
           f.progress -= S.drainRate * dt * 60;
         }
         f.progress = Math.max(0, Math.min(1, f.progress));
+        if (!f.halfwayNotified && f.progress >= 0.5) {
+          f.halfwayNotified = true;
+          setEvent('Target field is destabilizing. Keep the stream dense.', 1.8);
+        }
         if (f.progress >= 1) captureField(f);
       }
 
@@ -706,7 +1191,7 @@
 
       // Sector completion check.
       const goal = Math.min(world.sectorGoalFields, fields.length);
-      const done = captured >= goal && world.unlockedRadius >= world.targetRadius * 0.72;
+      const done = captured >= goal && world.unlockedRadius >= world.targetRadius * 0.50;
       if (!world.levelComplete && done) {
         world.levelComplete       = true;
         world.sectorCompleteTimer = S.sectorTransitionDelay;
@@ -715,11 +1200,25 @@
         celebrationBurst();
       }
 
+      // Update completion modal visibility
       if (world.levelComplete) {
         world.sectorCompleteTimer -= dt;
         world.unlockedRadius = Math.min(world.targetRadius, world.unlockedRadius + 0.55 * dpr);
-        if (world.sectorCompleteTimer <= 0) nextSector();
+        ui.completionModal.classList.add('show');
       }
+
+      // Update active field density display
+      if (world.activeField && !world.activeField.captured) {
+        world.activeTargetDensity = Math.round(world.activeField.particlesInside || 0);
+        world.activeFieldThreshold = world.activeField.threshold || fieldCaptureThreshold();
+        world.activeDensityPercent = Math.min(100, Math.round((world.activeTargetDensity / world.activeFieldThreshold) * 100));
+      } else {
+        world.activeTargetDensity = 0;
+        world.activeFieldThreshold = 0;
+        world.activeDensityPercent = 0;
+      }
+
+      if (world.eventTimer > 0) world.eventTimer -= dt;
     }
 
     function nextSector() {
@@ -731,6 +1230,7 @@
       world.targetRadius        = Math.min(w, h) * Math.min(0.88, 0.64 + world.sector * 0.025);
       world.maxRadius           = Math.min(w, h) * Math.min(0.96, 0.84 + world.sector * 0.018);
       world.message             = `Sector ${world.sector}: Depth increased. Foreign fields grow more unstable.`;
+      setEvent(`Sector ${world.sector}: density threshold now ${fieldCaptureThreshold()} particles.`, 3.4);
 
       nodes = nodes.filter(n => n.captured).slice(-4);
       nodes.push(createNode(world.centerX, world.centerY, 0.75));
@@ -747,7 +1247,8 @@
       }
 
       spawnFields();
-      shake = 18 * dpr;
+      pickActiveField();
+      shake = 18 * dpr * visualProfile().shake;
     }
 
     // ─── UI update ────────────────────────────────────────────────────────────
@@ -759,7 +1260,7 @@
       ui.pulseValue.textContent    = Number(ui.pulse.value).toFixed(2);
       ui.timeValue.textContent     = Number(ui.timeScale.value).toFixed(2) + 'x';
       ui.trailValue.textContent    = Number(ui.trail.value).toFixed(2);
-      ui.zoomValue.textContent     = Number(ui.zoom.value).toFixed(1) + 'x';
+      ui.zoomValue.textContent     = `${Number(ui.zoom.value).toFixed(1)}x (${world.cameraZoom.toFixed(2)}x live)`;
 
       const progress = Math.min(1, world.unlockedRadius / world.targetRadius);
       const captured = fields.filter(f => f.captured).length;
@@ -770,15 +1271,42 @@
       ui.fieldStat.textContent    = `${Math.min(captured, goal)}/${goal}`;
       ui.energyStat.textContent   = Math.floor(world.energy).toString();
       ui.sectorStat.textContent   = world.sector.toString();
-      ui.goalFill.style.width     = Math.round(Math.max(progress * 0.35, sectorP) * 100) + '%';
+      ui.takeoverFill.style.width = Math.round(sectorP * 100) + '%';
+      ui.frontierFill.style.width = Math.round(progress * 100) + '%';
+      ui.takeoverText.textContent = `${Math.min(captured, goal)}/${goal}`;
+      ui.frontierText.textContent = `${Math.round(progress * 100)}%`;
 
       if (world.levelComplete) {
         ui.goalTitle.textContent = 'Sector Stabilised:';
         ui.goalText.textContent  = 'The universe folds anew. Prepare for the next sector.';
+        ui.coachText.textContent = 'Sector completed. Prepare to redirect flow into the next highlighted field.';
+      } else if (world.activeField) {
+        const need = Math.max(0, Math.round((world.activeField.threshold || fieldCaptureThreshold()) - world.activeField.particlesInside));
+        ui.goalTitle.textContent = `Sector ${world.sector}: Active Target`;
+        ui.goalText.textContent  = `Particles flowing: ${world.activeTargetDensity} / ${world.activeFieldThreshold} (${world.activeDensityPercent}%)${
+          need > 0 ? ` — feed ${need} more to threshold.` : ' ✓ Threshold reached!'}`;
+        ui.coachText.textContent = need > 0
+          ? `Drag the attractor/repulsor to control particle flow. Fill the field: ${world.activeTargetDensity}/${world.activeFieldThreshold}.`
+          : 'Perfect! Density stable. Hold until takeover reaches 100%.';
       } else {
         ui.goalTitle.textContent = `Sector ${world.sector}:`;
         ui.goalText.textContent  = `Assimilate ${goal} field${goal !== 1 ? 's' : ''}. Each field expands your controlled space.`;
+        ui.coachText.textContent = 'Wait for target lock, then push particle flow into that highlighted field.';
       }
+
+      ui.modeBtn.textContent = pointer.touchRepulsor ? 'Tool: Repulsor' : 'Tool: Attractor';
+      ui.modeBtn.classList.toggle('modeActive', pointer.touchRepulsor);
+      ui.calmBtn.classList.toggle('modeActive', world.calmMode);
+
+      // Update density display in HUD
+      ui.densityLabel.textContent = `${world.activeTargetDensity} / ${world.activeFieldThreshold}`;
+      ui.densityPercent.textContent = `${world.activeDensityPercent}%`;
+      ui.densityBar.style.width = `${world.activeDensityPercent}%`;
+    }
+
+    // ─── Draw origin indicator ────────────────────────────────────────────────
+    function drawOriginIndicator() {
+      // Removed - visual clutter and periscope effect
     }
 
     // ─── Drawing ──────────────────────────────────────────────────────────────
@@ -792,12 +1320,13 @@
       fadeOverlay(Number(ui.trail.value));
 
       ctx.globalCompositeOperation = 'lighter';
+      const v = visualProfile();
 
       // Twinkling stars.
       for (const s of stars) {
         const dist     = Math.hypot(s.x - world.centerX, s.y - world.centerY);
         const unlocked = smoothstep(world.unlockedRadius * 0.6, world.unlockedRadius * 1.25, dist);
-        const twinkle  = (s.a + Math.sin(time * s.tw + s.x) * 0.08) * (0.3 + unlocked * 0.7);
+        const twinkle  = (s.a + Math.sin(time * s.tw + s.x) * 0.08) * (0.3 + unlocked * 0.7) * (0.66 + v.fieldGlow * 0.34);
         ctx.fillStyle  = `rgba(160,220,255,${Math.max(0, twinkle)})`;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
@@ -806,8 +1335,8 @@
 
       // Soft nebula glow at centre.
       const grad = ctx.createRadialGradient(world.centerX, world.centerY, 0, world.centerX, world.centerY, world.unlockedRadius * 1.3);
-      grad.addColorStop(0,    'rgba(41,243,255,0.045)');
-      grad.addColorStop(0.45, 'rgba(255,43,214,0.024)');
+      grad.addColorStop(0,    `rgba(41,243,255,${0.045 * v.fieldGlow})`);
+      grad.addColorStop(0.45, `rgba(255,43,214,${0.024 * v.fieldGlow})`);
       grad.addColorStop(1,    'rgba(0,0,0,0)');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, w, h);
@@ -816,20 +1345,12 @@
     }
 
     function drawBoundary() {
+      const v = visualProfile();
       const r    = world.unlockedRadius + Math.sin(time * 2.2) * 5 * dpr;
-      const grad = ctx.createRadialGradient(world.centerX, world.centerY, r * 0.65, world.centerX, world.centerY, r * 1.04);
-      grad.addColorStop(0,    'rgba(41,243,255,0)');
-      grad.addColorStop(0.78, 'rgba(41,243,255,0.025)');
-      grad.addColorStop(0.96, 'rgba(255,43,214,0.15)');
-      grad.addColorStop(1,    'rgba(255,155,47,0.02)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(world.centerX, world.centerY, r * 1.04, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = 'rgba(41,243,255,0.18)';
-      ctx.lineWidth   = 1.4 * dpr;
-      ctx.setLineDash([10 * dpr, 16 * dpr]);
+      // Very subtle boundary - almost invisible
+      ctx.strokeStyle = `rgba(41,243,255,${0.04 * v.fieldGlow})`;
+      ctx.lineWidth   = 0.6 * dpr;
+      ctx.setLineDash([6 * dpr, 20 * dpr]);
       ctx.beginPath();
       ctx.arc(world.centerX, world.centerY, r, 0, Math.PI * 2);
       ctx.stroke();
@@ -849,6 +1370,7 @@
       ctx.globalCompositeOperation = 'lighter';
       ctx.lineCap = 'round';
       const maxSpd = S.maxSpeed * dpr;
+      const v = visualProfile();
 
       // Batch particles into N colour bins to reduce stroke() calls from
       // 7 600 (2×per-particle with shadowBlur) down to N.
@@ -873,7 +1395,7 @@
         binR[bi]  += pa[0] + (pb[0] - pa[0]) * pf;
         binG[bi]  += pa[1] + (pb[1] - pa[1]) * pf;
         binBl[bi] += pa[2] + (pb[2] - pa[2]) * pf;
-        binA[bi]  += Math.min(0.9, 0.12 + (speed / maxSpd) * 0.60 + p.charged * 0.20);
+        binA[bi]  += Math.min(0.4, (0.04 + (speed / maxSpd) * 0.22 + p.charged * 0.08) * v.particleAlpha);
         binSz[bi] += p.size * (1 + p.charged * 0.8);
         binCt[bi]++;
         segs[bi].push(p.px, p.py, p.x, p.y);
@@ -897,15 +1419,18 @@
 
     function drawFields() {
       ctx.globalCompositeOperation = 'lighter';
+      const threshold = fieldCaptureThreshold();
+      const v = visualProfile();
 
       for (const f of fields) {
-        const reachable = Math.hypot(f.x - world.centerX, f.y - world.centerY) < world.unlockedRadius + f.r * 1.2;
-        const alpha     = f.captured ? 0.28 : reachable ? 0.42 : 0.16;
+        const reachable = f.reachable ?? (Math.hypot(f.x - world.centerX, f.y - world.centerY) < world.unlockedRadius + f.r * 1.25);
+        const isActive  = world.activeField === f;
+        const alpha     = (f.captured ? 0.14 : isActive ? 0.22 : reachable ? 0.12 : 0.05) * v.fieldGlow;
         const base      = f.captured   ? [120, 255, 190]
                         : f.type === 'repulsor' ? [255, 88,  64]
                         : f.type === 'vortex'   ? [255, 43, 214]
                         :                         [41, 243, 255];
-        const rr = f.r * (1 + Math.sin(time * 3.1 + f.phase) * 0.1);
+        const rr = f.r * (1 + Math.sin(time * 3.1 + f.phase) * 0.08);
 
         // Glow halo.
         const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, rr * 2.9);
@@ -919,7 +1444,7 @@
 
         // Ring outline.
         ctx.strokeStyle = `rgba(${base[0]},${base[1]},${base[2]},${alpha + 0.12})`;
-        ctx.lineWidth   = 1.2 * dpr;
+        ctx.lineWidth   = (isActive ? 2.2 : 1.2) * dpr;
         ctx.beginPath();
         ctx.arc(f.x, f.y, rr, 0, Math.PI * 2);
         ctx.stroke();
@@ -927,7 +1452,7 @@
         // Assimilation progress arc.
         if (!f.captured) {
           ctx.strokeStyle = `rgba(120,255,190,${reachable ? 0.78 : 0.24})`;
-          ctx.lineWidth   = 4 * dpr;
+          ctx.lineWidth   = (isActive ? 5 : 3) * dpr;
           ctx.beginPath();
           ctx.arc(f.x, f.y, rr + 7 * dpr, -Math.PI / 2, -Math.PI / 2 + f.progress * Math.PI * 2);
           ctx.stroke();
@@ -952,21 +1477,45 @@
           ctx.beginPath(); ctx.arc(0, 0, 24 * dpr, Math.PI, Math.PI * 2.45); ctx.stroke();
         }
         ctx.restore();
+
+        // Compact state label to make takeover conditions explicit.
+        if (!f.captured) {
+          const inside = Math.round(f.particlesInside || 0);
+          const need = Math.round(f.threshold || threshold);
+          const pct = Math.round(f.progress * 100);
+          const label = reachable
+            ? `${inside}/${need}  |  ${pct}%`
+            : 'Outside frontier';
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.font = `${11 * dpr}px Inter,system-ui,sans-serif`;
+          ctx.textAlign = 'center';
+          const textW = ctx.measureText(label).width;
+          const y = f.y + rr + 18 * dpr;
+          ctx.fillStyle = 'rgba(1,2,10,0.72)';
+          ctx.beginPath();
+          ctx.roundRect(f.x - textW / 2 - 7 * dpr, y - 10 * dpr, textW + 14 * dpr, 16 * dpr, 7 * dpr);
+          ctx.fill();
+          ctx.fillStyle = reachable ? 'rgba(185,255,225,0.92)' : 'rgba(180,190,220,0.8)';
+          ctx.fillText(label, f.x, y + 2.6 * dpr);
+          ctx.restore();
+        }
       }
     }
 
     function drawNodes() {
       ctx.globalCompositeOperation = 'lighter';
+      const v = visualProfile();
 
       for (const n of nodes) {
         const pulse  = 1 + Math.sin(time * 4.4 + n.phase) * 0.14;
         const base   = n.captured ? [120, 255, 190] : n.polarity > 0 ? [41, 243, 255] : [255, 88, 64];
         const accent = n.captured ? [41, 243, 255]  : n.polarity > 0 ? [255, 43, 214] : [255, 155, 47];
-        const r      = (n.captured ? 18 : 28) * dpr * pulse;
+        const r      = (n.captured ? 14 : 22) * dpr * pulse * (0.9 + v.nodeGlow * 0.1);
 
         const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 5.2);
-        grad.addColorStop(0,    `rgba(${base[0]},${base[1]},${base[2]},0.92)`);
-        grad.addColorStop(0.18, `rgba(${accent[0]},${accent[1]},${accent[2]},0.35)`);
+        grad.addColorStop(0,    `rgba(${base[0]},${base[1]},${base[2]},${0.92 * v.nodeGlow})`);
+        grad.addColorStop(0.18, `rgba(${accent[0]},${accent[1]},${accent[2]},${0.35 * v.nodeGlow})`);
         grad.addColorStop(1,    `rgba(${accent[0]},${accent[1]},${accent[2]},0)`);
         ctx.fillStyle = grad;
         ctx.beginPath();
@@ -974,7 +1523,7 @@
         ctx.fill();
 
         // Animated orbital rings.
-        ctx.strokeStyle = `rgba(${base[0]},${base[1]},${base[2]},0.28)`;
+        ctx.strokeStyle = `rgba(${base[0]},${base[1]},${base[2]},${0.22 * v.nodeGlow})`;
         ctx.lineWidth   = 1.5 * dpr;
         for (let i = 0; i < 3; i++) {
           const ring = r * (1.8 + i * 1.05) + Math.sin(time * 2.3 + i + n.phase) * 6 * dpr;
@@ -989,6 +1538,28 @@
         ctx.arc(n.x, n.y, Math.max(2.2 * dpr, r * 0.16), 0, Math.PI * 2);
         ctx.fill();
       }
+    }
+
+    function drawTargetGuide() {
+      const f = world.activeField;
+      if (!f || f.captured) return;
+      const v = visualProfile();
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = `rgba(120,255,190,${0.45 * v.fieldGlow})`;
+      ctx.lineWidth = 1.3 * dpr;
+      ctx.setLineDash([6 * dpr, 8 * dpr]);
+      ctx.beginPath();
+      ctx.moveTo(world.centerX, world.centerY);
+      ctx.lineTo(f.x, f.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = `rgba(120,255,190,${0.88 * v.fieldGlow})`;
+      ctx.beginPath();
+      ctx.arc(f.x, f.y - f.r - 14 * dpr, 4.5 * dpr, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
     function drawSectorMessage() {
@@ -1008,10 +1579,30 @@
       ctx.fillText(world.message, tx, ty);
     }
 
+    function drawEventToast() {
+      if (world.eventTimer <= 0 || !world.eventText) return;
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+      const t = Math.min(1, world.eventTimer / 0.4);
+      ctx.font = `bold ${13 * dpr}px Inter,system-ui,sans-serif`;
+      ctx.textAlign = 'center';
+      const tw = ctx.measureText(world.eventText).width;
+      const x = w * 0.5;
+      const y = h * 0.92;
+      const pad = 9 * dpr;
+      ctx.fillStyle = `rgba(1,2,18,${0.72 * t})`;
+      ctx.beginPath();
+      ctx.roundRect(x - tw / 2 - pad, y - 13 * dpr, tw + pad * 2, 23 * dpr, 10 * dpr);
+      ctx.fill();
+      ctx.fillStyle = `rgba(120,255,190,${0.96 * t})`;
+      ctx.fillText(world.eventText, x, y + 2 * dpr);
+      ctx.restore();
+    }
+
     // ─── Pointer / input ──────────────────────────────────────────────────────
     function pointerPos(e) {
       const rect = canvas.getBoundingClientRect();
-      const zoom = Number(ui.zoom.value);
+      const zoom = world.cameraZoom || Number(ui.zoom.value);
       // Undo the centre-based zoom transform to get world coordinates.
       const cx = (e.clientX - rect.left) * dpr;
       const cy = (e.clientY - rect.top)  * dpr;
@@ -1020,9 +1611,13 @@
     }
 
     function spawnDragNode(now) {
-      if (!pointer.down || now - pointer.lastSpawn < 90) return;
-      pointer.lastSpawn = now;
-      addNode(pointer.x, pointer.y, pointer.right ? -0.85 : 0.85);
+      if (!pointer.down) {
+        pointer.activeNode = null;
+        return;
+      }
+      if (!pointer.activeNode) return;  // Node already created on pointerdown; just update position during drag
+      pointer.activeNode.x = pointer.x;
+      pointer.activeNode.y = pointer.y;
     }
 
     // ─── Main loop ────────────────────────────────────────────────────────────
@@ -1039,6 +1634,11 @@
         updateParticles(dt);
         updateFields(dt);
 
+        // Always-on universe drift: kept subtle and bounded so play remains controllable.
+        const drift = 0.0007 + world.sector * 0.00008 + Math.min(0.0006, time * 0.000002);
+        world.autoZoom = Math.min(1.18, world.autoZoom + drift * dt);
+        updateCameraConstraints(Number(ui.zoom.value) * world.autoZoom);
+
         ctx.save();
 
         // Screen shake.
@@ -1048,18 +1648,20 @@
         }
 
         // Zoom transform (centred on canvas centre).
-        const zoom = Number(ui.zoom.value);
+        const zoom = world.cameraZoom;
         ctx.translate(w / 2, h / 2);
         ctx.scale(zoom, zoom);
         ctx.translate(-w / 2, -h / 2);
 
         drawBackground();
         drawFields();
+        drawTargetGuide();
         drawParticles();
         drawNodes();
         drawSectorMessage();
 
         ctx.restore();
+        drawEventToast();
       } else {
         // Paused: restore the snapshot taken at pause time, then draw the overlay.
         if (pauseSnapshot) {
@@ -1083,16 +1685,75 @@
     canvas.addEventListener('pointerdown', e => {
       pointerPos(e);
       pointer.down  = true;
-      pointer.right = e.button === 2;
-      addNode(pointer.x, pointer.y, pointer.right ? -1 : 1);
+      pointer.right = e.button === 2 || (e.pointerType === 'touch' && pointer.touchRepulsor);
+      // Create a SINGLE node; if one already active, update it. Otherwise create new.
+      if (!pointer.activeNode) {
+        const polarity = pointer.right ? -1 : 1;
+        pointer.activeNode = createNode(pointer.x, pointer.y, polarity);
+        nodes.push(pointer.activeNode);
+        while (nodes.length > S.nodeLimit) nodes.shift();
+        shockwave(pointer.x, pointer.y, polarity);
+        shake = 8 * dpr * visualProfile().shake;
+      } else {
+        pointer.activeNode.x = pointer.x;
+        pointer.activeNode.y = pointer.y;
+      }
+      if (e.pointerType === 'touch') e.preventDefault();
     });
     canvas.addEventListener('pointermove', e => pointerPos(e));
-    window.addEventListener('pointerup',  () => { pointer.down = false; });
+    window.addEventListener('pointerup',  () => {
+      pointer.down = false;
+      // Release the active node after a brief delay so it can still influence particles
+      setTimeout(() => { pointer.activeNode = null; }, 300);
+    });
     window.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('resize', resize);
 
-    ui.seedBtn.addEventListener('click', () => { seedNebula(); shake = 12 * dpr; });
-    ui.clearBtn.addEventListener('click', () => { nodes = []; seedNebula(); });
+    ui.seedBtn.addEventListener('click', () => { seedNebula(); shake = 12 * dpr * visualProfile().shake; });
+    ui.clearBtn.addEventListener('click', () => { nodes = []; pointer.activeNode = null; seedNebula(); });
+
+        ui.advanceSectorBtn.addEventListener('click', () => {
+          ui.completionModal.classList.remove('show');
+          if (world.levelComplete) nextSector();
+        });
+    ui.modeBtn.addEventListener('click', () => {
+      pointer.touchRepulsor = !pointer.touchRepulsor;
+      setEvent(pointer.touchRepulsor ? 'Repulsor mode armed for touch input.' : 'Attractor mode armed for touch input.', 1.8);
+      updateUI();
+    });
+    ui.calmBtn.addEventListener('click', () => {
+      world.calmMode = !world.calmMode;
+      applyVisualPreset();
+      setEvent(world.calmMode ? 'Calm visuals enabled.' : 'Vivid visuals enabled.', 1.4);
+      updateUI();
+    });
+
+    function openSettings() {
+      document.body.classList.add('settingsOpen');
+      if (ui.settingsMount.firstElementChild !== ui.advancedControls) {
+        ui.settingsMount.appendChild(ui.advancedControls);
+      }
+    }
+
+    function closeSettings() {
+      document.body.classList.remove('settingsOpen');
+    }
+
+    ui.settingsBtn.addEventListener('click', openSettings);
+    ui.closeSettingsBtn.addEventListener('click', closeSettings);
+    ui.hudToggleBtn.addEventListener('click', () => {
+      const currentlyCompact = ui.hudPanel.classList.contains('compact');
+      if (currentlyCompact) {
+        hudPinnedExpanded = true;
+        applyHudCompactState(false);
+      } else {
+        hudPinnedExpanded = false;
+        applyHudCompactState(true);
+      }
+    });
+    ui.settingsModal.addEventListener('click', e => {
+      if (e.target === ui.settingsModal) closeSettings();
+    });
 
     window.addEventListener('keydown', e => {
       if (e.code === 'Space' || e.key === ' ') {
@@ -1107,10 +1768,19 @@
       } else if (e.code === 'KeyR' || e.key === 'r' || e.key === 'R') {
         nodes = [];
         seedNebula();
+      } else if (e.code === 'KeyN' || e.key === 'n' || e.key === 'N') {
+        // Advance to next sector manually
+        if (world.levelComplete) nextSector();
+      } else if (e.code === 'Escape') {
+        closeSettings();
       }
     });
 
     // ─── Boot ─────────────────────────────────────────────────────────────────
+    if (ui.settingsMount.firstElementChild !== ui.advancedControls) {
+      ui.settingsMount.appendChild(ui.advancedControls);
+    }
+    applyVisualPreset();
     resize();
     fadeOverlay(1);
     requestAnimationFrame(frame);
