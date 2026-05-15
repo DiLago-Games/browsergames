@@ -911,9 +911,7 @@
       }
 
       nodes = [
-        createNode(w * 0.52, h * 0.48,  1),
-        createNode(w * 0.61, h * 0.56, -0.45),
-      ];
+      nodes = [];
 
       spawnFields();
       fadeOverlay(1);
@@ -1233,7 +1231,7 @@
       setEvent(`Sector ${world.sector}: density threshold now ${fieldCaptureThreshold()} particles.`, 3.4);
 
       nodes = nodes.filter(n => n.captured).slice(-4);
-      nodes.push(createNode(world.centerX, world.centerY, 0.75));
+      // No automatic node; player must place one
 
       for (const p of particles) {
         const a = Math.random() * Math.PI * 2;
