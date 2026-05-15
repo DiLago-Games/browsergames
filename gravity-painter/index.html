@@ -1152,11 +1152,13 @@
           continue;
         }
 
-        if (reachable && density > 0.12) {
+        // Assimilation only proceeds when the player has actively placed a node.
+        const hasPlayerNode = nodes.some(n => !n.captured);
+        if (reachable && density > 0.35 && hasPlayerNode) {
           const gainRate = S.assimilationRate * (0.65 + density * 0.9);
           f.progress += gainRate * dt * 60;
           world.energy += Math.min(3.8, f.particlesInside * 0.012) * dt;
-        } else if (reachable && density > 0.04) {
+        } else if (reachable && density > 0.20 && hasPlayerNode) {
           f.progress += density * S.assimilationRate * 0.24 * dt * 60;
           world.energy += Math.min(1.4, f.particlesInside * 0.005) * dt;
         } else {
@@ -1229,8 +1231,7 @@
       world.message             = `Sector ${world.sector}: Depth increased. Foreign fields grow more unstable.`;
       setEvent(`Sector ${world.sector}: density threshold now ${fieldCaptureThreshold()} particles.`, 3.4);
 
-      nodes = nodes.filter(n => n.captured).slice(-4);
-      // No automatic node; player must place one
+      nodes = []; // Clear all nodes; player must place a new one each sector
 
       for (const p of particles) {
         const a = Math.random() * Math.PI * 2;
