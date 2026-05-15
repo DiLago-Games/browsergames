@@ -265,7 +265,7 @@
 
       <label>
         <span class="row">Vortex / Swirl <span class="value" id="swirlValue"></span></span>
-        <input id="swirl" type="range" min="-1800" max="1800" step="25" value="620" />
+        <input id="swirl" type="range" min="-1800" max="1800" step="25" value="625" />
       </label>
 
       <label>
@@ -301,7 +301,7 @@
 
     <div class="badge">
       <span class="dot"></span>
-      Left-click / drag = Gravity Well &nbsp;·&nbsp; Right-click = Repulsor
+      Left-click / drag = Gravity Well &nbsp;·&nbsp; Right-click = Repulsor &nbsp;·&nbsp; Space = Pause &nbsp;·&nbsp; R = Reset
     </div>
   </section>
 
@@ -344,6 +344,7 @@
     let w = 0, h = 0, dpr = 1;
     let particles = [], nodes = [], fields = [], stars = [];
     let time = 0, last = performance.now(), shake = 0;
+    let paused = false, pauseSnapshot = null;
     const pointer = { x: 0, y: 0, down: false, right: false, lastSpawn: 0 };
 
     const world = {
@@ -992,11 +993,19 @@
 
     function drawSectorMessage() {
       if (!world.message) return;
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.font      = `${15 * dpr}px Inter,system-ui,sans-serif`;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.font      = `${14 * dpr}px Inter,system-ui,sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(238,246,255,0.18)';
-      ctx.fillText(world.message, w * 0.5, h * 0.12);
+      const metrics = ctx.measureText(world.message);
+      const tw = metrics.width;
+      const tx = w * 0.5, ty = h * 0.1;
+      const pad = 10 * dpr;
+      ctx.fillStyle = 'rgba(1,2,18,0.55)';
+      ctx.beginPath();
+      ctx.roundRect(tx - tw / 2 - pad, ty - 14 * dpr - pad, tw + pad * 2, 20 * dpr + pad * 2, 8 * dpr);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(238,246,255,0.88)';
+      ctx.fillText(world.message, tx, ty);
     }
 
     // ─── Pointer / input ──────────────────────────────────────────────────────
@@ -1020,35 +1029,53 @@
     function frame(now) {
       const rawDt = Math.min(0.033, (now - last) / 1000 || 0.016);
       last = now;
-      const dt = rawDt * Number(ui.timeScale.value);
-      time += dt;
 
       updateUI();
-      spawnDragNode(now);
-      updateParticles(dt);
-      updateFields(dt);
 
-      ctx.save();
+      if (!paused) {
+        const dt = rawDt * Number(ui.timeScale.value);
+        time += dt;
+        spawnDragNode(now);
+        updateParticles(dt);
+        updateFields(dt);
 
-      // Screen shake.
-      if (shake > 0.1) {
-        ctx.translate(rand(-shake, shake), rand(-shake, shake));
-        shake *= 0.82;
+        ctx.save();
+
+        // Screen shake.
+        if (shake > 0.1) {
+          ctx.translate(rand(-shake, shake), rand(-shake, shake));
+          shake *= 0.82;
+        }
+
+        // Zoom transform (centred on canvas centre).
+        const zoom = Number(ui.zoom.value);
+        ctx.translate(w / 2, h / 2);
+        ctx.scale(zoom, zoom);
+        ctx.translate(-w / 2, -h / 2);
+
+        drawBackground();
+        drawFields();
+        drawParticles();
+        drawNodes();
+        drawSectorMessage();
+
+        ctx.restore();
+      } else {
+        // Paused: restore the snapshot taken at pause time, then draw the overlay.
+        if (pauseSnapshot) {
+          ctx.putImageData(pauseSnapshot, 0, 0);
+        }
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'rgba(1,2,8,0.55)';
+        ctx.fillRect(0, 0, w, h);
+        ctx.font = `bold ${22 * dpr}px Inter,system-ui,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(41,243,255,0.92)';
+        ctx.fillText('PAUSED  —  press Space to resume', w * 0.5, h * 0.5);
+        ctx.restore();
       }
 
-      // Zoom transform (centred on canvas centre).
-      const zoom = Number(ui.zoom.value);
-      ctx.translate(w / 2, h / 2);
-      ctx.scale(zoom, zoom);
-      ctx.translate(-w / 2, -h / 2);
-
-      drawBackground();
-      drawSectorMessage();
-      drawFields();
-      drawParticles();
-      drawNodes();
-
-      ctx.restore();
       requestAnimationFrame(frame);
     }
 
@@ -1066,6 +1093,22 @@
 
     ui.seedBtn.addEventListener('click', () => { seedNebula(); shake = 12 * dpr; });
     ui.clearBtn.addEventListener('click', () => { nodes = []; seedNebula(); });
+
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        paused = !paused;
+        if (paused) {
+          pauseSnapshot = ctx.getImageData(0, 0, w, h); // capture current frame
+        } else {
+          pauseSnapshot = null;
+          last = performance.now(); // reset timestamp so rawDt doesn't spike with pause duration
+        }
+      } else if (e.code === 'KeyR' || e.key === 'r' || e.key === 'R') {
+        nodes = [];
+        seedNebula();
+      }
+    });
 
     // ─── Boot ─────────────────────────────────────────────────────────────────
     resize();
