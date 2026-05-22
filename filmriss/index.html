@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Filmriss 🍺 — Beer Memory</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0800;
+      --gold:      #d4a017;
+      --gold-dim:  #8a6a10;
+      --text:      #f5e6c8;
+      --muted:     #9a7a50;
+      --radius:    10px;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      min-height: 100vh; min-height: 100dvh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    /* Wood-grain ambience */
+    body::before {
+      content: "";
+      position: fixed; inset: 0;
+      background:
+        repeating-linear-gradient(87deg,
+          transparent, transparent 70px,
+          rgba(255,180,60,.018) 70px, rgba(255,180,60,.018) 72px),
+        repeating-linear-gradient(176deg,
+          transparent, transparent 50px,
+          rgba(0,0,0,.08) 50px, rgba(0,0,0,.08) 51px),
+        radial-gradient(ellipse at 50% 0%,
+          rgba(80,40,0,.5) 0%, transparent 65%),
+        linear-gradient(180deg, #1a0e04 0%, #0f0800 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Main wrapper: drunk effects land here ── */
+    #wrap {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh; min-height: 100dvh;
+      padding: 16px;
+      transition: filter .8s ease, transform .8s ease;
+      will-change: filter, transform;
+    }
+
+    /* ── Screens ── */
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      text-align: center;
+    }
+    .screen.active { display: flex; }
+
+    /* ── Title ── */
+    .big-title {
+      font-size: clamp(2.6rem, 9vw, 5rem);
+      font-weight: 900;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-shadow: 0 0 28px rgba(212,160,23,.9), 0 0 60px rgba(212,160,23,.4);
+      animation: titlePulse 2.5s ease-in-out infinite;
+    }
+    @keyframes titlePulse {
+      0%,100% { text-shadow: 0 0 20px rgba(212,160,23,.7), 0 0 50px rgba(212,160,23,.3); }
+      50%      { text-shadow: 0 0 45px rgba(212,160,23,1.0), 0 0 90px rgba(212,160,23,.6); }
+    }
+
+    .subtitle {
+      font-size: clamp(.82rem, 2.5vw, .96rem);
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      line-height: 1.7;
+    }
+    .subtitle.small { font-size: .72rem; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 14px 44px;
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #b87d00, #d4a017, #b87d00);
+      color: #1a0800;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      box-shadow: 0 0 22px rgba(212,160,23,.55);
+      transition: box-shadow .15s, transform .1s;
+    }
+    .btn:hover  { box-shadow: 0 0 40px rgba(212,160,23,.85); transform: scale(1.04); }
+    .btn:active { transform: scale(.97); }
+
+    /* ── HUD ── */
+    #hud {
+      display: flex;
+      gap: 36px;
+      font-size: .88rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    #hud strong { color: var(--gold); font-size: 1.1em; }
+
+    /* ── Status line ── */
+    #status-msg {
+      font-size: clamp(.88rem, 3vw, 1.05rem);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text);
+      min-height: 1.6em;
+      transition: color .3s;
+    }
+
+    /* ════════════════════════════════
+       MUG GRID
+    ════════════════════════════════ */
+    #mug-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(14px, 3.5vw, 28px);
+      padding: clamp(8px, 2vw, 16px);
+    }
+
+    /* ── Individual mug button ── */
+    .mug-btn {
+      position: relative;
+      width:  clamp(96px, 19vw, 155px);
+      height: clamp(115px, 23vw, 188px);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: transform .12s;
+    }
+    .mug-btn:active            { transform: scale(.93); }
+    .mug-btn.disabled          { cursor: default; pointer-events: none; }
+
+    /* Ambient glow overlay (whole button) */
+    .mug-glow {
+      position: absolute; inset: -8px;
+      border-radius: 16px;
+      opacity: 0;
+      transition: opacity .18s;
+      pointer-events: none;
+    }
+
+    /* Body */
+    .mug-body {
+      position: absolute;
+      left: 8%; top: 14%;
+      width: 68%; height: 74%;
+      border-radius: 5px 5px 14px 14px;
+      border: 2.5px solid rgba(255,255,255,.18);
+      overflow: hidden;
+      transition: box-shadow .18s, border-color .18s;
+    }
+
+    /* Foam */
+    .mug-foam {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 28%;
+      background: rgba(248,242,218,.92);
+      border-radius: 50% 50% 0 0 / 40% 40% 0 0;
+      z-index: 2;
+    }
+    .mug-foam::before, .mug-foam::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,.75);
+    }
+    .mug-foam::before { width: 22%; height: 64%; top: 4%; left: 14%; }
+    .mug-foam::after  { width: 15%; height: 50%; top: 8%; left: 45%; }
+
+    /* Bubble animation inside foam */
+    .mug-bubble {
+      position: absolute;
+      bottom: 22%; left: 50%;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.55);
+      transform: translateX(-50%);
+      animation: bubbleRise 2s ease-in infinite;
+      z-index: 1;
+    }
+    @keyframes bubbleRise {
+      0%   { bottom: 28%; opacity: .6; }
+      100% { bottom: 70%; opacity: 0; }
+    }
+
+    /* Liquid */
+    .mug-liquid {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 75%;
+    }
+    .mug-sheen {
+      position: absolute;
+      top: 0; left: 10%; width: 20%; height: 100%;
+      background: rgba(255,255,255,.07);
+      border-radius: 50%;
+    }
+
+    /* Handle */
+    .mug-handle {
+      position: absolute;
+      right: 0; top: 28%;
+      width: 24%; height: 38%;
+      border: 2.5px solid rgba(255,255,255,.18);
+      border-left: none;
+      border-radius: 0 50% 50% 0;
+      transition: border-color .18s;
+    }
+
+    /* Base shadow */
+    .mug-base {
+      position: absolute;
+      bottom: 7%; left: 5%;
+      width: 74%; height: 7%;
+      background: rgba(0,0,0,.35);
+      border-radius: 50%;
+      filter: blur(4px);
+    }
+
+    /* ── Lit state ── */
+    .mug-btn.lit .mug-glow   { opacity: 1; }
+    .mug-btn.lit .mug-body   { border-color: rgba(255,255,255,.7); }
+    .mug-btn.lit .mug-handle { border-color: rgba(255,255,255,.7); }
+
+    /* ── Color themes per mug ── */
+
+    /* Gold lager */
+    .mug-gold .mug-liquid  { background: linear-gradient(180deg, #e8a020 0%, #b06510 100%); }
+    .mug-gold .mug-body    { box-shadow: inset 0 0 18px rgba(200,100,0,.3),
+                                          0 0 10px rgba(200,120,0,.2); }
+    .mug-gold.lit .mug-body { box-shadow: inset 0 0 30px rgba(255,165,0,.55),
+                                           0 0 40px rgba(255,165,0,.9),
+                                           0 0 80px rgba(255,165,0,.4); }
+    .mug-gold .mug-glow    { background: radial-gradient(circle, rgba(255,165,0,.35) 0%, transparent 70%); }
+    .mug-gold .mug-foam    { background: rgba(250,244,220,.94); }
+
+    /* Green hoppy */
+    .mug-green .mug-liquid  { background: linear-gradient(180deg, #1e6e1e 0%, #0d400d 100%); }
+    .mug-green .mug-body    { box-shadow: inset 0 0 18px rgba(0,130,0,.3),
+                                           0 0 10px rgba(0,130,0,.2); }
+    .mug-green.lit .mug-body { box-shadow: inset 0 0 30px rgba(0,220,0,.55),
+                                            0 0 40px rgba(0,220,0,.9),
+                                            0 0 80px rgba(0,220,0,.4); }
+    .mug-green .mug-glow   { background: radial-gradient(circle, rgba(0,220,0,.35) 0%, transparent 70%); }
+    .mug-green .mug-foam   { background: rgba(235,248,230,.94); }
+
+    /* Dark red ale */
+    .mug-red .mug-liquid   { background: linear-gradient(180deg, #7a2010 0%, #451008 100%); }
+    .mug-red .mug-body     { box-shadow: inset 0 0 18px rgba(180,40,0,.3),
+                                          0 0 10px rgba(180,40,0,.2); }
+    .mug-red.lit .mug-body  { box-shadow: inset 0 0 30px rgba(255,60,0,.55),
+                                           0 0 40px rgba(255,60,0,.9),
+                                           0 0 80px rgba(255,60,0,.4); }
+    .mug-red .mug-glow     { background: radial-gradient(circle, rgba(255,60,0,.35) 0%, transparent 70%); }
+    .mug-red .mug-foam     { background: rgba(248,234,230,.94); }
+
+    /* Night porter */
+    .mug-blue .mug-liquid  { background: linear-gradient(180deg, #162870 0%, #0a1440 100%); }
+    .mug-blue .mug-body    { box-shadow: inset 0 0 18px rgba(40,80,200,.3),
+                                          0 0 10px rgba(40,80,200,.2); }
+    .mug-blue.lit .mug-body { box-shadow: inset 0 0 30px rgba(80,130,255,.55),
+                                           0 0 40px rgba(80,130,255,.9),
+                                           0 0 80px rgba(80,130,255,.4); }
+    .mug-blue .mug-glow    { background: radial-gradient(circle, rgba(80,130,255,.35) 0%, transparent 70%); }
+    .mug-blue .mug-foam    { background: rgba(230,236,248,.94); }
+
+    /* ════════════════════════════════
+       DRUNK METER
+    ════════════════════════════════ */
+    #drunk-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+      width: clamp(220px, 65vw, 380px);
+    }
+    #drunk-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .7rem;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    #drunk-track {
+      width: 100%;
+      height: 11px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    #drunk-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22cc00, #aacc00, #ff8800, #ff2200);
+      border-radius: 6px;
+      transition: width .6s ease;
+    }
+
+    /* ════════════════════════════════
+       FILMRISS SCREEN
+    ════════════════════════════════ */
+    #filmriss-screen {
+      position: fixed; inset: 0;
+      background: #000;
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      overflow: hidden;
+    }
+    #filmriss-screen.active { display: flex; }
+
+    /* Film grain overlay */
+    #filmriss-screen::before {
+      content: "";
+      position: absolute; inset: 0;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.12'/%3E%3C/svg%3E");
+      opacity: .35;
+      animation: grainShift .08s steps(1) infinite;
+      pointer-events: none;
+    }
+    @keyframes grainShift {
+      0%  { transform: translate(0,0); }
+      20% { transform: translate(-3px, 2px); }
+      40% { transform: translate(4px,-2px); }
+      60% { transform: translate(-2px, 4px); }
+      80% { transform: translate(3px,-3px); }
+    }
+
+    /* Horizontal scan-lines */
+    .scan-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: rgba(255,255,255,.6);
+      animation: scanBurst .4s ease forwards;
+      opacity: 0;
+    }
+    @keyframes scanBurst {
+      0%   { transform: scaleX(0); opacity: .8; }
+      60%  { transform: scaleX(1); opacity: .5; }
+      100% { transform: scaleX(1); opacity: 0; }
+    }
+
+    .filmriss-title {
+      position: relative; z-index: 1;
+      font-size: clamp(3rem, 11vw, 7rem);
+      font-weight: 900;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: #fff;
+      animation: filmrissIn .45s cubic-bezier(.2,.8,.3,1.2) forwards;
+    }
+    @keyframes filmrissIn {
+      0%   { opacity: 0; transform: scale(1.6) rotate(-4deg); }
+      100% { opacity: 1; transform: scale(1)   rotate(0deg); }
+    }
+
+    .filmriss-german {
+      position: relative; z-index: 1;
+      font-size: clamp(.75rem, 2.5vw, .9rem);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.4);
+      font-style: italic;
+      animation: fadeUp .6s .3s ease forwards;
+      opacity: 0;
+    }
+    @keyframes fadeUp {
+      0%   { opacity: 0; transform: translateY(12px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .filmriss-stats {
+      position: relative; z-index: 1;
+      font-size: clamp(.88rem, 2.8vw, 1.05rem);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.55);
+      line-height: 2.1;
+      animation: fadeUp .6s .5s ease forwards;
+      opacity: 0;
+    }
+    .filmriss-stats .hl {
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 1.45em;
+    }
+
+    #btn-restart {
+      position: relative; z-index: 1;
+      animation: fadeUp .6s .7s ease forwards;
+      opacity: 0;
+    }
+
+    /* ── Drunk wobble ── */
+    @keyframes drunkWobble {
+      0%   { transform: rotate(0deg)    translateX(0); }
+      20%  { transform: rotate(-1.2deg) translateX(-4px); }
+      50%  { transform: rotate( .8deg)  translateX( 3px); }
+      80%  { transform: rotate(-1.0deg) translateX(-2px); }
+      100% { transform: rotate(0deg)    translateX(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-height: 580px) {
+      #hud { font-size: .78rem; gap: 22px; }
+      #status-msg { font-size: .82rem; }
+      .mug-btn { width: clamp(78px, 17vw, 120px); height: clamp(94px, 21vw, 144px); }
+      #mug-grid { gap: 10px; }
+      #drunk-wrap { display: none; }
+    }
+    @media (max-width: 380px) {
+      .mug-btn { width: clamp(82px, 22vw, 130px); height: clamp(98px, 27vw, 155px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── FILMRISS blackout screen ── -->
+  <div id="filmriss-screen" role="dialog" aria-modal="true" aria-label="Game over - Filmriss">
+    <div class="scan-line" style="top:28%; animation-delay:.08s"></div>
+    <div class="scan-line" style="top:55%; animation-delay:.22s"></div>
+    <div class="scan-line" style="top:72%; animation-delay:.34s"></div>
+    <div class="filmriss-title">🎬 Filmriss!</div>
+    <p class="filmriss-german">"Film tear" — total blackout</p>
+    <div class="filmriss-stats">
+      Round reached&nbsp; <span class="hl" id="result-round">0</span><br>
+      Personal best&nbsp; <span class="hl" id="result-best">0</span>
+    </div>
+    <button class="btn" id="btn-restart">↺ Sober Up &amp; Retry</button>
+  </div>
+
+  <!-- ── Game wrapper ── -->
+  <div id="wrap">
+
+    <!-- Start screen -->
+    <div class="screen active" id="start-screen">
+      <div class="big-title">🍺 Filmriss</div>
+      <p class="subtitle">Watch the beers light up<br>then repeat the sequence!</p>
+      <p class="subtitle small">Drink more → get blurrier → blackout!</p>
+      <button class="btn" id="btn-start">🍺 Start Drinking</button>
+      <p class="subtitle small" id="best-disp"></p>
+    </div>
+
+    <!-- Game screen -->
+    <div class="screen" id="game-screen">
+      <div id="hud">
+        <div>Round <strong id="hud-round">1</strong></div>
+        <div>Best&nbsp; <strong id="hud-best">0</strong></div>
+      </div>
+
+      <div id="status-msg">Get ready…</div>
+
+      <div id="mug-grid" aria-label="Beer mugs — click to repeat the sequence"></div>
+
+      <div id="drunk-wrap" aria-hidden="true">
+        <div id="drunk-labels">
+          <span>Sober</span>
+          <span>Hammered 🍺</span>
+        </div>
+        <div id="drunk-track">
+          <div id="drunk-fill"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- #wrap -->
+
+  <script>
+  (() => {
+    "use strict";
+
+    /* ── DOM refs ── */
+    const wrap           = document.getElementById("wrap");
+    const startScreen    = document.getElementById("start-screen");
+    const gameScreen     = document.getElementById("game-screen");
+    const filmrissScreen = document.getElementById("filmriss-screen");
+    const btnStart       = document.getElementById("btn-start");
+    const btnRestart     = document.getElementById("btn-restart");
+    const mugGrid        = document.getElementById("mug-grid");
+    const statusMsg      = document.getElementById("status-msg");
+    const hudRound       = document.getElementById("hud-round");
+    const hudBest        = document.getElementById("hud-best");
+    const drunkFill      = document.getElementById("drunk-fill");
+    const resultRound    = document.getElementById("result-round");
+    const resultBest     = document.getElementById("result-best");
+    const bestDisp       = document.getElementById("best-disp");
+
+    /* ── Mug config ── */
+    const MUGS = [
+      { cls: "mug-gold",  label: "Golden Lager",  freq: 392 },
+      { cls: "mug-green", label: "Green Hoppy",   freq: 440 },
+      { cls: "mug-red",   label: "Dark Red Ale",  freq: 523 },
+      { cls: "mug-blue",  label: "Night Porter",  freq: 294 },
+    ];
+
+    /* ── Constants ── */
+    const DRUNK_ROUNDS  = 18;   // rounds to reach full hammered
+    const BASE_SHOW_GAP = 600;  // ms between flashes (decreases with rounds)
+    const FLASH_DURATION= 520;  // ms a mug stays lit
+    const STORAGE_KEY   = "filmrissHS";
+
+    /* ── Web Audio ── */
+    let audioCtx = null;
+    function ensureAudio() {
+      if (!audioCtx) {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) { audioCtx = null; }
+      }
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    }
+
+    function playTone(freq, duration, type = "sine", volume = 0.28) {
+      if (!audioCtx) return;
+      try {
+        const osc  = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playSuccess() {
+      if (!audioCtx) return;
+      [523, 659, 784].forEach((f, i) => {
+        setTimeout(() => playTone(f, .18, "sine", .22), i * 100);
+      });
+    }
+
+    function playWrong() {
+      playTone(110, .6, "sawtooth", .3);
+    }
+
+    /* ── State ── */
+    let sequence    = [];
+    let playerIdx   = 0;
+    let round       = 0;
+    let bestRound   = 0;
+    let isShowing   = false;
+    let acceptInput = false;
+    let drunkPct    = 0;   // 0..1
+
+    /* ── Persistent best ── */
+    try { bestRound = parseInt(localStorage.getItem(STORAGE_KEY) || "0", 10) || 0; } catch (_) {}
+
+    /* ── Build mug buttons ── */
+    const mugBtns = MUGS.map((cfg, i) => {
+      const btn = document.createElement("button");
+      btn.className = `mug-btn ${cfg.cls} disabled`;
+      btn.setAttribute("aria-label", cfg.label);
+      btn.innerHTML = `
+        <div class="mug-glow"    aria-hidden="true"></div>
+        <div class="mug-body"    aria-hidden="true">
+          <div class="mug-foam"></div>
+          <div class="mug-bubble" style="animation-delay:${i * .5}s; left:35%"></div>
+          <div class="mug-bubble" style="animation-delay:${i * .5 + 1}s; left:55%"></div>
+          <div class="mug-liquid">
+            <div class="mug-sheen"></div>
+          </div>
+        </div>
+        <div class="mug-handle"  aria-hidden="true"></div>
+        <div class="mug-base"    aria-hidden="true"></div>
+      `;
+      btn.addEventListener("click", () => { ensureAudio(); onMugClick(i); });
+      mugGrid.appendChild(btn);
+      return btn;
+    });
+
+    /* ── Helpers ── */
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+
+    function showScreen(el) {
+      [startScreen, gameScreen].forEach(s => s.classList.remove("active"));
+      el.classList.add("active");
+    }
+
+    function setStatus(txt, color) {
+      statusMsg.textContent = txt;
+      statusMsg.style.color = color || "";
+    }
+
+    function enableMugs()  { mugBtns.forEach(b => b.classList.remove("disabled")); }
+    function disableMugs() { mugBtns.forEach(b => b.classList.add("disabled")); }
+
+    function updateHUD() {
+      hudRound.textContent = round;
+      hudBest.textContent  = bestRound;
+    }
+
+    /* ── Drunk effect ── */
+    function updateDrunk() {
+      drunkFill.style.width = (drunkPct * 100).toFixed(1) + "%";
+
+      const blur    = drunkPct * 3.2;                      // up to ~3 px
+      const sat     = 1 + drunkPct * 0.5;                  // slight oversaturation
+      const rotDeg  = (drunkPct - .4) * 5;                 // tilt starts at 40%
+
+      wrap.style.filter    = `blur(${blur.toFixed(2)}px) saturate(${sat.toFixed(2)})`;
+      wrap.style.transform = `rotate(${Math.max(0, rotDeg).toFixed(2)}deg)`;
+
+      if (drunkPct > .65) {
+        const speed = (1.8 - drunkPct).toFixed(2);
+        wrap.style.animation = `drunkWobble ${speed}s ease-in-out infinite`;
+      } else {
+        wrap.style.animation = "none";
+      }
+    }
+
+    function resetDrunk() {
+      drunkPct = 0;
+      drunkFill.style.width = "0%";
+      wrap.style.filter    = "";
+      wrap.style.transform = "";
+      wrap.style.animation = "none";
+    }
+
+    /* ── Light a mug ── */
+    async function lightMug(i) {
+      mugBtns[i].classList.add("lit");
+      playTone(MUGS[i].freq, .45);
+      await delay(FLASH_DURATION);
+      mugBtns[i].classList.remove("lit");
+    }
+
+    /* ── Show the sequence ── */
+    async function showSequence() {
+      isShowing   = true;
+      acceptInput = false;
+      disableMugs();
+      setStatus("Watch carefully… 👀");
+      await delay(600);
+
+      const gap = Math.max(220, BASE_SHOW_GAP - round * 18);
+      for (let i = 0; i < sequence.length; i++) {
+        await lightMug(sequence[i]);
+        await delay(gap);
+      }
+
+      isShowing   = false;
+      acceptInput = true;
+      enableMugs();
+      setStatus("Your turn! 🍺");
+    }
+
+    /* ── Player clicks a mug ── */
+    async function onMugClick(i) {
+      if (!acceptInput) return;
+
+      lightMug(i);  // visual + sound feedback
+
+      if (i === sequence[playerIdx]) {
+        playerIdx++;
+
+        if (playerIdx === sequence.length) {
+          // ✅ Round complete
+          acceptInput = false;
+          disableMugs();
+          playSuccess();
+          setStatus("Prost! 🍺", "#d4a017");
+
+          round++;
+          drunkPct = Math.min(1, (round - 1) / DRUNK_ROUNDS);
+          if (round > bestRound) {
+            bestRound = round;
+            try { localStorage.setItem(STORAGE_KEY, bestRound); } catch (_) {}
+          }
+          updateHUD();
+          updateDrunk();
+
+          await delay(1100);
+          playerIdx = 0;
+          sequence.push(Math.floor(Math.random() * MUGS.length));
+          await showSequence();
+        }
+      } else {
+        // ❌ Wrong
+        acceptInput = false;
+        disableMugs();
+        playWrong();
+        setStatus("FILMRISS! 🎬", "#ff4422");
+        await delay(700);
+        triggerFilmriss();
+      }
+    }
+
+    /* ── FILMRISS animation ── */
+    function triggerFilmriss() {
+      resultRound.textContent = round;
+      resultBest.textContent  = bestRound;
+      filmrissScreen.classList.add("active");
+      resetDrunk();
+    }
+
+    /* ── Start / restart ── */
+    function startGame() {
+      ensureAudio();
+      sequence    = [];
+      playerIdx   = 0;
+      round       = 1;
+      resetDrunk();
+      filmrissScreen.classList.remove("active");
+      showScreen(gameScreen);
+      updateHUD();
+      sequence.push(Math.floor(Math.random() * MUGS.length));
+      showSequence();
+    }
+
+    /* ── Event listeners ── */
+    btnStart.addEventListener("click",   startGame);
+    btnRestart.addEventListener("click", startGame);
+
+    /* ── Init display ── */
+    hudBest.textContent = bestRound;
+    if (bestRound > 0) bestDisp.textContent = `Best: Round ${bestRound}`;
+
+  })();
+  </script>
+</body>
+</html>
