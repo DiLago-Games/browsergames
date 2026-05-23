@@ -444,6 +444,207 @@
     @media (max-width: 380px) {
       .mug-btn { width: clamp(82px, 22vw, 130px); height: clamp(98px, 27vw, 155px); }
     }
+
+    /* ── Wrong mug shake ── */
+    @keyframes mugShake {
+      0%,100% { transform: translateX(0) rotate(0deg); }
+      20%     { transform: translateX(-7px) rotate(-3deg); }
+      40%     { transform: translateX(7px) rotate(3deg); }
+      60%     { transform: translateX(-4px) rotate(-2deg); }
+      80%     { transform: translateX(4px) rotate(2deg); }
+    }
+    .mug-btn.wrong { animation: mugShake .42s ease forwards !important; }
+    .mug-btn.wrong .mug-body {
+      border-color: rgba(255,60,40,.95) !important;
+      box-shadow: inset 0 0 30px rgba(255,40,0,.7),
+                  0 0 55px rgba(255,40,0,1) !important;
+    }
+
+    /* ── Step indicator ── */
+    #step-indicator {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      min-height: 18px;
+    }
+    .step-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.12);
+      border: 1.5px solid rgba(255,255,255,.22);
+      transition: background .15s, border-color .15s, transform .15s;
+    }
+    .step-dot.done { background: var(--gold); border-color: var(--gold); transform: scale(1.1); }
+    .step-dot.next { background: rgba(212,160,23,.3); border-color: var(--gold);
+                     animation: dotPulse .6s ease-in-out infinite alternate; }
+    @keyframes dotPulse {
+      from { transform: scale(1); }
+      to   { transform: scale(1.3); }
+    }
+
+    /* ── Replay button ── */
+    #replay-btn {
+      padding: 8px 22px;
+      font-size: .76rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: color .2s, border-color .2s, background .2s;
+      display: none;
+    }
+    #replay-btn:hover { color: var(--gold); border-color: var(--gold-dim); background: rgba(212,160,23,.08); }
+    #replay-btn:active { transform: scale(.96); }
+    #replay-btn.visible { display: block; }
+    #replay-btn:disabled { opacity: .35; cursor: default; }
+
+    /* ── Difficulty selector ── */
+    .diff-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .diff-btn {
+      padding: 9px 18px;
+      font-size: .76rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      border: 1.5px solid rgba(255,255,255,.1);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: color .2s, border-color .2s, background .2s;
+    }
+    .diff-btn:hover  { color: var(--text); border-color: rgba(255,255,255,.28); }
+    .diff-btn.active {
+      background: rgba(212,160,23,.16);
+      color: var(--gold);
+      border-color: var(--gold-dim);
+    }
+
+    /* ── Timer bar ── */
+    #timer-wrap {
+      width: clamp(220px, 65vw, 380px);
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+    }
+    #timer-wrap.visible { display: flex; }
+    #timer-label {
+      font-size: .66rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: right;
+    }
+    #timer-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    #timer-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #22cc00, #aacc00, #ff8800, #ff2200);
+      border-radius: 4px;
+    }
+
+    /* ── Milestone pop ── */
+    #milestone-pop {
+      position: fixed; inset: 0;
+      z-index: 150;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    #milestone-pop.active { display: flex; }
+    .milestone-badge {
+      font-size: clamp(1.5rem, 6vw, 2.6rem);
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-shadow: 0 0 40px rgba(212,160,23,1), 0 0 90px rgba(212,160,23,.6);
+      animation: milestonePop .75s cubic-bezier(.15,.8,.25,1.3) forwards;
+    }
+    @keyframes milestonePop {
+      0%   { opacity: 0; transform: scale(.4); }
+      60%  { opacity: 1; transform: scale(1.12); }
+      85%  { opacity: 1; transform: scale(.98); }
+      100% { opacity: 0; transform: scale(1); }
+    }
+
+    /* ── Confetti ── */
+    .confetti {
+      position: fixed;
+      top: -12px;
+      width: 8px; height: 8px;
+      border-radius: 2px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 155;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0%   { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+      80%  { opacity: .8; }
+      100% { opacity: 0; transform: translateY(100vh) rotate(740deg) scale(.6); }
+    }
+
+    /* ── Share button ── */
+    #btn-share {
+      position: relative; z-index: 1;
+      padding: 9px 24px;
+      font-size: .78rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.5);
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+      animation: fadeUp .6s .9s ease forwards;
+      opacity: 0;
+    }
+    #btn-share:hover { color: var(--gold); border-color: var(--gold-dim); }
+
+    /* ── Drunk vignette ── */
+    #vignette {
+      position: fixed; inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      transition: box-shadow .8s ease;
+      box-shadow: inset 0 0 0px rgba(160,60,0,0);
+    }
+
+    /* ── Screen flash on filmriss ── */
+    @keyframes filmrissFlash {
+      0%   { opacity: 1; }
+      15%  { opacity: 0; }
+      30%  { opacity: .8; }
+      50%  { opacity: 0; }
+      100% { opacity: 0; }
+    }
+    #flash-overlay {
+      position: fixed; inset: 0;
+      background: #fff;
+      z-index: 199;
+      pointer-events: none;
+      opacity: 0;
+    }
+    #flash-overlay.active { animation: filmrissFlash .55s ease forwards; }
   </style>
 </head>
 <body>
@@ -460,6 +661,7 @@
       Personal best&nbsp; <span class="hl" id="result-best">0</span>
     </div>
     <button class="btn" id="btn-restart">↺ Sober Up &amp; Retry</button>
+    <button id="btn-share">📋 Share Score</button>
   </div>
 
   <!-- ── Game wrapper ── -->
@@ -470,6 +672,11 @@
       <div class="big-title">🍺 Filmriss</div>
       <p class="subtitle">Watch the beers light up<br>then repeat the sequence!</p>
       <p class="subtitle small">Drink more → get blurrier → blackout!</p>
+      <div class="diff-row">
+        <button class="diff-btn active" data-diff="sober">🟢 Sober</button>
+        <button class="diff-btn" data-diff="tipsy">🟡 Tipsy</button>
+        <button class="diff-btn" data-diff="hammered">🔴 Hammered</button>
+      </div>
       <button class="btn" id="btn-start">🍺 Start Drinking</button>
       <p class="subtitle small" id="best-disp"></p>
     </div>
@@ -482,6 +689,8 @@
       </div>
 
       <div id="status-msg">Get ready…</div>
+      <div id="step-indicator"></div>
+      <button id="replay-btn">👁 Replay — costs a sip</button>
 
       <div id="mug-grid" aria-label="Beer mugs — click to repeat the sequence"></div>
 
@@ -494,9 +703,19 @@
           <div id="drunk-fill"></div>
         </div>
       </div>
+
+      <div id="timer-wrap">
+        <div id="timer-label">Time left</div>
+        <div id="timer-track"><div id="timer-fill"></div></div>
+      </div>
     </div>
 
   </div><!-- #wrap -->
+
+  <!-- ── Global overlays ── -->
+  <div id="vignette"></div>
+  <div id="flash-overlay"></div>
+  <div id="milestone-pop"></div>
 
   <script>
   (() => {
@@ -509,14 +728,22 @@
     const filmrissScreen = document.getElementById("filmriss-screen");
     const btnStart       = document.getElementById("btn-start");
     const btnRestart     = document.getElementById("btn-restart");
+    const btnShare       = document.getElementById("btn-share");
     const mugGrid        = document.getElementById("mug-grid");
     const statusMsg      = document.getElementById("status-msg");
+    const stepIndicator  = document.getElementById("step-indicator");
+    const replayBtn      = document.getElementById("replay-btn");
     const hudRound       = document.getElementById("hud-round");
     const hudBest        = document.getElementById("hud-best");
     const drunkFill      = document.getElementById("drunk-fill");
+    const timerWrap      = document.getElementById("timer-wrap");
+    const timerFill      = document.getElementById("timer-fill");
     const resultRound    = document.getElementById("result-round");
     const resultBest     = document.getElementById("result-best");
     const bestDisp       = document.getElementById("best-disp");
+    const milestonePop   = document.getElementById("milestone-pop");
+    const vignette       = document.getElementById("vignette");
+    const flashOverlay   = document.getElementById("flash-overlay");
 
     /* ── Mug config ── */
     const MUGS = [
@@ -526,11 +753,18 @@
       { cls: "mug-blue",  label: "Night Porter",  freq: 294 },
     ];
 
+    /* ── Difficulty config ── */
+    const DIFF = {
+      sober:    { showGap: 700, drunkRounds: 24, timerSecs: 0 },
+      tipsy:    { showGap: 480, drunkRounds: 16, timerSecs: 8 },
+      hammered: { showGap: 300, drunkRounds: 10, timerSecs: 5 },
+    };
+    let difficulty = "sober";
+
     /* ── Constants ── */
-    const DRUNK_ROUNDS  = 18;   // rounds to reach full hammered
-    const BASE_SHOW_GAP = 600;  // ms between flashes (decreases with rounds)
-    const FLASH_DURATION= 520;  // ms a mug stays lit
-    const STORAGE_KEY   = "filmrissHS";
+    const FLASH_DURATION = 520;
+    const STORAGE_KEY    = "filmrissHS";
+    const MILESTONES     = new Set([5, 10, 15, 20, 25, 30]);
 
     /* ── Web Audio ── */
     let audioCtx = null;
@@ -570,6 +804,13 @@
       playTone(110, .6, "sawtooth", .3);
     }
 
+    function playCheers() {
+      if (!audioCtx) return;
+      [392, 494, 587, 698, 880].forEach((f, i) => {
+        setTimeout(() => playTone(f, .25, "triangle", .18), i * 85);
+      });
+    }
+
     /* ── State ── */
     let sequence    = [];
     let playerIdx   = 0;
@@ -578,9 +819,21 @@
     let isShowing   = false;
     let acceptInput = false;
     let drunkPct    = 0;   // 0..1
+    let timerHandle = null;
+    let replayUsed  = false;
+    let clickLock   = false;
 
     /* ── Persistent best ── */
     try { bestRound = parseInt(localStorage.getItem(STORAGE_KEY) || "0", 10) || 0; } catch (_) {}
+
+    /* ── Difficulty buttons ── */
+    document.querySelectorAll(".diff-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        difficulty = btn.dataset.diff;
+      });
+    });
 
     /* ── Build mug buttons ── */
     const mugBtns = MUGS.map((cfg, i) => {
@@ -605,6 +858,13 @@
       return btn;
     });
 
+    /* ── Keyboard controls (keys 1-4) ── */
+    document.addEventListener("keydown", e => {
+      if (e.repeat) return;  // ignore key-hold repeat
+      const idx = ["1","2","3","4"].indexOf(e.key);
+      if (idx !== -1) { ensureAudio(); onMugClick(idx); }
+    });
+
     /* ── Helpers ── */
     const delay = ms => new Promise(r => setTimeout(r, ms));
 
@@ -626,15 +886,65 @@
       hudBest.textContent  = bestRound;
     }
 
+    /* ── Step indicator ── */
+    function renderStepDots() {
+      stepIndicator.innerHTML = "";
+      for (let i = 0; i < sequence.length; i++) {
+        const dot = document.createElement("div");
+        dot.className = "step-dot" +
+          (i < playerIdx ? " done" : i === playerIdx ? " next" : "");
+        stepIndicator.appendChild(dot);
+      }
+    }
+    function clearStepDots() { stepIndicator.innerHTML = ""; }
+
+    /* ── Timer bar ── */
+    function startTimer() {
+      const cfg = DIFF[difficulty];
+      if (!cfg.timerSecs) return;
+      clearTimer();
+      timerWrap.classList.add("visible");
+      timerFill.style.width = "100%";
+
+      const totalMs = cfg.timerSecs * 1000;
+      const start   = performance.now();
+
+      function tick() {
+        const pct = Math.max(0, 1 - (performance.now() - start) / totalMs);
+        timerFill.style.width = (pct * 100).toFixed(1) + "%";
+        if (pct <= 0) {
+          clearTimer();
+          if (acceptInput) {
+            acceptInput = false;
+            disableMugs();
+            replayBtn.classList.remove("visible");
+            playWrong();
+            navigator.vibrate && navigator.vibrate([80, 40, 80]);
+            setStatus("TIME'S UP! 🎬", "#ff4422");
+            delay(700).then(triggerFilmriss);
+          }
+          return;
+        }
+        timerHandle = requestAnimationFrame(tick);
+      }
+      timerHandle = requestAnimationFrame(tick);
+    }
+
+    function clearTimer() {
+      if (timerHandle) { cancelAnimationFrame(timerHandle); timerHandle = null; }
+      timerWrap.classList.remove("visible");
+    }
+
     /* ── Drunk effect ── */
     function updateDrunk() {
       drunkFill.style.width = (drunkPct * 100).toFixed(1) + "%";
 
-      const blur    = drunkPct * 3.2;                      // up to ~3 px
-      const sat     = 1 + drunkPct * 0.5;                  // slight oversaturation
-      const rotDeg  = (drunkPct - .4) * 5;                 // tilt starts at 40%
+      const blur    = drunkPct * 3.2;
+      const sat     = 1 + drunkPct * 0.5;
+      const rotDeg  = (drunkPct - .4) * 5;
+      const hue     = drunkPct * 18;
 
-      wrap.style.filter    = `blur(${blur.toFixed(2)}px) saturate(${sat.toFixed(2)})`;
+      wrap.style.filter    = `blur(${blur.toFixed(2)}px) saturate(${sat.toFixed(2)}) hue-rotate(${hue.toFixed(1)}deg)`;
       wrap.style.transform = `rotate(${Math.max(0, rotDeg).toFixed(2)}deg)`;
 
       if (drunkPct > .65) {
@@ -643,6 +953,11 @@
       } else {
         wrap.style.animation = "none";
       }
+
+      // Vignette burns in as drunk level rises
+      const vigSize   = (drunkPct * 130).toFixed(0);
+      const vigAlpha  = (drunkPct * .75).toFixed(2);
+      vignette.style.boxShadow = `inset 0 0 ${vigSize}px rgba(160,50,0,${vigAlpha})`;
     }
 
     function resetDrunk() {
@@ -651,6 +966,7 @@
       wrap.style.filter    = "";
       wrap.style.transform = "";
       wrap.style.animation = "none";
+      vignette.style.boxShadow = "inset 0 0 0px rgba(160,50,0,0)";
     }
 
     /* ── Light a mug ── */
@@ -661,15 +977,53 @@
       mugBtns[i].classList.remove("lit");
     }
 
+    /* ── Wrong mug shake + red flash ── */
+    function shakeWrongMug(i) {
+      mugBtns[i].classList.remove("wrong");
+      void mugBtns[i].offsetWidth;  // force reflow to restart animation
+      mugBtns[i].classList.add("wrong");
+      setTimeout(() => mugBtns[i].classList.remove("wrong"), 460);
+    }
+
+    /* ── Milestone celebration ── */
+    function triggerMilestone(r) {
+      const labels = { 5:"Five rounds!", 10:"Ten rounds!", 15:"Fifteen!", 20:"Twenty!! 🤯", 25:"25 rounds!!", 30:"Legendary 🏆" };
+      milestonePop.innerHTML = `<div class="milestone-badge">🍺 ${labels[r] || `Round ${r}!`} 🍺</div>`;
+      milestonePop.classList.add("active");
+      playCheers();
+      spawnConfetti();
+      setTimeout(() => milestonePop.classList.remove("active"), 950);
+    }
+
+    function spawnConfetti() {
+      const colors = ["#d4a017","#ff8800","#22cc00","#4499ff","#ff3366","#ffffff","#ffdd44"];
+      for (let i = 0; i < 36; i++) {
+        const el = document.createElement("div");
+        el.className = "confetti";
+        el.style.left             = (Math.random() * 100).toFixed(1) + "vw";
+        el.style.background       = colors[Math.floor(Math.random() * colors.length)];
+        el.style.animationDuration = (.7 + Math.random() * 1.3).toFixed(2) + "s";
+        el.style.animationDelay   = (Math.random() * .5).toFixed(2) + "s";
+        const sz = (5 + Math.random() * 9).toFixed(0) + "px";
+        el.style.width = sz; el.style.height = sz;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2400);
+      }
+    }
+
     /* ── Show the sequence ── */
     async function showSequence() {
       isShowing   = true;
       acceptInput = false;
       disableMugs();
+      replayBtn.classList.remove("visible");
+      clearTimer();
+      clearStepDots();
       setStatus("Watch carefully… 👀");
       await delay(600);
 
-      const gap = Math.max(220, BASE_SHOW_GAP - round * 18);
+      const cfg = DIFF[difficulty];
+      const gap = Math.max(180, cfg.showGap - round * 15);
       for (let i = 0; i < sequence.length; i++) {
         await lightMug(sequence[i]);
         await delay(gap);
@@ -677,28 +1031,56 @@
 
       isShowing   = false;
       acceptInput = true;
+      replayUsed  = false;
       enableMugs();
+      renderStepDots();
       setStatus("Your turn! 🍺");
+      replayBtn.classList.add("visible");
+      startTimer();
     }
+
+    /* ── Replay ── */
+    replayBtn.addEventListener("click", async () => {
+      if (!acceptInput || replayUsed) return;
+      replayUsed  = true;
+      acceptInput = false;
+      playerIdx   = 0;
+      disableMugs();
+      replayBtn.classList.remove("visible");
+      clearTimer();
+      // Penalty: add one sip worth of drunk
+      const cfg = DIFF[difficulty];
+      drunkPct = Math.min(1, drunkPct + 1 / cfg.drunkRounds);
+      updateDrunk();
+      await showSequence();
+    });
 
     /* ── Player clicks a mug ── */
     async function onMugClick(i) {
-      if (!acceptInput) return;
+      if (!acceptInput || clickLock) return;
+      clickLock = true;
+      setTimeout(() => { clickLock = false; }, 320);
 
       lightMug(i);  // visual + sound feedback
 
       if (i === sequence[playerIdx]) {
         playerIdx++;
+        renderStepDots();
 
         if (playerIdx === sequence.length) {
           // ✅ Round complete
           acceptInput = false;
+          clickLock   = false;
           disableMugs();
+          clearTimer();
+          replayBtn.classList.remove("visible");
+          clearStepDots();
           playSuccess();
           setStatus("Prost! 🍺", "#d4a017");
 
           round++;
-          drunkPct = Math.min(1, (round - 1) / DRUNK_ROUNDS);
+          const cfg = DIFF[difficulty];
+          drunkPct = Math.min(1, (round - 1) / cfg.drunkRounds);
           if (round > bestRound) {
             bestRound = round;
             try { localStorage.setItem(STORAGE_KEY, bestRound); } catch (_) {}
@@ -706,7 +1088,14 @@
           updateHUD();
           updateDrunk();
 
-          await delay(1100);
+          if (MILESTONES.has(round)) {
+            await delay(300);
+            triggerMilestone(round);
+            await delay(950);
+          } else {
+            await delay(1100);
+          }
+
           playerIdx = 0;
           sequence.push(Math.floor(Math.random() * MUGS.length));
           await showSequence();
@@ -714,7 +1103,12 @@
       } else {
         // ❌ Wrong
         acceptInput = false;
+        clickLock   = false;
         disableMugs();
+        clearTimer();
+        replayBtn.classList.remove("visible");
+        shakeWrongMug(i);
+        navigator.vibrate && navigator.vibrate([80, 40, 80]);
         playWrong();
         setStatus("FILMRISS! 🎬", "#ff4422");
         await delay(700);
@@ -724,11 +1118,30 @@
 
     /* ── FILMRISS animation ── */
     function triggerFilmriss() {
+      // White flash before blackout
+      flashOverlay.classList.remove("active");
+      void flashOverlay.offsetWidth;
+      flashOverlay.classList.add("active");
+
       resultRound.textContent = round;
       resultBest.textContent  = bestRound;
-      filmrissScreen.classList.add("active");
+      setTimeout(() => filmrissScreen.classList.add("active"), 200);
       resetDrunk();
     }
+
+    /* ── Share score ── */
+    btnShare.addEventListener("click", () => {
+      const text = `🍺 Filmriss! I survived round ${round} (best: ${bestRound}) before blacking out! Can you beat it? 🎬 #Filmriss`;
+      if (navigator.share) {
+        navigator.share({ title: "Filmriss 🍺", text }).catch(() => {});
+      } else {
+        navigator.clipboard && navigator.clipboard.writeText(text).then(() => {
+          const orig = btnShare.textContent;
+          btnShare.textContent = "✓ Copied!";
+          setTimeout(() => { btnShare.textContent = orig; }, 2000);
+        }).catch(() => {});
+      }
+    });
 
     /* ── Start / restart ── */
     function startGame() {
@@ -736,7 +1149,11 @@
       sequence    = [];
       playerIdx   = 0;
       round       = 1;
+      replayUsed  = false;
       resetDrunk();
+      clearTimer();
+      clearStepDots();
+      replayBtn.classList.remove("visible");
       filmrissScreen.classList.remove("active");
       showScreen(gameScreen);
       updateHUD();
