@@ -79,6 +79,7 @@ const state = {
   freeSpinSessionActive: false,
   expandingWildReels: 0,
   bannerTimeout: null,
+  stopRequested: false,
   spinTickTimer: null,
   freeSpinCheerTimer: null,
   bgmTimer: null,
@@ -1180,6 +1181,19 @@ function animateSingleReel(trackEl, startPx, stopPx, reelIndex, stopIndex, confi
     const startTs = performance.now();
 
     function frame(now) {
+      if (state.stopRequested) {
+        setTrackPhase(trackEl, "speed-slow");
+        trackEl.style.transform = `translateY(-${stopPx}px)`;
+        if (!stopSoundPlayed) {
+          playReelStop(reelIndex);
+        }
+        if (onStop) {
+          onStop();
+        }
+        resolve();
+        return;
+      }
+
       const elapsed = now - startTs;
       let position;
 
@@ -1435,7 +1449,10 @@ async function spin() {
   }
 
   state.spinning = true;
+  state.stopRequested = false;
   setButtonsDisabled(true);
+  spinBtn.disabled = false;
+  spinBtn.textContent = "Stop";
   updateBackgroundMusicForState();
 
   if (inFreeSpins) {
@@ -1472,6 +1489,9 @@ async function spin() {
   startSpinSound();
   await spinAnimation(rawGrid);
   stopSpinSound();
+  state.stopRequested = false;
+  spinBtn.disabled = true;
+  spinBtn.textContent = "Spin";
 
   const scatterResult = countScatters(rawGrid);
   const scatterCount = scatterResult.total;
@@ -1582,7 +1602,13 @@ function changeBet(delta) {
   updateHud();
 }
 
-spinBtn.addEventListener("click", spin);
+spinBtn.addEventListener("click", () => {
+  if (state.spinning) {
+    state.stopRequested = true;
+  } else {
+    spin();
+  }
+});
 betUpBtn.addEventListener("click", () => changeBet(1));
 betDownBtn.addEventListener("click", () => changeBet(-1));
 
