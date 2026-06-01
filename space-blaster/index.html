@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Space Blaster – Browser Game</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20260506f" />
 </head>
 <body>
 
@@ -39,6 +39,14 @@
       <span id="hud-level">Level 1</span>
     </div>
 
+    <!-- Mobile controls -->
+    <div id="mobile-controls" style="display:none;" aria-hidden="true">
+      <button id="btn-left" class="mobile-btn" aria-label="Move left">◀</button>
+      <button id="btn-fire" class="mobile-btn mobile-btn-fire" aria-label="Fire">FIRE</button>
+      <button id="btn-right" class="mobile-btn" aria-label="Move right">▶</button>
+      <button id="btn-pause" class="mobile-btn mobile-btn-pause" aria-label="Pause">⏸</button>
+    </div>
+
     <!-- Game-over screen -->
     <div id="gameover-screen" style="display:none;">
       <div id="gameover-box">
@@ -51,6 +59,6 @@
 
   </div>
 
-  <script src="game.js"></script>
+  <script src="game.js?v=20260506f"></script>
 </body>
 </html>

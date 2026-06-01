@@ -15,6 +15,7 @@
   const loadingScreen  = document.getElementById("loading-screen");
   const progressBar    = document.getElementById("unity-progress-bar-full");
   const btnStart       = document.getElementById("btn-start");
+  const unityContainer = document.getElementById("unity-container");
   const canvas         = document.getElementById("unity-canvas");
   const hud            = document.getElementById("hud");
   const hudScore       = document.getElementById("hud-score");
@@ -31,9 +32,9 @@
   canvas.width  = W;
   canvas.height = H;
 
-  const LIVES_MAX              = 3;
-  const BULLET_SPEED           = 9;
-  const SHIP_SPEED             = 5;
+  const LIVES_MAX              = 4;
+  const BULLET_SPEED           = 10;
+  const SHIP_SPEED             = 6;
   const STAR_COUNT             = 120;
 
   // Scoring
@@ -41,15 +42,18 @@
   const ASTEROID_SIZE_DIVISOR   = 15;
 
   // Spawn-rate / speed difficulty scaling
-  const MIN_SPAWN_RATE        = 8;
-  const BASE_SPAWN_RATE       = 55;
-  const LEVEL_SPAWN_MODIFIER  = 4;
-  const BASE_ASTEROID_SPEED   = 1.2;
-  const LEVEL_SPEED_INCREMENT = 0.35;
+  const MIN_SPAWN_RATE        = 16;
+  const BASE_SPAWN_RATE       = 80;
+  const LEVEL_SPAWN_MODIFIER  = 2;
+  const BASE_ASTEROID_SPEED   = 0.85;
+  const LEVEL_SPEED_INCREMENT = 0.18;
+
+  // Prevent rapid multi-hit life loss from clustered asteroids.
+  const LIFE_LOSS_COOLDOWN = 42;
 
   // Power-up durations (frames at 60 fps)
-  const RAPID_FIRE_DURATION = 300;   // ~5 s
-  const SHIELD_DURATION     = 360;   // ~6 s
+  const RAPID_FIRE_DURATION = 420;   // ~7 s
+  const SHIELD_DURATION     = 480;   // ~8 s
 
   /* ── Palette ────────────────────────────────────── */
   const COLOR = {
@@ -66,10 +70,40 @@
   let state, score, lives, level, clearedInLevel,
       ship, bullets, asteroids, powerups, particles,
       stars, keys, paused, highScore, raf,
-      rapidFireTimer, shieldTimer, rapidFireActive, shieldActive;
+      rapidFireTimer, shieldTimer, rapidFireActive, shieldActive,
+      lifeLossCooldown;
+
+  let dragTouchX = null;
+
+  const isTouchDevice =
+    window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
+    window.matchMedia("(max-width: 900px) and (any-pointer: coarse)").matches ||
+    navigator.maxTouchPoints > 0 ||
+    ("ontouchstart" in window);
 
   /* ── Simulated loading bar ──────────────────────── */
+  resizeCanvasDisplay();
+  window.addEventListener("resize", resizeCanvasDisplay);
+  window.addEventListener("orientationchange", resizeCanvasDisplay);
   simulateLoading();
+
+  function resizeCanvasDisplay() {
+    const containerW = unityContainer.clientWidth;
+    const containerH = unityContainer.clientHeight;
+    const gameAspect = W / H;
+    let displayW = containerW;
+    let displayH = displayW / gameAspect;
+
+    if (displayH > containerH) {
+      displayH = containerH;
+      displayW = displayH * gameAspect;
+    }
+
+    canvas.style.width = `${displayW}px`;
+    canvas.style.height = `${displayH}px`;
+    canvas.style.left = `${(containerW - displayW) / 2}px`;
+    canvas.style.top = `${(containerH - displayH) / 2}px`;
+  }
 
   function simulateLoading() {
     let pct = 0;
@@ -93,6 +127,7 @@
     loadingScreen.style.display  = "none";
     gameoverScreen.style.display = "none";
     hud.style.display            = "flex";
+    resizeCanvasDisplay();
     canvas.focus();
     initState();
     if (raf) cancelAnimationFrame(raf);
@@ -108,6 +143,70 @@
   });
   document.addEventListener("keyup",  e => { keys[e.code] = false; });
 
+  function clientToWorldX(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) / rect.width;
+    return Math.max(ship.w / 2, Math.min(W - ship.w / 2, x * W));
+  }
+
+  function moveShipToClientX(clientX) {
+    if (state !== "playing") return;
+    ship.x = clientToWorldX(clientX);
+  }
+
+  canvas.addEventListener("touchstart", e => {
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    e.preventDefault();
+    dragTouchX = clientToWorldX(touch.clientX);
+  }, { passive: false });
+  canvas.addEventListener("touchmove", e => {
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    e.preventDefault();
+    dragTouchX = clientToWorldX(touch.clientX);
+  }, { passive: false });
+  ["touchend", "touchcancel"].forEach(type => {
+    canvas.addEventListener(type, e => {
+      e.preventDefault();
+      dragTouchX = null;
+    }, { passive: false });
+  });
+
+  window.addEventListener("touchstart", e => {
+    if (state !== "playing") return;
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    e.preventDefault();
+    dragTouchX = clientToWorldX(touch.clientX);
+  }, { passive: false });
+  window.addEventListener("touchmove", e => {
+    if (state !== "playing") return;
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    e.preventDefault();
+    dragTouchX = clientToWorldX(touch.clientX);
+  }, { passive: false });
+  ["touchend", "touchcancel"].forEach(type => {
+    window.addEventListener(type, () => {
+      if (state !== "playing") return;
+      dragTouchX = null;
+    }, { passive: false });
+  });
+
+  canvas.addEventListener("mousedown", e => {
+    e.preventDefault();
+    dragTouchX = clientToWorldX(e.clientX);
+  });
+  canvas.addEventListener("mousemove", e => {
+    if ((e.buttons & 1) === 0) return;
+    e.preventDefault();
+    dragTouchX = clientToWorldX(e.clientX);
+  });
+  ["mouseup", "mouseleave"].forEach(type => {
+    canvas.addEventListener(type, () => { dragTouchX = null; });
+  });
+
   /* ── Init ───────────────────────────────────────── */
   function initState() {
     state         = "playing";
@@ -120,6 +219,8 @@
     shieldActive    = false;
     rapidFireTimer  = 0;
     shieldTimer     = 0;
+    lifeLossCooldown = 0;
+    dragTouchX = null;
 
     ship = {
       x: W / 2, y: H - 70,
@@ -156,14 +257,24 @@
 
   /* ── Update ─────────────────────────────────────── */
   function update() {
+    if (lifeLossCooldown > 0) lifeLossCooldown--;
+
     // Ship movement
-    if (keys["ArrowLeft"] || keys["KeyA"]) ship.x = Math.max(ship.w / 2, ship.x - SHIP_SPEED);
-    if (keys["ArrowRight"]|| keys["KeyD"]) ship.x = Math.min(W - ship.w / 2, ship.x + SHIP_SPEED);
+    if (dragTouchX !== null) {
+      ship.x = dragTouchX;
+    } else {
+      const movingLeft = keys["ArrowLeft"] || keys["KeyA"];
+      const movingRight = keys["ArrowRight"] || keys["KeyD"];
+      if (movingLeft) ship.x = Math.max(ship.w / 2, ship.x - SHIP_SPEED);
+      if (movingRight) ship.x = Math.min(W - ship.w / 2, ship.x + SHIP_SPEED);
+    }
 
     // Shooting
     ship.shootCooldown--;
     const cooldown = rapidFireActive ? 8 : 18;
-    if ((keys["Space"] || keys["KeyZ"]) && ship.shootCooldown <= 0) {
+    const isTouchDragShooting = isTouchDevice && dragTouchX !== null;
+    const isShooting = keys["Space"] || keys["KeyZ"] || isTouchDragShooting;
+    if (isShooting && ship.shootCooldown <= 0) {
       bullets.push({ x: ship.x, y: ship.y - ship.h / 2 });
       ship.shootCooldown = cooldown;
     }
@@ -188,12 +299,7 @@
       // Off bottom → lose a life
       if (a.y - a.r > H) {
         asteroids.splice(i, 1);
-        if (!shieldActive) {
-          lives--;
-          spawnExplosion(a.x, H - 20, "#f66", 12);
-          updateHUD();
-          if (lives <= 0) endGame();
-        }
+        loseLife(a.x, H - 20, "#f66", 12);
         continue;
       }
 
@@ -218,12 +324,9 @@
       if (hit) continue;
 
       // Ship collision
-      if (!shieldActive && dist({ x: ship.x, y: ship.y }, a) < a.r + 18) {
-        lives--;
-        spawnExplosion(a.x, a.y, "#ff8", 16);
+      if (dist({ x: ship.x, y: ship.y }, a) < a.r + 18) {
+        loseLife(a.x, a.y, "#ff8", 16);
         asteroids.splice(i, 1);
-        updateHUD();
-        if (lives <= 0) endGame();
       }
     }
 
@@ -419,7 +522,7 @@
 
   /* ── Helpers ────────────────────────────────────── */
   function spawnAsteroid() {
-    const r = 12 + Math.random() * 22;
+    const r = 10 + Math.random() * 18;
     const numVerts = 7 + Math.floor(Math.random() * 5);
     const verts = Array.from({ length: numVerts }, (_, i) => {
       const angle  = (i / numVerts) * Math.PI * 2;
@@ -480,6 +583,15 @@
     highScoreEl.textContent   = highScore;
     gameoverScreen.style.display = "flex";
     hud.style.display            = "none";
+  }
+
+  function loseLife(x, y, color, particleCount) {
+    if (shieldActive || lifeLossCooldown > 0) return;
+    lives--;
+    lifeLossCooldown = LIFE_LOSS_COOLDOWN;
+    spawnExplosion(x, y, color, particleCount);
+    updateHUD();
+    if (lives <= 0) endGame();
   }
 
   function updateHUD() {
