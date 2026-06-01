@@ -139,6 +139,101 @@ body {
   box-shadow: 0 6px 24px rgba(201,168,76,0.55);
 }
 
+/* ── Scenario selection screen ──────────────────── */
+#scenario-screen {
+  background: linear-gradient(135deg, #2a1a0a 0%, #1a0f07 100%);
+  padding: 20px;
+  overflow-y: auto;
+}
+#scenario-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 720px;
+}
+#scenario-title {
+  font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+  color: var(--gold-lt);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(201,168,76,0.4);
+}
+#scenario-subtitle {
+  font-size: 0.95rem;
+  color: #b8a878;
+  letter-spacing: 1px;
+  font-style: italic;
+}
+#scenarios-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+.scenario-card {
+  background: linear-gradient(160deg, #3a2a1a 0%, #2a1a0a 100%);
+  border: 2px solid #5a3a1a;
+  border-radius: 6px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+.scenario-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px rgba(201,168,76,0.35), inset 0 0 20px rgba(201,168,76,0.05);
+  transform: translateY(-4px);
+}
+.scenario-icon {
+  font-size: 2.5rem;
+  opacity: 0.9;
+}
+.scenario-card h3 {
+  font-size: clamp(0.9rem, 2.2vw, 1rem);
+  color: var(--gold-lt);
+  letter-spacing: 1px;
+  margin: 0;
+}
+.scenario-card p {
+  font-size: 0.85rem;
+  color: #a89a7a;
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
+}
+.scenario-btn {
+  padding: 10px 24px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #9a6a20, #c9a84c);
+  color: #1a0f07;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+  opacity: 0;
+  animation: slideUp 0.4s ease forwards;
+}
+.scenario-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 16px rgba(201,168,76,0.45);
+}
+.scenario-card:nth-child(1) .scenario-btn { animation-delay: 0.05s; }
+.scenario-card:nth-child(2) .scenario-btn { animation-delay: 0.1s; }
+.scenario-card:nth-child(3) .scenario-btn { animation-delay: 0.15s; }
+.scenario-card:nth-child(4) .scenario-btn { animation-delay: 0.2s; }
+.scenario-card:nth-child(5) .scenario-btn { animation-delay: 0.25s; }
+.scenario-card:nth-child(6) .scenario-btn { animation-delay: 0.3s; }
+
 /* ── Game screen ──────────────────────────────────── */
 #game-screen {
   flex-direction: column;
@@ -383,6 +478,12 @@ body {
 .fade-in {
   animation: fadeIn 0.35s ease forwards;
 }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 
 /* ── Responsive ───────────────────────────────────── */
 @media (max-height: 580px) {
