@@ -337,6 +337,18 @@
       font-size: 0.92rem;
     }
 
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     @media (max-width: 980px) {
       .page {
         grid-template-columns: 1fr;
@@ -398,7 +410,14 @@
       </div>
 
       <div class="playfield-shell">
-        <canvas id="game" width="960" height="600" aria-label="Californian game canvas"></canvas>
+        <canvas
+          id="game"
+          width="960"
+          height="600"
+          role="application"
+          aria-label="Californian lane-driving game. Move between five lanes to collect glowing records and avoid traffic."
+          aria-describedby="game-help"
+        ></canvas>
         <div class="overlay" id="overlay">
           <div class="overlay-card">
             <h2 id="overlay-title">Hit the strip</h2>
@@ -417,10 +436,11 @@
       </div>
 
       <div class="status-line" id="status" aria-live="polite">Collect records to build score multipliers.</div>
+      <div class="sr-only" id="announcer" aria-live="polite" aria-atomic="true"></div>
     </section>
 
     <aside class="panel sidebar">
-      <section>
+      <section id="game-help">
         <h2>How to play</h2>
         <ul>
           <li>Move your van across five lanes with the keyboard, by tapping the road, or with the on-screen buttons.</li>
@@ -458,11 +478,20 @@
       const leftButton = document.getElementById("left-button");
       const rightButton = document.getElementById("right-button");
       const statusEl = document.getElementById("status");
+      const announcerEl = document.getElementById("announcer");
       const scoreEl = document.getElementById("score");
       const livesEl = document.getElementById("lives");
       const streakEl = document.getElementById("streak");
       const levelEl = document.getElementById("level");
       const bestPill = document.getElementById("best-pill");
+
+      const SPAWN_ZONE_HEIGHT_RATIO = 0.32;
+      const MIN_SPAWN_DELAY = 0.28;
+      const BASE_SPAWN_DELAY = 0.9;
+      const SPAWN_DELAY_LEVEL_REDUCTION = 0.045;
+      const CAR_COLLISION_THRESHOLD = 58;
+      const OBJECT_COLLISION_THRESHOLD = 42;
+      const MAX_FRAME_TIME = 0.032;
 
       const bandNames = [
         "Sunset Echo",
@@ -481,7 +510,7 @@
         lives: 3,
         streak: 0,
         level: 1,
-        best: Number(localStorage.getItem("californian-best") || 0),
+        best: parseInt(localStorage.getItem("californian-best") || "0", 10),
         time: 0,
         spawnTimer: 0,
         messageTimer: 0,
@@ -503,6 +532,10 @@
       function setMessage(text, timeout = 1.5) {
         statusEl.textContent = text;
         state.messageTimer = timeout;
+      }
+
+      function announce(text) {
+        announcerEl.textContent = text;
       }
 
       function laneWidth() {
@@ -538,6 +571,7 @@
         resetGame();
         state.running = true;
         overlay.hidden = true;
+        announce("Run started. Score 0, lives 3, level 1.");
       }
 
       function endGame() {
@@ -553,6 +587,7 @@
         startButton.textContent = "Restart Run";
         overlay.hidden = false;
         setMessage("Traffic won this round. Try another run.", 3);
+        announce(`Run over. Final score ${Math.floor(state.score)}. Lives depleted at level ${state.level}.`);
       }
 
       function updateHud() {
@@ -564,7 +599,7 @@
 
       function spawnObject() {
         const occupiedLanes = new Set(
-          state.objects.filter((item) => item.y < canvas.height * 0.32).map((item) => item.lane)
+          state.objects.filter((item) => item.y < canvas.height * SPAWN_ZONE_HEIGHT_RATIO).map((item) => item.lane)
         );
         const freeLanes = Array.from({ length: laneCount }, (_, lane) => lane).filter((lane) => !occupiedLanes.has(lane));
         const lane = freeLanes.length ? freeLanes[Math.floor(Math.random() * freeLanes.length)] : Math.floor(Math.random() * laneCount);
@@ -602,6 +637,7 @@
         state.streak += 1;
         state.score += 140 + state.streak * 30;
         setMessage(`Collected ${record.label} — streak x${state.streak}!`, 1.3);
+        announce(`Collected ${record.label}. Score ${Math.floor(state.score)}. Streak ${state.streak}.`);
       }
 
       function crash(obstacleType) {
@@ -612,6 +648,7 @@
         state.streak = 0;
         state.invulnerable = 1.2;
         setMessage(obstacleType === "cone" ? "Roadblock hit — watch the shoulder." : "Traffic clip — breathe and reset.", 1.6);
+        announce(`Crash. Lives ${state.lives}. Score ${Math.floor(state.score)}. Level ${state.level}.`);
         if (state.lives <= 0) {
           endGame();
         }
@@ -624,11 +661,17 @@
 
         state.time += dt;
         state.score += dt * (18 + state.level * 3);
+        const previousLevel = state.level;
         state.level = 1 + Math.floor(state.time / 14);
         state.spawnTimer -= dt;
         state.markersOffset = (state.markersOffset + dt * (280 + state.level * 36)) % 90;
         state.palmsOffset = (state.palmsOffset + dt * (70 + state.level * 8)) % 160;
         state.player.wobble += dt * 8;
+
+        if (state.level !== previousLevel) {
+          setMessage(`Level ${state.level} — the boulevard speeds up.`, 1.6);
+          announce(`Level ${state.level}. Score ${Math.floor(state.score)}. Lives ${state.lives}.`);
+        }
 
         if (state.messageTimer > 0) {
           state.messageTimer -= dt;
@@ -641,7 +684,7 @@
           state.invulnerable -= dt;
         }
 
-        const spawnDelay = Math.max(0.28, 0.9 - state.level * 0.045);
+        const spawnDelay = Math.max(MIN_SPAWN_DELAY, BASE_SPAWN_DELAY - state.level * SPAWN_DELAY_LEVEL_REDUCTION);
         if (state.spawnTimer <= 0) {
           spawnObject();
           state.spawnTimer = spawnDelay * (0.75 + Math.random() * 0.7);
@@ -651,7 +694,7 @@
         state.objects = state.objects.filter((item) => {
           item.y += item.speed * dt;
           const sameLane = item.lane === state.player.lane;
-          const nearPlayer = Math.abs(item.y - playerY) < (item.type === "car" ? 58 : 42);
+          const nearPlayer = Math.abs(item.y - playerY) < (item.type === "car" ? CAR_COLLISION_THRESHOLD : OBJECT_COLLISION_THRESHOLD);
           if (sameLane && nearPlayer) {
             if (item.type === "record") {
               awardRecord(item);
@@ -862,7 +905,7 @@
         if (!state.lastTime) {
           state.lastTime = timestamp;
         }
-        const dt = Math.min(0.032, (timestamp - state.lastTime) / 1000);
+        const dt = Math.min(MAX_FRAME_TIME, (timestamp - state.lastTime) / 1000);
         state.lastTime = timestamp;
         update(dt);
         draw();
