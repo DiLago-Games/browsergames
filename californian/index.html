@@ -326,6 +326,8 @@
       bandTimer: 0,
       bandIndex: 0,
       distance: 0,
+      introTimer: 0,
+      cruiseScore: 0,
       collectibles: [],
       effects: [],
       lastTime: 0
@@ -341,6 +343,8 @@
       state.bandTimer = 0;
       state.bandIndex = 0;
       state.distance = 0;
+      state.introTimer = 2.5;
+      state.cruiseScore = 0;
       state.collectibles = [];
       state.effects = [];
       state.lastTime = 0;
@@ -401,7 +405,7 @@
 
     function spawnEntity() {
       const lane = Math.floor(Math.random() * laneCount);
-      const collectible = Math.random() < 0.38;
+      const collectible = state.introTimer > 0 || Math.random() < 0.52;
       state.collectibles.push({
         lane,
         y: -60,
@@ -425,6 +429,14 @@
       state.speed = Math.min(520, state.speed + dt * 6);
       state.spawnTimer -= dt;
       state.bandTimer += dt;
+      state.introTimer = Math.max(0, state.introTimer - dt);
+      state.cruiseScore += dt * 4;
+
+      const baseScore = Math.floor(state.cruiseScore);
+      if (baseScore > state.score) {
+        state.score = baseScore;
+        updateHud();
+      }
 
       if (state.bandTimer >= 8) {
         state.bandTimer = 0;
@@ -433,7 +445,7 @@
       }
 
       if (state.spawnTimer <= 0) {
-        state.spawnTimer = Math.max(0.22, 0.62 - state.score * 0.0035);
+        state.spawnTimer = Math.max(0.28, 0.76 - state.score * 0.003);
         spawnEntity();
       }
 
