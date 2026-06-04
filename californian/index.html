@@ -8,6 +8,17 @@
     :root {
       color-scheme: dark;
       font-family: Arial, sans-serif;
+      --bg-top: #ff9a62;
+      --bg-bottom: #07111f;
+      --accent: #ffd56f;
+      --accent-strong: #ff8f4e;
+      --panel: rgba(9, 14, 25, 0.82);
+      --border: rgba(255, 214, 170, 0.28);
+      --text-soft: #ffe0bd;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
@@ -15,52 +26,694 @@
       min-height: 100vh;
       display: grid;
       place-items: center;
+      padding: 20px;
       background:
-        linear-gradient(180deg, rgba(255, 143, 78, 0.2), transparent 45%),
-        linear-gradient(135deg, #10131d, #181d2f 60%, #24192e);
-      color: #fff4e7;
+        radial-gradient(circle at top, rgba(255, 198, 124, 0.35), transparent 28%),
+        linear-gradient(180deg, var(--bg-top), #ff7d66 16%, #1c2746 48%, var(--bg-bottom));
+      color: #fff8f1;
     }
 
-    main {
-      width: min(92vw, 640px);
-      padding: 32px;
-      border: 1px solid rgba(255, 214, 170, 0.25);
-      border-radius: 20px;
-      background: rgba(14, 18, 30, 0.86);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-      text-align: center;
+    .shell {
+      width: min(100%, 980px);
+      display: grid;
+      gap: 18px;
+      grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 24px 56px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(10px);
+    }
+
+    .sidebar {
+      padding: 24px;
     }
 
     h1 {
-      margin-top: 0;
-      font-size: clamp(2rem, 6vw, 3rem);
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 6vw, 3.2rem);
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
-    p {
-      line-height: 1.6;
-      color: #ffd9b5;
+    .lede,
+    .how-to {
+      margin: 0;
+      color: var(--text-soft);
+      line-height: 1.55;
     }
 
-    a {
-      display: inline-block;
-      margin-top: 16px;
-      padding: 12px 20px;
-      border-radius: 999px;
-      background: #ff8f4e;
-      color: #181d2f;
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 22px 0;
+    }
+
+    .stat {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 224, 189, 0.75);
+    }
+
+    .stat-value {
+      margin-top: 8px;
+      font-size: 1.8rem;
       font-weight: 700;
+      color: #fff;
+    }
+
+    .playlist {
+      margin: 18px 0 22px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 143, 78, 0.12);
+      border: 1px solid rgba(255, 143, 78, 0.28);
+    }
+
+    .playlist-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255, 229, 189, 0.7);
+    }
+
+    .playlist-value {
+      margin-top: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    button,
+    .link {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 20px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
       text-decoration: none;
+      transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
+    }
+
+    button:hover,
+    .link:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #1a1f30;
+    }
+
+    .secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff5ea;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .game-panel {
+      position: relative;
+      padding: 18px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #ff9c7c, #223156 42%, #09111f 100%);
+    }
+
+    .hud {
+      position: absolute;
+      top: 34px;
+      left: 34px;
+      right: 34px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+      font-weight: 700;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+    }
+
+    .touch-controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .touch-controls button {
+      min-height: 52px;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 22px;
+      background: rgba(6, 9, 17, 0.52);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .overlay-card {
+      max-width: 320px;
+      padding: 24px;
+      border-radius: 22px;
+      background: rgba(11, 17, 31, 0.92);
+      border: 1px solid rgba(255, 214, 170, 0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .overlay-card h2 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1.8rem;
+    }
+
+    .overlay-card p {
+      margin: 0 0 16px;
+      line-height: 1.55;
+      color: var(--text-soft);
+    }
+
+    @media (max-width: 860px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <main>
-    <h1>🌴 Californian</h1>
-    <p>A Californian-themed action game with band references is now linked from the DiLago Games homepage.</p>
-    <p>This lightweight page keeps the new homepage entry functional while the full game experience is iterated on.</p>
-    <a href="../index.html">Back to games</a>
+  <main class="shell">
+    <section class="panel sidebar">
+      <h1>🌴 Californian</h1>
+      <p class="lede">Cruise the sunset strip, collect gig flyers, and dodge traffic to keep the tour alive.</p>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Score</div>
+          <div class="stat-value" id="scoreStat">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Lives</div>
+          <div class="stat-value" id="livesStat">3</div>
+        </div>
+      </div>
+
+      <div class="playlist">
+        <div class="playlist-label">Now playing</div>
+        <div class="playlist-value" id="playlistValue">The Golden Coast</div>
+      </div>
+
+      <p class="how-to">Use <strong>←</strong> and <strong>→</strong> or the touch buttons to switch lanes. Collect flyers and records, avoid convertibles and palm trunks, and survive as the boulevard speeds up.</p>
+
+      <div class="actions">
+        <button class="primary" id="startButton" type="button">Start ride</button>
+        <button class="secondary" id="restartButton" type="button">Restart</button>
+        <a class="link secondary" href="../index.html">Back to games</a>
+      </div>
+    </section>
+
+    <section class="panel game-panel">
+      <div class="hud">
+        <span id="hudScore">Score 0</span>
+        <span id="hudLives">Lives 3</span>
+      </div>
+      <canvas id="gameCanvas" width="405" height="720" aria-label="Californian game canvas"></canvas>
+
+      <div class="overlay" id="overlay">
+        <div class="overlay-card">
+          <h2 id="overlayTitle">Ready for the coast?</h2>
+          <p id="overlayText">Start the ride, collect the hype, and keep your tour van out of trouble.</p>
+          <button class="primary" id="overlayButton" type="button">Play</button>
+        </div>
+      </div>
+
+      <div class="touch-controls">
+        <button class="secondary" id="leftButton" type="button" aria-label="Move left">⬅ Drift left</button>
+        <button class="secondary" id="rightButton" type="button" aria-label="Move right">Drift right ➡</button>
+      </div>
+    </section>
   </main>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const scoreStat = document.getElementById('scoreStat');
+    const livesStat = document.getElementById('livesStat');
+    const hudScore = document.getElementById('hudScore');
+    const hudLives = document.getElementById('hudLives');
+    const playlistValue = document.getElementById('playlistValue');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const overlayText = document.getElementById('overlayText');
+    const overlayButton = document.getElementById('overlayButton');
+    const startButton = document.getElementById('startButton');
+    const restartButton = document.getElementById('restartButton');
+    const leftButton = document.getElementById('leftButton');
+    const rightButton = document.getElementById('rightButton');
+
+    const laneCount = 3;
+    const laneWidth = canvas.width / laneCount;
+    const playerY = canvas.height - 120;
+    const bands = [
+      'The Golden Coast',
+      'Pacific Static',
+      'Sunset Echo Club',
+      'Venice Voltage',
+      'Neon Palms',
+      'Mirage Motel'
+    ];
+
+    const state = {
+      running: false,
+      score: 0,
+      lives: 3,
+      lane: 1,
+      speed: 260,
+      spawnTimer: 0,
+      bandTimer: 0,
+      bandIndex: 0,
+      distance: 0,
+      collectibles: [],
+      effects: [],
+      lastTime: 0
+    };
+
+    function resetGame() {
+      state.running = false;
+      state.score = 0;
+      state.lives = 3;
+      state.lane = 1;
+      state.speed = 260;
+      state.spawnTimer = 0;
+      state.bandTimer = 0;
+      state.bandIndex = 0;
+      state.distance = 0;
+      state.collectibles = [];
+      state.effects = [];
+      state.lastTime = 0;
+      updateHud();
+      updatePlaylist();
+      showOverlay('Ready for the coast?', 'Start the ride, collect the hype, and keep your tour van out of trouble.', 'Play');
+      draw();
+    }
+
+    function startGame() {
+      if (state.running) {
+        return;
+      }
+
+      if (state.lives <= 0) {
+        resetGame();
+      }
+
+      state.running = true;
+      hideOverlay();
+      requestAnimationFrame(loop);
+    }
+
+    function gameOver() {
+      state.running = false;
+      showOverlay('Encore over', `You banked ${state.score} points before the boulevard won. Hit play for another run.`, 'Play again');
+    }
+
+    function showOverlay(title, text, buttonLabel) {
+      overlayTitle.textContent = title;
+      overlayText.textContent = text;
+      overlayButton.textContent = buttonLabel;
+      overlay.classList.remove('hidden');
+    }
+
+    function hideOverlay() {
+      overlay.classList.add('hidden');
+    }
+
+    function updateHud() {
+      scoreStat.textContent = state.score;
+      livesStat.textContent = state.lives;
+      hudScore.textContent = `Score ${state.score}`;
+      hudLives.textContent = `Lives ${state.lives}`;
+    }
+
+    function updatePlaylist() {
+      playlistValue.textContent = bands[state.bandIndex];
+    }
+
+    function laneX(lane) {
+      return lane * laneWidth + laneWidth / 2;
+    }
+
+    function movePlayer(delta) {
+      state.lane = Math.max(0, Math.min(laneCount - 1, state.lane + delta));
+    }
+
+    function spawnEntity() {
+      const lane = Math.floor(Math.random() * laneCount);
+      const collectible = Math.random() < 0.38;
+      state.collectibles.push({
+        lane,
+        y: -60,
+        size: collectible ? 20 : 28,
+        type: collectible ? (Math.random() < 0.45 ? 'record' : 'flyer') : (Math.random() < 0.5 ? 'car' : 'palm')
+      });
+    }
+
+    function addEffect(x, y, color) {
+      state.effects.push({
+        x,
+        y,
+        radius: 8,
+        alpha: 1,
+        color
+      });
+    }
+
+    function update(dt) {
+      state.distance += state.speed * dt;
+      state.speed = Math.min(520, state.speed + dt * 6);
+      state.spawnTimer -= dt;
+      state.bandTimer += dt;
+
+      if (state.bandTimer >= 8) {
+        state.bandTimer = 0;
+        state.bandIndex = (state.bandIndex + 1) % bands.length;
+        updatePlaylist();
+      }
+
+      if (state.spawnTimer <= 0) {
+        state.spawnTimer = Math.max(0.22, 0.62 - state.score * 0.0035);
+        spawnEntity();
+      }
+
+      for (let i = state.collectibles.length - 1; i >= 0; i -= 1) {
+        const item = state.collectibles[i];
+        item.y += state.speed * dt;
+
+        const collides = item.lane === state.lane && Math.abs(item.y - playerY) < 48;
+        if (collides) {
+          if (item.type === 'record' || item.type === 'flyer') {
+            state.score += item.type === 'record' ? 20 : 12;
+            addEffect(laneX(item.lane), item.y, '#ffd56f');
+          } else {
+            state.lives -= 1;
+            addEffect(laneX(item.lane), item.y, '#ff6a6a');
+          }
+          state.collectibles.splice(i, 1);
+          updateHud();
+          if (state.lives <= 0) {
+            gameOver();
+            return;
+          }
+          continue;
+        }
+
+        if (item.y > canvas.height + 80) {
+          if (item.type === 'record' || item.type === 'flyer') {
+            state.score += 1;
+            updateHud();
+          }
+          state.collectibles.splice(i, 1);
+        }
+      }
+
+      for (let i = state.effects.length - 1; i >= 0; i -= 1) {
+        const effect = state.effects[i];
+        effect.radius += dt * 60;
+        effect.alpha -= dt * 2.4;
+        if (effect.alpha <= 0) {
+          state.effects.splice(i, 1);
+        }
+      }
+    }
+
+    function drawSky() {
+      const sunGradient = ctx.createRadialGradient(canvas.width / 2, 128, 20, canvas.width / 2, 128, 210);
+      sunGradient.addColorStop(0, 'rgba(255, 244, 182, 0.95)');
+      sunGradient.addColorStop(0.52, 'rgba(255, 179, 106, 0.72)');
+      sunGradient.addColorStop(1, 'rgba(255, 179, 106, 0)');
+      ctx.fillStyle = sunGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#ffcf83';
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, 132, 68, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(27, 34, 60, 0.92)';
+      ctx.beginPath();
+      ctx.moveTo(0, 290);
+      ctx.lineTo(75, 228);
+      ctx.lineTo(155, 278);
+      ctx.lineTo(260, 210);
+      ctx.lineTo(340, 258);
+      ctx.lineTo(canvas.width, 220);
+      ctx.lineTo(canvas.width, 420);
+      ctx.lineTo(0, 420);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawRoad() {
+      const offset = (state.distance * 0.55) % 80;
+
+      ctx.fillStyle = '#1a1f30';
+      ctx.beginPath();
+      ctx.moveTo(80, 240);
+      ctx.lineTo(canvas.width - 80, 240);
+      ctx.lineTo(canvas.width - 12, canvas.height);
+      ctx.lineTo(12, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+      ctx.lineWidth = 2;
+      for (let lane = 1; lane < laneCount; lane += 1) {
+        const startX = 80 + lane * ((canvas.width - 160) / laneCount);
+        const endX = 12 + lane * ((canvas.width - 24) / laneCount);
+        ctx.beginPath();
+        ctx.moveTo(startX, 240);
+        ctx.lineTo(endX, canvas.height);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#ffe29a';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      for (let y = -80; y < canvas.height; y += 90) {
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2, y + offset);
+        ctx.lineTo(canvas.width / 2, y + offset + 42);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = 'rgba(7, 17, 31, 0.35)';
+      for (let i = 0; i < 5; i += 1) {
+        const palmY = 280 + i * 100 - (state.distance * 0.4 % 100);
+        drawPalm(34, palmY, 0.85);
+        drawPalm(canvas.width - 34, palmY + 24, 0.78);
+      }
+    }
+
+    function drawPalm(x, y, scale) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = '#5c3a25';
+      ctx.fillRect(-4, -4, 8, 46);
+      ctx.strokeStyle = '#3aa05b';
+      ctx.lineWidth = 4;
+      for (let i = -2; i <= 2; i += 1) {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(i * 12, -12 - Math.abs(i) * 4);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawPlayer() {
+      const x = laneX(state.lane);
+      const hover = Math.sin(state.distance * 0.03) * 3;
+      ctx.save();
+      ctx.translate(x, playerY + hover);
+
+      ctx.fillStyle = '#0a162a';
+      ctx.beginPath();
+      ctx.moveTo(0, -36);
+      ctx.lineTo(34, 18);
+      ctx.lineTo(0, 30);
+      ctx.lineTo(-34, 18);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#ff8f4e';
+      ctx.beginPath();
+      ctx.moveTo(0, -28);
+      ctx.lineTo(22, 10);
+      ctx.lineTo(0, 18);
+      ctx.lineTo(-22, 10);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#9ee8ff';
+      ctx.fillRect(-10, -18, 20, 8);
+      ctx.restore();
+    }
+
+    function drawEntity(item) {
+      const x = laneX(item.lane);
+      ctx.save();
+      ctx.translate(x, item.y);
+
+      if (item.type === 'record') {
+        ctx.fillStyle = '#1a1f30';
+        ctx.beginPath();
+        ctx.arc(0, 0, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ff8f4e';
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (item.type === 'flyer') {
+        ctx.fillStyle = '#ffd56f';
+        ctx.fillRect(-14, -18, 28, 36);
+        ctx.fillStyle = '#1a1f30';
+        ctx.fillRect(-9, -10, 18, 4);
+        ctx.fillRect(-9, -2, 18, 4);
+        ctx.fillRect(-9, 6, 12, 4);
+      } else if (item.type === 'car') {
+        ctx.fillStyle = '#7ee4ff';
+        ctx.fillRect(-18, -28, 36, 56);
+        ctx.fillStyle = '#09111f';
+        ctx.fillRect(-10, -16, 20, 24);
+      } else {
+        ctx.fillStyle = '#6d452b';
+        ctx.fillRect(-6, -30, 12, 60);
+        ctx.strokeStyle = '#45bf6b';
+        ctx.lineWidth = 4;
+        for (let i = -2; i <= 2; i += 1) {
+          ctx.beginPath();
+          ctx.moveTo(0, -18);
+          ctx.lineTo(i * 11, -30 - Math.abs(i) * 4);
+          ctx.stroke();
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function drawEffects() {
+      for (const effect of state.effects) {
+        ctx.save();
+        ctx.globalAlpha = effect.alpha;
+        ctx.strokeStyle = effect.color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawSky();
+      drawRoad();
+
+      for (const item of state.collectibles) {
+        drawEntity(item);
+      }
+
+      drawPlayer();
+      drawEffects();
+    }
+
+    function loop(timestamp) {
+      if (!state.running) {
+        return;
+      }
+
+      if (!state.lastTime) {
+        state.lastTime = timestamp;
+      }
+
+      const dt = Math.min(0.032, (timestamp - state.lastTime) / 1000);
+      state.lastTime = timestamp;
+
+      update(dt);
+      draw();
+
+      if (state.running) {
+        requestAnimationFrame(loop);
+      }
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') {
+        movePlayer(-1);
+      } else if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') {
+        movePlayer(1);
+      } else if (event.key === ' ' || event.key === 'Enter') {
+        startGame();
+      }
+    });
+
+    const buttonHandlers = [
+      [startButton, startGame],
+      [restartButton, resetGame],
+      [overlayButton, startGame],
+      [leftButton, () => movePlayer(-1)],
+      [rightButton, () => movePlayer(1)]
+    ];
+
+    for (const [button, handler] of buttonHandlers) {
+      button.addEventListener('click', handler);
+      button.addEventListener('touchstart', (event) => {
+        event.preventDefault();
+        handler();
+      }, { passive: false });
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && state.running) {
+        state.running = false;
+        showOverlay('Paused at the red light', 'Jump back in whenever you are ready to keep the tour moving.', 'Resume');
+      }
+    });
+
+    resetGame();
+  </script>
 </body>
 </html>
