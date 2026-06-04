@@ -431,8 +431,8 @@
       </div>
 
       <div class="touch-controls" aria-label="Touch controls">
-        <button type="button" id="left-button">← Drift Left</button>
-        <button type="button" id="right-button">Drift Right →</button>
+        <button type="button" id="left-button" aria-label="Move left one lane">← Drift Left</button>
+        <button type="button" id="right-button" aria-label="Move right one lane">Drift Right →</button>
       </div>
 
       <div class="status-line" id="status" aria-live="polite">Collect records to build score multipliers.</div>
@@ -490,7 +490,7 @@
       const BASE_SPAWN_DELAY = 0.9;
       const SPAWN_DELAY_LEVEL_REDUCTION = 0.045;
       const CAR_COLLISION_THRESHOLD = 58;
-      const OBJECT_COLLISION_THRESHOLD = 42;
+      const NON_CAR_COLLISION_THRESHOLD = 42;
       const MAX_FRAME_TIME = 0.032;
 
       const bandNames = [
@@ -602,7 +602,10 @@
           state.objects.filter((item) => item.y < canvas.height * SPAWN_ZONE_HEIGHT_RATIO).map((item) => item.lane)
         );
         const freeLanes = Array.from({ length: laneCount }, (_, lane) => lane).filter((lane) => !occupiedLanes.has(lane));
-        const lane = freeLanes.length ? freeLanes[Math.floor(Math.random() * freeLanes.length)] : Math.floor(Math.random() * laneCount);
+        if (!freeLanes.length) {
+          return false;
+        }
+        const lane = freeLanes[Math.floor(Math.random() * freeLanes.length)];
         const roll = Math.random();
         let type = "record";
         if (roll > 0.34) {
@@ -616,6 +619,7 @@
           size: type === "record" ? 28 : type === "cone" ? 32 : 54,
           label: type === "record" ? bandNames[Math.floor(Math.random() * bandNames.length)] : ""
         });
+        return true;
       }
 
       function clampLane(index) {
@@ -686,15 +690,15 @@
 
         const spawnDelay = Math.max(MIN_SPAWN_DELAY, BASE_SPAWN_DELAY - state.level * SPAWN_DELAY_LEVEL_REDUCTION);
         if (state.spawnTimer <= 0) {
-          spawnObject();
-          state.spawnTimer = spawnDelay * (0.75 + Math.random() * 0.7);
+          const spawned = spawnObject();
+          state.spawnTimer = spawned ? spawnDelay * (0.75 + Math.random() * 0.7) : 0.12;
         }
 
         const playerY = canvas.height - 88;
         state.objects = state.objects.filter((item) => {
           item.y += item.speed * dt;
           const sameLane = item.lane === state.player.lane;
-          const nearPlayer = Math.abs(item.y - playerY) < (item.type === "car" ? CAR_COLLISION_THRESHOLD : OBJECT_COLLISION_THRESHOLD);
+          const nearPlayer = Math.abs(item.y - playerY) < (item.type === "car" ? CAR_COLLISION_THRESHOLD : NON_CAR_COLLISION_THRESHOLD);
           if (sameLane && nearPlayer) {
             if (item.type === "record") {
               awardRecord(item);
