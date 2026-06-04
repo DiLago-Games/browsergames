@@ -13,6 +13,7 @@ A collection of casual browser games built with HTML5 and JavaScript.
 | [`futuristic-pong/`](futuristic-pong/) | ⚡ Pong 3001 | Neon cyber-pong: glow effects, particle hits, AI opponent, power-ups, and level progression |
 | [`gravity-painter/`](gravity-painter/) | 🌌 Gravity Painter | Cosmic physics sandbox — paint gravity wells, assimilate foreign fields, and expand your universe sector by sector |
 | [`Keep the Crowd alive/`](Keep the Crowd alive/) | 🎮 Keep The Crowd Alive |  |
+| [`californian/`](californian/) | 🌴 Californian | Californian-themed action game with band references |
 
 ## Adding a new game
 
