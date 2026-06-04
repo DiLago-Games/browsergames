@@ -420,7 +420,7 @@
         ></canvas>
         <div class="overlay" id="overlay">
           <div class="overlay-card">
-            <h2 id="overlay-title">Hit the strip</h2>
+            <h2 id="overlay-title">Hit the Strip</h2>
             <p id="overlay-copy">Use <strong>← →</strong> or <strong>A / D</strong> to switch lanes. On touch screens, tap the road or the buttons below. Collect the glowing records, dodge traffic, and hold on to all three lives as the tempo climbs.</p>
             <div class="button-row">
               <button class="primary" id="start-button" type="button">Start Run</button>
@@ -582,8 +582,8 @@
           localStorage.setItem("californian-best", String(state.best));
           updateBestDisplay();
         }
-        overlayTitle.textContent = "Encore over";
-        overlayCopy.textContent = `You finished with ${Math.floor(state.score)} points and reached level ${state.level}. Hit the strip again and beat your best run of ${state.best}.`;
+        overlayTitle.textContent = "Encore Over";
+        overlayCopy.textContent = `You finished with ${Math.floor(state.score)} points and reached level ${state.level}. Hit the Strip again and beat your best run of ${state.best}.`;
         startButton.textContent = "Restart Run";
         overlay.hidden = false;
         setMessage("Traffic won this round. Try another run.", 3);
